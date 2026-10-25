@@ -1,0 +1,42 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie beschrieben.
+labels: ["fehler"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke! Bitte **keine Tokens, Schlüssel, Kopplungscodes, Adressen oder Gesprächsinhalte** hineinkopieren.
+        Sicherheitslücken bitte nicht hier, sondern wie in SECURITY.md beschrieben melden.
+  - type: dropdown
+    id: teil
+    attributes:
+      label: Welcher Teil?
+      options:
+        - Setup (Windows)
+        - PC-Client (Windows)
+        - PC-Client (Linux)
+        - Android-App
+        - Web-App (iPhone, Browser)
+        - Einrichtung mit Claude Code (EINRICHTUNG.md)
+        - Anderes
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Setup-Version, PC-Client-Version oder App-Version (steht im Zahnrad bzw. im Fenster).
+    validations:
+      required: true
+  - type: textarea
+    id: was
+    attributes:
+      label: Was hast du getan, was ist passiert, was hast du erwartet?
+    validations:
+      required: true
+  - type: textarea
+    id: protokoll
+    attributes:
+      label: Ausschnitt aus dem Protokoll (optional)
+      description: z. B. jarvis.log oder einrichten.log. Vorher auf Persönliches durchsehen.
+      render: text

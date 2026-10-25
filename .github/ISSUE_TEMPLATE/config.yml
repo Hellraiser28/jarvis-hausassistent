@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Sicherheitslücke melden
+    url: https://github.com/Hellraiser28/jarvis-hausassistent/security/advisories/new
+    about: Bitte vertraulich über GitHub melden, nicht als öffentliches Issue.

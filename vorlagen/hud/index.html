@@ -1,0 +1,1112 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J.A.R.V.I.S.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<script>
+/* Oberflaeche (seit 25.10.2026 getrennt): Diese Seite ist Code und fuer alle gleich. Was sie zu DEINEM Jarvis macht
+   (Farbe, Bereiche, Zeile unter dem Logo, Begruessungen, Knoepfe), kommt von der Bruecke mit dem Zustand (zustand.json
+   bzw. /v1/zustand, Schluessel "oberflaeche"). Aendern: "Jarvis, mach dich gruen" (Werkzeug oberflaeche, die Bruecke
+   prueft jeden Wert). Ein Update dieser Seite laesst die Einstellungen deshalb stehen.
+   Die Seite prueft beim Anwenden noch einmal (der Glance-Ordner ist fuer mehrere Konten beschreibbar) und merkt sich
+   den letzten Stand im Browser, damit beim Laden nicht die Grundfarbe aufblitzt. */
+const STANDARD = {"name": "J.A.R.V.I.S.", "untertitel": "Just A Rather Very Intelligent System", "person": "", "farbe": "rot", "farben": null, "bereiche": ["wetter", "systeme", "kalender", "welt", "verbindungen", "laufband", "gespraech", "aktionen", "begruessung"], "begruessungen": [[5, "Noch wach{, person}?"], [11, "Guten Morgen{, person}."], [18, "Hallo{, person}. Was liegt an?"], [24, "Guten Abend{, person}."]], "start": [["J.A.R.V.I.S.", ""], ["Arc-Reaktor", "STABIL"], ["Gehirn", "CLAUDE"], ["Stimme", "BEREIT"]], "aktionen": [{"text": "Briefing", "frage": "Gib mir ein Briefing.", "symbol": "briefing"}, {"text": "Termine", "frage": "Was steht heute an?", "symbol": "kalender"}, {"text": "Wetter", "frage": "Wie wird das Wetter heute?", "symbol": "wetter"}, {"text": "News", "frage": "Was gibt's Neues in der Welt?", "symbol": "news"}], "app_aktionen": [], "app_bereiche": ["werte", "wetter", "strom", "termine", "haus", "server", "radio", "nachrichten", "schnellzugriff", "begruessung"], "nachtmodus": "aus", "bewegung": "voll", "werte_namen": {"strom": "STROM", "euro": "HEUTE", "last": "LAST"}, "pc_name": "PC", "verbindungen_extra": []};
+// Sprache (0.3.0): ?sprache=de|en in der Adresse, sonst die Wahl im Browser (localStorage "jarvis-sprache"), sonst
+// die Sprache des Browsers bzw. von Windows im PC-Fenster. Neue Texte immer in beide Sprachen.
+const TEXTE = { de: {"faehigkeiten_gross": "FÄHIGKEITEN", "einstellungen": "Einstellungen", "systeme": "Systeme", "haus": "Haus", "kalender": "Kalender", "welt": "Welt", "verbindungen": "Verbindungen", "gespraech": "Gespräch", "st_bereit": "Bereit", "st_hoert": "Höre zu", "st_denkt": "Denke nach", "st_spricht": "Spreche", "st_fehler": "Störung", "echtzeit_titel": "Gespräch in Echtzeit (Gemini Live): einfach reden, reinreden erlaubt", "echtzeit": "Echtzeit", "autostart": "Mit Windows starten", "autostart_k": "Jarvis läuft im Hintergrund und hört auf „Hey Jarvis“", "desktop": "Desktop-Symbol", "desktop_k": "zum Öffnen von Hand", "pc_client": "PC-Client", "pc_client_v": "PC-Client {0}", "nach_updates": "Nach Updates suchen", "jetzt_aktualisieren": "Jetzt aktualisieren", "lade_faehigkeiten": "Lade Fähigkeiten …", "nachrichten": "NACHRICHTEN", "lade_meldungen": "Lade Meldungen …", "frag": "Frag Jarvis …", "senden": "Senden", "q_app_extern": "App unterwegs", "q_echtzeit_pc": "Echtzeit PC", "q_echtzeit_app": "Echtzeit App", "q_echtzeit_extern": "Echtzeit unterwegs", "q_echtzeit": "Echtzeit", "keine_verbindung": "Keine Verbindung", "freigabe_offen": "Freigabe offen: {0} · Kennwort sagen und Push bestätigen", "admin": "Admin-Modus · noch {0}", "pc_aus": "aus", "pc_haengt": "Steuerung hängt", "pc_du": "du bist dran", "pc_verbunden": "verbunden", "gehirn": "Gehirn", "stimme": "Stimme", "noch_nichts": "Noch nichts gesagt. Ungewöhnlich ruhig hier.", "verlauf_geschuetzt": "Das Gespräch steht im PC-Fenster und in der App (mit Anmeldung), nicht offen im Heimnetz.", "keine_termine": "Keine Termine. Genieß es.", "bis": "{0} bis {1} °C", "mediathek": "Neu in der Mediathek", "faehigkeiten": "Fähigkeiten", "werkzeuge": "Werkzeuge", "bereiche": "Bereiche", "an_gross": "AN", "aus_gross": "AUS", "erinnerungen": "Erinnerungen", "naechste": " · nächste {0}", "nur": "nur {0}", "fuss": "Eingänge: {0}   ·   Stand {1}", "fuss_pc": "   ·   Beispiel antippen = an Jarvis schicken", "pruefung_fehl": "Prüfung fehlgeschlagen: {0}", "version_da": "Version {0} verfügbar · {1}", "aktuell": "aktuell · geprüft {0} · {1}", "lade_neu": "Lade die neue Version, Jarvis startet gleich neu …", "suche": "Suche …", "et_startet": "⚡ Echtzeit startet …", "et_geht_nicht": "Echtzeit geht gerade nicht: {0}", "keine_antwort": "keine Antwort", "mikrofon": "Mikrofon", "tonverarbeitung": "Tonverarbeitung", "wiedergabe": "Wiedergabe", "et_schritt": "Echtzeit: {0} nicht verfügbar ({1}).", "et_klick": "⚡ Einmal ins Fenster klicken, dann geht's los", "et_weg": "Echtzeit-Verbindung weg ({0}).", "et_laeuft": "⚡ Echtzeit · einfach reden, reinreden geht", "et_gruss": "(Die Sitzung beginnt. Begrüß die Person in einem kurzen Satz.)", "hausgehirn": "▸ Hausgehirn", "hausgehirn_weg": "Das Hausgehirn ist gerade nicht erreichbar.", "et_ende_hey": "Echtzeit beendet. „Hey Jarvis“ geht wieder.", "et_still": "Zwei Minuten Stille, Echtzeit beendet.", "et_ende": "Echtzeit beendet.", "arc": "Arc-Reaktor", "stabil": "STABIL", "w_sunny": "Sonnig", "w_clear-night": "Klare Nacht", "w_partlycloudy": "Wolkig", "w_cloudy": "Bedeckt", "w_rainy": "Regen", "w_pouring": "Starkregen", "w_snowy": "Schnee", "w_snowy-rainy": "Schneeregen", "w_fog": "Nebel", "w_lightning": "Gewitter", "w_lightning-rainy": "Gewitter", "w_windy": "Windig", "w_windy-variant": "Windig", "w_hail": "Hagel", "z_stil_kurz": "kurz", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "ausführlich", "z_farbe_rot": "Rot-Gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blau", "z_farbe_gruen": "Grün", "z_hb_wetter": "Wetter", "z_hb_systeme": "Systeme", "z_hb_haus": "Haus", "z_hb_kalender": "Kalender", "z_hb_welt": "Weltlage", "z_hb_verbindungen": "Verbindungen", "z_hb_laufband": "Laufband", "z_hb_gespraech": "Gespräch", "z_hb_aktionen": "Knöpfe", "z_hb_begruessung": "Begrüßung", "z_hb_werte": "Werte", "z_sy_briefing": "Bericht", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Kopfhörer", "z_sy_news": "Zeitung", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Spiel", "z_sy_monitor": "Bildschirm", "z_sy_liste": "Liste", "z_sy_kalender": "Kalender", "z_sy_licht": "Licht", "z_sy_wetter": "Sonne", "z_sy_haus": "Haus", "z_sy_stern": "Stern", "z_sy_film": "Film", "z_aussehen": "AUSSEHEN", "z_aussehen_hinweis": "Gilt für Wandbildschirm, PC-Fenster und App und bleibt bei Updates erhalten. Sagen geht auch: „Jarvis, mach dich grün.“", "z_farbe": "Farbe", "z_eigene_farbe": "Eigene Farbe", "z_eigene_farbe_k": "Hauptfarbe, der Rest wird daraus berechnet", "z_eigene_farbe_titel": "eigene Farbe", "z_name_assistent": "Name des Assistenten", "z_so_nennt": "So nennt er dich", "z_untertitel": "Zeile unter dem Logo", "z_nachtmodus": "Nachtmodus", "z_nachtmodus_k": "22 bis 6 Uhr gedimmt", "z_ruhig": "Ruhige Bewegung", "z_ruhig_k": "langsamer, ohne Pulsieren", "z_knoepfe_titel": "KNÖPFE IM SCHNELLZUGRIFF", "z_k_text_ph": "Beschriftung, z. B. Licht", "z_k_frage_ph": "Was Jarvis tun soll, z. B. Mach das Licht im Wohnzimmer an.", "z_symbol": "Symbol", "z_knopf_dazu": "KNOPF DAZU", "z_wand_zeigen": "AM WANDBILDSCHIRM UND PC ZEIGEN", "z_rueckgaengig": "RÜCKGÄNGIG", "z_grundeinstellung": "GRUNDEINSTELLUNG", "z_grund_frage": "Aussehen auf die Grundeinstellung zurücksetzen (Stand nach der Einrichtung)?", "z_verhalten": "VERHALTEN", "z_verhalten_hinweis": "Gilt für Jarvis überall, auch am PC und an den Lautsprechern.", "z_zwischensaetze": "Zwischensätze", "z_zwischensaetze_k": "„Ich schau kurz in den Kalender …“", "z_antworten": "Antworten", "z_nachtruhe": "Nachtruhe", "z_nachtruhe_k": "keine Durchsagen, kein Vorlesen", "z_von_bis": "von … bis", "z_jarvis_antwortet_nicht": "Jarvis antwortet nicht.", "z_gespeichert": "✓ Gespeichert", "z_nach_oben": "nach oben", "z_entfernen": "entfernen", "z_uhr": "{0} Uhr", "z_beschriftung_fehlt": "Beschriftung und Auftrag ausfüllen.", "z_von": "von", "z_bis": "bis", "z_dieser_pc": "DIESER PC", "z_knoepfe_hinweis": "Gelten für PC-Fenster und Wandbildschirm. Die App kann eigene haben."},
+  en: {"faehigkeiten_gross": "SKILLS", "einstellungen": "Settings", "systeme": "Systems", "haus": "Home", "kalender": "Calendar", "welt": "World", "verbindungen": "Connections", "gespraech": "Conversation", "st_bereit": "Ready", "st_hoert": "Listening", "st_denkt": "Thinking", "st_spricht": "Speaking", "st_fehler": "Fault", "echtzeit_titel": "Real-time conversation (Gemini Live): just talk, interrupting is fine", "echtzeit": "Real-time", "autostart": "Start when you sign in", "autostart_k": "Jarvis runs in the background and listens for “Hey Jarvis”", "desktop": "Desktop icon", "desktop_k": "to open it by hand", "pc_client": "PC client", "pc_client_v": "PC client {0}", "nach_updates": "Check for updates", "jetzt_aktualisieren": "Update now", "lade_faehigkeiten": "Loading skills …", "nachrichten": "NEWS", "lade_meldungen": "Loading news …", "frag": "Ask Jarvis …", "senden": "Send", "q_app_extern": "App on the go", "q_echtzeit_pc": "Real-time PC", "q_echtzeit_app": "Real-time app", "q_echtzeit_extern": "Real-time on the go", "q_echtzeit": "Real-time", "keine_verbindung": "No connection", "freigabe_offen": "Approval pending: {0} · say the password and confirm the push", "admin": "Admin mode · {0} left", "pc_aus": "off", "pc_haengt": "control stuck", "pc_du": "your turn", "pc_verbunden": "connected", "gehirn": "Brain", "stimme": "Voice", "noch_nichts": "Nothing said yet. Unusually quiet here.", "verlauf_geschuetzt": "The conversation is shown in the PC window and the app (signed in), not openly on the home network.", "keine_termine": "No appointments. Enjoy it.", "bis": "{0} to {1} °C", "mediathek": "New in the media library", "faehigkeiten": "Skills", "werkzeuge": "Tools", "bereiche": "Areas", "an_gross": "ON", "aus_gross": "OFF", "erinnerungen": "Reminders", "naechste": " · next {0}", "nur": "only {0}", "fuss": "Inputs: {0}   ·   As of {1}", "fuss_pc": "   ·   Tap an example = send it to Jarvis", "pruefung_fehl": "Check failed: {0}", "version_da": "Version {0} available · {1}", "aktuell": "up to date · checked {0} · {1}", "lade_neu": "Downloading the new version, Jarvis restarts in a moment …", "suche": "Searching …", "et_startet": "⚡ Real-time starting …", "et_geht_nicht": "Real-time isn't available right now: {0}", "keine_antwort": "no answer", "mikrofon": "Microphone", "tonverarbeitung": "Audio processing", "wiedergabe": "Playback", "et_schritt": "Real-time: {0} not available ({1}).", "et_klick": "⚡ Click into the window once, then off we go", "et_weg": "Real-time connection lost ({0}).", "et_laeuft": "⚡ Real-time · just talk, interrupting works", "et_gruss": "(The session starts. Greet the person in one short sentence.)", "hausgehirn": "▸ Home brain", "hausgehirn_weg": "The home brain can't be reached right now.", "et_ende_hey": "Real-time ended. “Hey Jarvis” works again.", "et_still": "Two minutes of silence, real-time ended.", "et_ende": "Real-time ended.", "arc": "Arc reactor", "stabil": "STABLE", "w_sunny": "Sunny", "w_clear-night": "Clear night", "w_partlycloudy": "Partly cloudy", "w_cloudy": "Cloudy", "w_rainy": "Rain", "w_pouring": "Heavy rain", "w_snowy": "Snow", "w_snowy-rainy": "Sleet", "w_fog": "Fog", "w_lightning": "Thunderstorm", "w_lightning-rainy": "Thunderstorm", "w_windy": "Windy", "w_windy-variant": "Windy", "w_hail": "Hail", "z_stil_kurz": "short", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "detailed", "z_farbe_rot": "Red-gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blue", "z_farbe_gruen": "Green", "z_hb_wetter": "Weather", "z_hb_systeme": "Systems", "z_hb_haus": "Home", "z_hb_kalender": "Calendar", "z_hb_welt": "World", "z_hb_verbindungen": "Connections", "z_hb_laufband": "Ticker", "z_hb_gespraech": "Conversation", "z_hb_aktionen": "Buttons", "z_hb_begruessung": "Greeting", "z_hb_werte": "Values", "z_sy_briefing": "Report", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Headphones", "z_sy_news": "Newspaper", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Game", "z_sy_monitor": "Screen", "z_sy_liste": "List", "z_sy_kalender": "Calendar", "z_sy_licht": "Light", "z_sy_wetter": "Sun", "z_sy_haus": "House", "z_sy_stern": "Star", "z_sy_film": "Film", "z_aussehen": "APPEARANCE", "z_aussehen_hinweis": "Applies to the wall display, PC window and app, and survives updates. You can also just say: “Jarvis, turn green.”", "z_farbe": "Color", "z_eigene_farbe": "Custom color", "z_eigene_farbe_k": "Main color, the rest is derived from it", "z_eigene_farbe_titel": "custom color", "z_name_assistent": "Assistant's name", "z_so_nennt": "What he calls you", "z_untertitel": "Line under the logo", "z_nachtmodus": "Night mode", "z_nachtmodus_k": "dimmed from 10 pm to 6 am", "z_ruhig": "Calm motion", "z_ruhig_k": "slower, no pulsing", "z_knoepfe_titel": "QUICK ACCESS BUTTONS", "z_k_text_ph": "Label, e.g. Light", "z_k_frage_ph": "What Jarvis should do, e.g. Turn on the living room light.", "z_symbol": "Icon", "z_knopf_dazu": "ADD BUTTON", "z_wand_zeigen": "SHOW ON WALL DISPLAY AND PC", "z_rueckgaengig": "UNDO", "z_grundeinstellung": "RESET", "z_grund_frage": "Reset the appearance to the default (as after setup)?", "z_verhalten": "BEHAVIOR", "z_verhalten_hinweis": "Applies to Jarvis everywhere, including the PC and speakers.", "z_zwischensaetze": "Interim phrases", "z_zwischensaetze_k": "“Let me check the calendar …”", "z_antworten": "Answers", "z_nachtruhe": "Quiet hours", "z_nachtruhe_k": "no announcements, no reading aloud", "z_von_bis": "from … to", "z_jarvis_antwortet_nicht": "Jarvis isn't answering.", "z_gespeichert": "✓ Saved", "z_nach_oben": "move up", "z_entfernen": "remove", "z_uhr": "{0}:00", "z_beschriftung_fehlt": "Fill in the label and the task.", "z_von": "from", "z_bis": "to", "z_dieser_pc": "THIS PC", "z_knoepfe_hinweis": "Apply to the PC window and wall display. The app can have its own."} };
+const STANDARD_EN = {"begruessungen": [[5, "Still up{, person}?"], [11, "Good morning{, person}."], [18, "Hello{, person}. What's up?"], [24, "Good evening{, person}."]], "start": [["J.A.R.V.I.S.", ""], ["Arc reactor", "STABLE"], ["Brain", "CLAUDE"], ["Voice", "READY"]], "aktionen": [{"text": "Briefing", "frage": "Give me a briefing.", "symbol": "briefing"}, {"text": "Calendar", "frage": "What's on today?", "symbol": "kalender"}, {"text": "Weather", "frage": "What's the weather today?", "symbol": "wetter"}, {"text": "News", "frage": "What's new in the world?", "symbol": "news"}], "werte_namen": {"strom": "POWER", "euro": "TODAY", "last": "LOAD"}};
+const SP = (() => {
+  const m = /[?&]sprache=(de|en)\b/.exec(location.search);
+  if (m) return m[1];
+  let w = null; try { w = localStorage.getItem("jarvis-sprache"); } catch (e) { /* egal */ }
+  if (w === "de" || w === "en") return w;
+  return String(navigator.language || "de").toLowerCase().startsWith("de") ? "de" : "en";
+})();
+const LOC = SP === "de" ? "de-DE" : (String(navigator.language || "").toLowerCase().startsWith("en") ? navigator.language : "en-US");
+function tx(k, ...werte) {
+  const t = (TEXTE[SP] && TEXTE[SP][k]) ?? TEXTE.de[k] ?? k;
+  return werte.length ? t.replace(/\{(\d)\}/g, (m, i) => werte[+i] ?? "") : t;
+}
+const FARBEN = ["rot", "cyan", "blau", "gruen", "eigene"], BEREICHE = ["wetter", "systeme", "haus", "kalender", "welt", "verbindungen", "laufband", "gespraech", "aktionen", "begruessung", "werte"], HEXF = /^#[0-9a-f]{6}$/i;
+function oberflaecheSauber(o) {
+  const e = JSON.parse(JSON.stringify(STANDARD));
+  if (!o || typeof o !== "object") return e;
+  const txt = (v, n) => (typeof v === "string" ? v.slice(0, n) : null);
+  const paar = (z, a, b) => Array.isArray(z) && z.length === 2 && [String(z[0]).slice(0, a), String(z[1]).slice(0, b)];
+  for (const [k, n] of [["name", 30], ["untertitel", 80], ["person", 30], ["pc_name", 30]]) { const v = txt(o[k], n); if (v !== null) e[k] = v; }
+  if (FARBEN.includes(o.farbe)) e.farbe = o.farbe;
+  if (e.farbe === "eigene") {
+    const f = o.farben || {}; e.farben = {};
+    for (const k of ["c", "titel", "bg", "text", "dim"]) if (HEXF.test(f[k] || "")) e.farben[k] = f[k];
+    if (!e.farben.c) { e.farbe = STANDARD.farbe; e.farben = null; }
+  }
+  if (Array.isArray(o.bereiche)) e.bereiche = o.bereiche.filter((b) => BEREICHE.includes(b));
+  if (Array.isArray(o.begruessungen)) e.begruessungen = o.begruessungen.filter((g) => Array.isArray(g) && typeof g[0] === "number")
+    .slice(0, 8).map((g) => [g[0], String(g[1]).slice(0, 120)]);
+  if (Array.isArray(o.start)) e.start = o.start.map((z) => paar(z, 30, 20)).filter(Boolean).slice(0, 6);
+  if (Array.isArray(o.aktionen)) e.aktionen = o.aktionen.filter((x) => x && typeof x.text === "string" && typeof x.frage === "string")
+    .slice(0, 10).map((x) => ({ text: x.text.slice(0, 20), frage: x.frage.slice(0, 200), symbol: String(x.symbol || "stern") }));
+  if (o.werte_namen && typeof o.werte_namen === "object") for (const k of ["strom", "euro", "last"]) { const v = txt(o.werte_namen[k], 10); if (v) e.werte_namen[k] = v; }
+  if (Array.isArray(o.verbindungen_extra)) e.verbindungen_extra = o.verbindungen_extra.map((z) => paar(z, 30, 30)).filter(Boolean).slice(0, 4);
+  if (["aus", "auto"].includes(o.nachtmodus)) e.nachtmodus = o.nachtmodus;
+  if (["voll", "ruhig"].includes(o.bewegung)) e.bewegung = o.bewegung;
+  if (SP === "en") for (const k of Object.keys(STANDARD_EN))       // deutsche Grundwerte -> englische
+    if (JSON.stringify(e[k]) === JSON.stringify(STANDARD[k])) e[k] = JSON.parse(JSON.stringify(STANDARD_EN[k]));
+  return e;
+}
+let OBERFLAECHE = oberflaecheSauber(STANDARD), OB_STAND = null;
+try {
+  const c = JSON.parse(localStorage.getItem("jarvis-oberflaeche") || "null");
+  if (c && c.o) { OBERFLAECHE = oberflaecheSauber(c.o); OB_STAND = c.stand; }
+} catch (e) { /* ohne Speicher (privates Fenster): Grundwerte bis zum ersten Zustand */ }
+// Farbe setzen; ?farbe=... in der Adresse geht vor. "eigene" leitet die dunklen Toene aus der Hauptfarbe ab.
+function farbeSetzen() {
+  const m = /[?&]farbe=(rot|cyan|blau|gruen)\b/.exec(location.search);
+  const f = m ? m[1] : OBERFLAECHE.farbe, h = document.documentElement;
+  h.classList.remove("rot", "blau", "gruen");
+  ["--c", "--c2", "--c3", "--c-rgb", "--f-rgb", "--f2-rgb", "--f3-rgb", "--titel", "--bg", "--text", "--dim", "--kern", "--v1",
+   "--v2", "--aus"].forEach((k) => h.style.removeProperty(k));
+  if (f === "eigene" && OBERFLAECHE.farben) {
+    const F = OBERFLAECHE.farben, c = [1, 3, 5].map((i) => parseInt(F.c.slice(i, i + 2), 16));
+    const mal = (x) => c.map((v) => Math.round(v * x)).join(","), hin = (x, z) => c.map((v) => Math.round(v + (z - v) * x)).join(",");
+    const w = { "--c": F.c, "--c2": `rgb(${mal(0.7)})`, "--c3": `rgba(${c.join(",")},.14)`, "--c-rgb": c.join(","),
+      "--f-rgb": mal(0.16), "--f2-rgb": mal(0.1), "--f3-rgb": mal(0.055), "--bg": F.bg || `rgb(${mal(0.03)})`,
+      "--v1": `rgb(${mal(0.26)})`, "--v2": `rgb(${mal(0.1)})`, "--kern": `rgb(${hin(0.8, 255)})`, "--text": F.text || `rgb(${hin(0.88, 255)})`,
+      "--dim": F.dim || `rgb(${hin(0.45, 128)})`, "--titel": F.titel || F.c, "--aus": `rgb(${mal(0.2)})` };
+    Object.entries(w).forEach(([k, v]) => h.style.setProperty(k, v));
+  } else if (f !== "cyan") h.classList.add(f);
+}
+farbeSetzen();
+</script>
+<style>
+/* Iron-Man-HUD fuer Jarvis (Homelab). 2.0 vom 22.10.2026: Startsequenz, Wetter, Datenboegen, Welt-Panel, Laufband,
+   Schnellaktionen im PC-Fenster. Daten: zustand.json (Bruecke, 1 s, mit den Oberflaechen-Einstellungen), lage.json
+   (Bruecke, 1 min), system.json, haus.json, kalender.json (Bruecke, fertige Zeilen, 10 s). Eingabe nur im PC-Fenster. */
+:root {
+  --c: #3be8ff; --c2: #1aa6c4; --c3: rgba(var(--c-rgb),.14); --amber: #ffb02e; --rot: #ff3b4e; --gruen: #4dffa6;
+  --bg: #020a12; --text: #cfefff; --dim: #6aa7b8;
+  --akzent: var(--c);
+  --c-rgb: 59,232,255; --f-rgb: 8,40,60; --f2-rgb: 4,24,38; --f3-rgb: 2,14,24;
+  --v1: #06253a; --v2: #031220; --kern: #bff7ff; --titel: var(--c); --aus: #345;
+}
+/* Rot wie die App (24.10.2026, seit dem Abend Standard auch auf Glance); ?farbe=cyan holt das alte Design zurueck */
+html.rot {
+  --c: #ff2d3d; --c2: #b3121f; --c3: rgba(255,45,61,.14); --amber: #ffc24a; --rot: #ff2d3d; --gruen: #7dffb0;
+  --bg: #070206; --text: #ffe9e4; --dim: #b08a83;
+  --c-rgb: 255,45,61; --f-rgb: 40,6,12; --f2-rgb: 26,3,8; --f3-rgb: 14,2,5;
+  --v1: #42070f; --v2: #1a030a; --kern: #ffd0d4; --titel: #ffc24a; --aus: #3a1a1e;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: radial-gradient(ellipse at 50% 40%, var(--v1) 0%, var(--v2) 45%, var(--bg) 100%);
+  color: var(--text); font-family: Rajdhani, "Segoe UI", sans-serif; overflow: hidden; }
+body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .5;
+  background: repeating-linear-gradient(0deg, rgba(var(--c-rgb),.035) 0 1px, transparent 1px 3px),
+              linear-gradient(90deg, rgba(var(--c-rgb),.05) 1px, transparent 1px) 0 0 / 46px 46px,
+              linear-gradient(0deg, rgba(var(--c-rgb),.05) 1px, transparent 1px) 0 0 / 46px 46px; }
+body.denkt { --akzent: var(--amber); }
+body.admin { --akzent: var(--rot); }
+html.rot body.admin { --akzent: #ffffff; }
+html.blau {
+  --c: #4da3ff; --c2: #1f6fd1; --c3: rgba(77,163,255,.14); --c-rgb: 77,163,255; --titel: #cfe6ff;
+  --bg: #02060f; --v1: #0a2147; --v2: #041026; --kern: #d6e9ff; --text: #e3efff; --dim: #7c98bf; --aus: #1d2b44;
+  --f-rgb: 12,26,41; --f2-rgb: 8,16,26; --f3-rgb: 4,9,14;
+}
+html.gruen {
+  --c: #35f29a; --c2: #12a866; --c3: rgba(53,242,154,.14); --c-rgb: 53,242,154; --titel: #d4ffe9;
+  --bg: #020a06; --v1: #073a24; --v2: #031a10; --kern: #d4ffe9; --text: #dfffee; --dim: #6fae8f; --aus: #17352a;
+  --f-rgb: 8,39,25; --f2-rgb: 5,24,15; --f3-rgb: 3,13,8; --gruen: #8fe3ff;
+}
+.bereich-aus { display: none !important; }
+/* Seit 25.10.2026: Einstellung bewegung "ruhig" (oder "Bewegung reduzieren" im System) und nachtmodus "auto" */
+html.ruhig .dreh { animation-duration: 90s; } html.ruhig .dreh2 { animation-duration: 45s; } html.ruhig .dreh3 { animation-duration: 180s; }
+html.ruhig body.denkt .dreh { animation-duration: 9s; } html.ruhig body.denkt .dreh2 { animation-duration: 5s; }
+html.ruhig .kern, html.ruhig body.hoert .kern { animation-duration: 6s; }
+html.ruhig .balken rect, html.ruhig body.spricht .balken rect { animation: none; }
+html.nacht body { filter: brightness(.5) saturate(.75); }
+.werte i { font-style: normal; }
+.raster { position: relative; height: 100%; display: grid; gap: 12px; padding: 12px 14px;
+  grid-template-columns: minmax(220px, 1fr) minmax(320px, 1.4fr) minmax(240px, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto; }
+header { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+h1 { font-family: Orbitron, sans-serif; letter-spacing: .5em; font-size: clamp(18px, 2.4vw, 30px); margin: 0; color: var(--titel);
+  text-shadow: 0 0 12px var(--titel), 0 0 32px rgba(var(--c-rgb),.45); }
+.unter { font-size: 12px; letter-spacing: .3em; color: var(--dim); text-transform: uppercase; }
+.kopfrechts { display: flex; align-items: center; gap: 22px; }
+.wetter { display: flex; align-items: center; gap: 10px; padding: 4px 12px; border: 1px solid rgba(var(--c-rgb),.25); border-radius: 3px;
+  background: rgba(var(--f-rgb),.4); }
+.wetter svg { width: 30px; height: 30px; stroke: var(--c); fill: none; stroke-width: 1.6; filter: drop-shadow(0 0 4px var(--c)); }
+.wetter b { font-family: Orbitron, sans-serif; font-size: 20px; color: var(--text); font-weight: 500; }
+.wetter span { font-size: 12px; color: var(--dim); letter-spacing: .08em; line-height: 1.2; }
+.uhr { font-family: Orbitron, sans-serif; font-size: clamp(16px, 2vw, 26px); color: var(--titel); text-align: right; }
+.uhr small { display: block; font-size: 11px; color: var(--dim); letter-spacing: .2em; }
+.panel { position: relative; border: 1px solid rgba(var(--c-rgb),.25); background: linear-gradient(160deg, rgba(var(--f-rgb),.55), rgba(var(--f3-rgb),.35));
+  padding: 12px 16px; border-radius: 4px; box-shadow: inset 0 0 30px rgba(var(--c-rgb),.06); overflow: hidden; }
+.panel::before, .panel::after { content: ""; position: absolute; width: 18px; height: 18px; border: 2px solid var(--c); }
+.panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+.panel h2 { font-family: Orbitron, sans-serif; font-size: 12px; letter-spacing: .35em; color: var(--titel); margin: 0 0 10px; font-weight: 500; }
+.panel h2::after { content: ""; display: block; height: 1px; margin-top: 6px; background: linear-gradient(90deg, var(--titel), transparent); }
+.links, .rechts { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.messer { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+.messer svg { width: 100%; max-width: 86px; }
+.messer .w { font-family: Orbitron, sans-serif; font-size: 15px; fill: var(--text); }
+.messer .n { font-size: 10px; letter-spacing: .2em; fill: var(--dim); }
+.zeile { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px dashed rgba(var(--c-rgb),.12); font-size: 15px; }
+.zeile b { font-family: Orbitron, sans-serif; font-weight: 500; font-size: 14px; color: var(--c); }
+.zeile b.warm { color: var(--amber); } .zeile b.gut { color: var(--gruen); }
+.mitte { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; }
+.reaktor { width: min(40vh, 100%); aspect-ratio: 1; position: relative; }
+.reaktor svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 14px var(--akzent)); }
+.dreh { transform-origin: 200px 200px; animation: dreh 30s linear infinite; }
+.dreh2 { transform-origin: 200px 200px; animation: dreh 14s linear infinite reverse; }
+.dreh3 { transform-origin: 200px 200px; animation: dreh 60s linear infinite; }
+body.denkt .dreh { animation-duration: 3s; } body.denkt .dreh2 { animation-duration: 1.6s; }
+body.hoert .kern { animation: puls .6s ease-in-out infinite alternate; }
+.kern { transform-origin: 200px 200px; animation: puls 3s ease-in-out infinite alternate; }
+@keyframes dreh { to { transform: rotate(360deg); } }
+@keyframes puls { from { transform: scale(.94); opacity: .75; } to { transform: scale(1.04); opacity: 1; } }
+.balken rect { transform-origin: center; transform-box: fill-box; opacity: 0; }
+body.spricht .balken rect { opacity: .9; animation: welle .5s ease-in-out infinite alternate; }
+@keyframes welle { from { transform: scaleY(.25); } to { transform: scaleY(1.3); } }
+.bogen { fill: none; stroke-linecap: round; transition: stroke-dasharray .8s ease; }
+.zustand { font-family: Orbitron, sans-serif; letter-spacing: .4em; font-size: clamp(13px, 1.6vw, 18px); color: var(--akzent);
+  margin-top: 6px; text-shadow: 0 0 10px var(--akzent); text-transform: uppercase; }
+.gruss { font-size: 15px; color: var(--dim); margin-top: 2px; font-style: italic; }
+.werte { display: flex; gap: 26px; margin-top: 6px; font-family: Orbitron, sans-serif; font-size: 13px; color: var(--dim); letter-spacing: .1em; }
+.werte b { color: var(--text); font-weight: 500; }
+.hinweis { margin-top: 6px; min-height: 20px; font-size: 14px; letter-spacing: .1em; text-align: center; }
+.hinweis.rot { color: var(--rot); text-shadow: 0 0 8px var(--rot); }
+.hinweis.amber { color: var(--amber); }
+.aktionen { display: none; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 4px; max-width: 560px; }
+body.mit-eingabe .aktionen { display: flex; }
+.aktion { display: flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid rgba(var(--c-rgb),.4); border-radius: 3px;
+  background: rgba(var(--f-rgb),.45); color: var(--text); font-family: Rajdhani, sans-serif; font-size: 13.5px; cursor: pointer; }
+body.mit-eingabe .reaktor { width: min(30vh, 100%); }
+.rechts .kal, .rechts .welt { flex: 1 1 0; min-height: 120px; overflow: hidden; }
+.aktion svg { width: 16px; height: 16px; stroke: var(--c); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.aktion.echtzeit { display: none; border-color: var(--titel); color: var(--titel); }
+.aktion.echtzeit.da { display: flex; } .aktion.echtzeit svg { stroke: var(--titel); }
+.aktion.echtzeit.an { background: var(--c3); border-color: var(--c); color: var(--text); box-shadow: 0 0 14px rgba(var(--c-rgb),.55); }
+.aktion:hover { background: var(--c3); border-color: var(--c); box-shadow: 0 0 10px rgba(var(--c-rgb),.3); }
+.termin { padding: 4px 0; border-bottom: 1px dashed rgba(var(--c-rgb),.12); font-size: 15px; display: flex; gap: 8px; }
+.termin i { font-style: normal; width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; flex: none; background: var(--c); box-shadow: 0 0 6px var(--c); }
+.termin i.arb { background: var(--gruen); box-shadow: 0 0 6px var(--gruen); }
+.kopf { color: var(--dim); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; margin-top: 6px; }
+.meldung { padding: 4px 0; border-bottom: 1px dashed rgba(var(--c-rgb),.12); font-size: 14.5px; line-height: 1.25; }
+.meldung em { font-style: normal; display: block; font-size: 10.5px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; }
+body.mit-eingabe .meldung, body.mit-eingabe .lauf span[data-titel] { cursor: pointer; }
+body.mit-eingabe .meldung:hover { color: var(--c); }
+.punkt { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: var(--aus); }
+.punkt.an { background: var(--gruen); box-shadow: 0 0 8px var(--gruen); }
+.ticker { grid-column: 1 / -1; height: 32px; display: flex; align-items: center; overflow: hidden; border: 1px solid rgba(var(--c-rgb),.22);
+  background: rgba(var(--f2-rgb),.6); }
+.ticker .marke { flex: none; height: 100%; display: grid; place-items: center; padding: 0 12px; font-family: Orbitron, sans-serif; font-size: 10px;
+  letter-spacing: .25em; color: var(--bg); background: var(--c); box-shadow: 0 0 12px rgba(var(--c-rgb),.5); }
+.ticker .bahn { flex: 1; overflow: hidden; white-space: nowrap; position: relative; height: 100%; }
+.ticker .lauf { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; gap: 28px; padding-left: 100%;
+  animation: lauf 90s linear infinite; font-size: 15px; }
+.ticker .lauf b { color: var(--c); font-weight: 600; margin-right: 6px; } .ticker .lauf small { color: var(--dim); margin-right: 6px; letter-spacing: .1em; }
+@keyframes lauf { to { transform: translateX(-100%); } }
+footer { grid-column: 1 / -1; }
+.verlauf { display: flex; flex-direction: column; gap: 6px; max-height: 20vh; overflow: hidden; }
+.eintrag { font-size: 15px; line-height: 1.35; }
+.eintrag .f { color: var(--dim); } .eintrag .f::before { content: "▸ "; color: var(--c); }
+.eintrag .a { color: var(--text); } .eintrag .a::before { content: "J ▸ "; color: var(--akzent); font-family: Orbitron, sans-serif; font-size: 12px; }
+.eintrag .m { color: var(--dim); font-size: 11px; letter-spacing: .1em; margin-left: 6px; }
+.eingabe { display: none; margin-top: 10px; gap: 8px; }
+body.mit-eingabe .eingabe { display: flex; }
+.eingabe input { flex: 1; background: rgba(var(--f3-rgb),.8); border: 1px solid rgba(var(--c-rgb),.4); color: var(--text); padding: 10px 12px;
+  font-family: Rajdhani, sans-serif; font-size: 16px; outline: none; border-radius: 3px; }
+.eingabe input:focus { border-color: var(--c); box-shadow: 0 0 12px rgba(var(--c-rgb),.35); }
+.eingabe button { background: transparent; border: 1px solid var(--c); color: var(--c); font-family: Orbitron, sans-serif; letter-spacing: .2em;
+  padding: 0 16px; cursor: pointer; border-radius: 3px; }
+.eingabe button:hover { background: var(--c3); }
+/* Startsequenz */
+.start { position: fixed; inset: 0; z-index: 9; background: #000; display: flex; align-items: center; justify-content: center; gap: 48px; transition: opacity .7s; }
+.start.weg { opacity: 0; pointer-events: none; }
+.start .mini { width: 130px; height: 130px; border-radius: 50%; position: relative; flex: none;
+  background: radial-gradient(circle, #fff 0 14%, var(--kern) 22%, var(--c) 42%, rgba(var(--c-rgb),.15) 62%, transparent 70%);
+  box-shadow: 0 0 50px rgba(var(--c-rgb),.8), 0 0 110px rgba(var(--c-rgb),.35); animation: zuenden 1.2s ease-out both; }
+.start .mini::before { content: ""; position: absolute; inset: -14px; border-radius: 50%; border: 3px dashed rgba(var(--c-rgb),.7); animation: dreh 3s linear infinite; }
+.start .mini::after { content: ""; position: absolute; inset: -30px; border-radius: 50%; border: 1px solid rgba(var(--c-rgb),.4); }
+@keyframes zuenden { 0% { opacity: 0; transform: scale(.4); filter: brightness(3); } 60% { opacity: 1; } 100% { transform: scale(1); filter: none; } }
+.start .logo { font-family: Orbitron, sans-serif; font-weight: 900; color: var(--titel); letter-spacing: .45em; font-size: 26px; margin-bottom: 16px;
+  text-shadow: 0 0 14px var(--titel); }
+.start .zeile2 { font-family: Orbitron, sans-serif; font-size: 12px; letter-spacing: .16em; color: var(--dim); margin: 5px 0; opacity: 0; animation: ein .25s forwards; }
+.start .zeile2 b { color: var(--gruen); font-weight: 500; }
+@keyframes ein { to { opacity: 1; } }
+/* Zweite Seite: Faehigkeiten (22.10.2026 nachts, Daten faehigkeiten.json von der Bruecke, 10 min) */
+.reiter { display: flex; gap: 6px; }
+.reiter span { font-family: Orbitron, sans-serif; font-size: 11px; letter-spacing: .25em; padding: 7px 12px; cursor: pointer; color: var(--dim);
+  border: 1px solid rgba(var(--c-rgb),.25); border-radius: 3px; background: rgba(var(--f-rgb),.35); user-select: none; }
+.reiter span.aktiv { color: var(--bg); background: var(--c); box-shadow: 0 0 12px rgba(var(--c-rgb),.45); }
+.seite2 { display: none; grid-column: 1 / -1; grid-row: 2 / -1; min-height: 0; flex-direction: column; gap: 12px; }
+body.skills .seite2 { display: flex; }
+body.skills .links, body.skills .mitte, body.skills .rechts, body.skills .ticker, body.skills footer { display: none; }
+.kennzahlen { display: flex; flex-wrap: wrap; gap: 10px; }
+.kennzahl { border: 1px solid rgba(var(--c-rgb),.25); background: rgba(var(--f-rgb),.45); border-radius: 3px; padding: 8px 14px; min-width: 120px; }
+.kennzahl b { display: block; font-family: Orbitron, sans-serif; font-size: 22px; color: var(--c); font-weight: 500; text-shadow: 0 0 10px rgba(var(--c-rgb),.5); }
+.kennzahl span { font-size: 11px; letter-spacing: .2em; color: var(--dim); text-transform: uppercase; }
+.kennzahl b.aus { color: var(--dim); text-shadow: none; } .kennzahl b.an { color: var(--gruen); }
+.bereiche { flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-auto-rows: max-content; align-content: start; padding-right: 4px; }
+.bereiche::-webkit-scrollbar { width: 6px; } .bereiche::-webkit-scrollbar-thumb { background: var(--c2); }
+.bereich h2 { display: flex; align-items: center; gap: 8px; }
+.bereich h2 svg { width: 18px; height: 18px; stroke: var(--c); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.skill { padding: 6px 0; border-bottom: 1px dashed rgba(var(--c-rgb),.12); }
+.skill .t { font-size: 15.5px; color: var(--text); font-weight: 600; }
+.skill .t small { font-weight: 400; color: var(--amber); font-size: 11px; letter-spacing: .1em; margin-left: 6px; }
+.skill .d { font-size: 13.5px; color: var(--dim); line-height: 1.25; }
+.beispiel { display: inline-block; margin: 4px 6px 0 0; padding: 2px 8px; font-size: 13px; color: var(--c); border: 1px solid rgba(var(--c-rgb),.3);
+  border-radius: 10px; background: rgba(var(--c-rgb),.06); }
+body.mit-eingabe .beispiel { cursor: pointer; }
+body.mit-eingabe .beispiel:hover { background: var(--c3); border-color: var(--c); }
+.fusszeile2 { font-size: 12px; color: var(--dim); letter-spacing: .08em; }
+/* PC-Fenster: Einstellungen (Client 5, 23.10.2026) */
+.zahnrad { display: none; width: 34px; height: 34px; border: 1px solid rgba(var(--c-rgb),.25); border-radius: 3px; cursor: pointer;
+  background: rgba(var(--f-rgb),.35); align-items: center; justify-content: center; }
+.zahnrad svg { width: 18px; height: 18px; stroke: var(--c); fill: none; stroke-width: 1.7; }
+body.mit-eingabe .zahnrad.da { display: flex; }
+.einst { display: none; position: fixed; z-index: 8; top: 64px; right: 14px; width: 330px;
+  background: linear-gradient(160deg, rgba(var(--f-rgb),.97), rgba(var(--f3-rgb),.98)); box-shadow: 0 8px 30px rgba(0,0,0,.6); }
+.einst.offen { display: block; }
+/* Zahnrad mit Aussehen und Verhalten (seit PC-Client 14, 25.10.2026): dieselben Einstellungen wie im Zahnrad der App */
+.einst { width: 380px; max-height: calc(100vh - 80px); overflow-y: auto; }
+.e-teil { border-top: 1px solid rgba(var(--c-rgb),.18); }
+.e-teil > summary, .e-gruppe > summary { cursor: pointer; list-style: none; font-family: Orbitron, sans-serif; font-size: 11px;
+  letter-spacing: .25em; color: var(--titel); padding: 9px 0; }
+.e-teil > summary::-webkit-details-marker, .e-gruppe > summary::-webkit-details-marker { display: none; }
+.e-teil > summary::before, .e-gruppe > summary::before { content: "▸ "; }
+.e-teil[open] > summary::before, .e-gruppe[open] > summary::before { content: "▾ "; }
+.e-gruppe > summary { font-size: 10px; color: var(--dim); }
+.e-bruecke { display: none; } .e-bruecke.da { display: block; } .e-bruecke.laedt { opacity: .6; pointer-events: none; }
+.e-hinweis { color: var(--dim); font-size: 12px; margin: 0 0 6px; }
+.e-zeile { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0;
+  border-bottom: 1px dashed rgba(var(--c-rgb),.15); font-size: 14px; }
+.e-zeile small { display: block; color: var(--dim); font-size: 12px; }
+.einst input[type=text], .einst select { background: rgba(0,0,0,.35); border: 1px solid rgba(var(--c-rgb),.35); color: var(--text);
+  padding: 4px 6px; border-radius: 3px; font: inherit; font-size: 13px; }
+.e-zeile input[type=text] { width: 170px; }
+.einst input[type=color] { width: 44px; height: 26px; border: 1px solid rgba(var(--c-rgb),.35); background: none; padding: 0; }
+.e-farben { display: flex; gap: 8px; }
+.e-farbe { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+.e-farbe.an { border-color: var(--text); box-shadow: 0 0 8px rgba(var(--c-rgb),.8); }
+.e-wahl { display: flex; gap: 4px; }
+.e-wahl span { padding: 3px 8px; border: 1px solid rgba(var(--c-rgb),.35); border-radius: 3px; cursor: pointer; font-size: 13px; }
+.e-wahl span.an { background: var(--c3); border-color: var(--c); color: var(--text); }
+.e-knopfzeile { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed rgba(var(--c-rgb),.12); }
+.e-knopfzeile svg { width: 16px; height: 16px; flex: none; stroke: var(--c); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.e-knopfzeile div { flex: 1; min-width: 0; } .e-knopfzeile b { font-weight: 500; font-size: 13px; }
+.e-knopfzeile small { display: block; color: var(--dim); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.e-klein { cursor: pointer; color: var(--dim); padding: 0 4px; } .e-klein:hover { color: var(--c); }
+.e-neu { display: grid; gap: 6px; padding: 8px 0; }
+.e-knopf { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border: 1px solid rgba(var(--c-rgb),.4);
+  border-radius: 3px; cursor: pointer; font-size: 12px; letter-spacing: .1em; color: var(--text); }
+.e-knopf:hover { background: var(--c3); }
+.e-leiste { display: flex; gap: 8px; padding: 10px 0 4px; flex-wrap: wrap; }
+.e-meldung { display: none; margin-top: 8px; padding: 6px 8px; font-size: 13px; border: 1px solid var(--c); background: var(--c3); }
+.e-meldung.zeigen { display: block; } .e-meldung.fehler { border-color: var(--rot); color: var(--rot); }
+.aktualisierung { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0 2px; font-size: 14px; }
+.aktualisierung small { display: block; color: var(--dim); font-size: 12px; margin-top: 2px; }
+.aktualisierung .aktion { flex: none; display: none; }
+.aktualisierung.da .aktion { display: flex; }
+.zahnrad { position: relative; }
+.zahnrad.neu::after { content: ""; position: absolute; top: 3px; right: 3px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gruen); box-shadow: 0 0 6px var(--gruen); }
+.schalter { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px dashed rgba(var(--c-rgb),.15);
+  font-size: 15px; cursor: pointer; }
+.schalter small { display: block; color: var(--dim); font-size: 12px; }
+.schalter i { flex: none; width: 42px; height: 22px; border-radius: 11px; background: var(--aus); position: relative; transition: background .2s; }
+.schalter i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--dim); transition: left .2s; }
+.schalter.an i { background: var(--c2); } .schalter.an i::after { left: 23px; background: #fff; }
+@media (max-width: 900px) {
+  html, body { overflow: auto; }
+  .raster { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
+  .reaktor { width: min(70vw, 340px); }
+  .kopfrechts { gap: 10px; } .wetter span { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="start" id="start"><div class="mini"></div><div><div class="logo" id="startlogo">J.A.R.V.I.S.</div><div id="startzeilen"></div></div></div>
+<div class="raster">
+  <header>
+    <div><h1 id="titel">J.A.R.V.I.S.</h1><div class="unter" id="untertitel"></div></div>
+    <div class="kopfrechts">
+      <div class="reiter" id="reiter"><span class="aktiv" data-seite="hud">HUD</span><span data-seite="skills" data-t="faehigkeiten_gross">FÄHIGKEITEN</span></div>
+      <div class="zahnrad" id="zahnrad" title="Einstellungen" data-t-title="einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></div>
+      <div class="wetter" id="wetter"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg><b>–</b><span></span></div>
+      <div class="uhr" id="uhr">--:--<small id="datum">&nbsp;</small></div>
+    </div>
+  </header>
+
+  <section class="links">
+    <div class="panel" id="p-systeme"><h2 data-t="systeme">Systeme</h2>
+      <div class="messer" id="messer"></div>
+      <div id="system" style="margin-top:8px"></div>
+    </div>
+    <div class="panel" id="p-haus" style="flex:1"><h2 data-t="haus">Haus</h2><div id="haus"></div></div>
+  </section>
+
+  <section class="mitte">
+    <div class="reaktor">
+      <svg viewBox="0 0 400 400" aria-hidden="true">
+        <defs>
+          <radialGradient id="glut"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="var(--akzent)"/><stop offset="1" stop-color="transparent"/></radialGradient>
+        </defs>
+        <path class="bogen" d="M 30 280 A 185 185 0 0 1 30 120" stroke="rgba(255,176,46,.18)" stroke-width="7"/>
+        <path class="bogen" d="M 370 280 A 185 185 0 0 0 370 120" stroke="rgba(77,255,166,.18)" stroke-width="7"/>
+        <path class="bogen" id="bogen-strom" d="M 30 280 A 185 185 0 0 1 30 120" stroke="var(--amber)" stroke-width="7" stroke-dasharray="0 400"/>
+        <path class="bogen" id="bogen-nas" d="M 370 280 A 185 185 0 0 0 370 120" stroke="var(--gruen)" stroke-width="7" stroke-dasharray="0 400"/>
+        <g class="dreh3" stroke="var(--akzent)" stroke-opacity=".45" fill="none">
+          <circle cx="200" cy="200" r="198" stroke-dasharray="2 8"/>
+        </g>
+        <g class="dreh" stroke="var(--akzent)" fill="none" stroke-width="3">
+          <circle cx="200" cy="200" r="160" stroke-opacity=".2"/>
+          <path d="M200 40 A160 160 0 0 1 338 120" stroke-width="5"/>
+          <path d="M360 200 A160 160 0 0 1 296 328" stroke-width="5" stroke-opacity=".7"/>
+          <path d="M124 341 A160 160 0 0 1 42 238" stroke-width="5"/>
+        </g>
+        <g class="dreh2" stroke="var(--akzent)" fill="none">
+          <circle cx="200" cy="200" r="130" stroke-width="14" stroke-dasharray="18 10" stroke-opacity=".55"/>
+        </g>
+        <g class="balken" fill="var(--akzent)" id="balken"></g>
+        <g class="kern">
+          <circle cx="200" cy="200" r="90" fill="none" stroke="var(--akzent)" stroke-width="2"/>
+          <circle cx="200" cy="200" r="70" fill="url(#glut)" opacity=".85"/>
+          <polygon points="200,150 243,225 157,225" fill="none" stroke="#fff" stroke-width="3" opacity=".8"/>
+          <circle cx="200" cy="200" r="22" fill="#fff" opacity=".9"/>
+        </g>
+      </svg>
+    </div>
+    <div class="zustand" id="zustand" data-t="st_bereit">Bereit</div>
+    <div class="gruss" id="gruss"></div>
+    <div class="werte" id="p-werte"><span><i id="n-strom">STROM</i> <b id="w-strom">–</b></span><span><i id="n-euro">HEUTE</i> <b id="w-euro">–</b></span><span><i id="n-last">NAS</i> <b id="w-nas">–</b></span></div>
+    <div class="hinweis" id="hinweis"></div>
+    <div class="aktionen" id="aktionen">
+      <span class="aktion echtzeit" id="echtzeit-knopf" title="Gespräch in Echtzeit (Gemini Live): einfach reden, reinreden erlaubt" data-t-title="echtzeit_titel"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span data-t="echtzeit">Echtzeit</span></span>
+    </div>
+  </section>
+
+  <section class="rechts">
+    <div class="panel kal" id="p-kalender"><h2 data-t="kalender">Kalender</h2><div id="kalender"></div></div>
+    <div class="panel welt" id="p-welt"><h2 data-t="welt">Welt</h2><div id="welt"></div></div>
+    <div class="panel" id="p-verbindungen"><h2 data-t="verbindungen">Verbindungen</h2><div id="netz"></div></div>
+  </section>
+
+  <div class="panel einst" id="einst"><h2 data-t="einstellungen">Einstellungen</h2>
+    <details class="e-teil" open><summary data-t="z_dieser_pc">DIESER PC</summary>
+    <div class="schalter" data-name="autostart"><div><span data-t="autostart">Mit Windows starten</span><small data-t="autostart_k">Jarvis läuft im Hintergrund und hört auf „Hey Jarvis“</small></div><i></i></div>
+    <div class="schalter" data-name="desktop_symbol"><div><span data-t="desktop">Desktop-Symbol</span><small data-t="desktop_k">zum Öffnen von Hand</small></div><i></i></div>
+    <div class="aktualisierung" id="aktualisierung"><div><span id="einst-fuss" data-t="pc_client">PC-Client</span><small id="v-text"></small></div><span class="aktion" id="v-knopf" data-t="nach_updates">Nach Updates suchen</span></div>
+    </details>
+    <div class="e-bruecke" id="e-bruecke">
+      <details class="e-teil"><summary data-t="z_aussehen">AUSSEHEN</summary>
+        <p class="e-hinweis" data-t="z_aussehen_hinweis"></p>
+        <div class="e-zeile"><span data-t="z_farbe">Farbe</span><div class="e-farben" id="e-farben"></div></div>
+        <div class="e-zeile" id="e-eigenzeile"><span><span data-t="z_eigene_farbe">Eigene Farbe</span><small data-t="z_eigene_farbe_k"></small></span><input type="color" id="e-eigen" value="#ff2d3d"></div>
+        <div class="e-zeile"><span data-t="z_name_assistent">Name des Assistenten</span><input type="text" id="e-name" maxlength="30" data-schluessel="name"></div>
+        <div class="e-zeile"><span data-t="z_so_nennt">So nennt er dich</span><input type="text" id="e-person" maxlength="30" data-schluessel="person"></div>
+        <div class="e-zeile"><span data-t="z_untertitel">Zeile unter dem Logo</span><input type="text" id="e-untertitel" maxlength="60" data-schluessel="untertitel"></div>
+        <div class="schalter" id="e-nacht"><div><span data-t="z_nachtmodus">Nachtmodus</span><small data-t="z_nachtmodus_k"></small></div><i></i></div>
+        <div class="schalter" id="e-ruhig"><div><span data-t="z_ruhig">Ruhige Bewegung</span><small data-t="z_ruhig_k"></small></div><i></i></div>
+        <details class="e-gruppe"><summary data-t="z_wand_zeigen">AM WANDBILDSCHIRM UND PC ZEIGEN</summary><div id="e-bereiche"></div></details>
+        <details class="e-gruppe"><summary data-t="z_knoepfe_titel">KNÖPFE IM SCHNELLZUGRIFF</summary>
+          <p class="e-hinweis" data-t="z_knoepfe_hinweis"></p>
+          <div id="e-knoepfe"></div>
+          <div class="e-neu" id="e-neu"><input type="text" id="e-k-text" maxlength="20" data-t-ph="z_k_text_ph"><input type="text" id="e-k-frage" maxlength="200" data-t-ph="z_k_frage_ph"><select id="e-k-symbol" data-t-title="z_symbol"></select><span class="e-knopf" id="e-k-dazu" data-t="z_knopf_dazu">KNOPF DAZU</span></div>
+        </details>
+        <div class="e-leiste"><span class="e-knopf" id="e-rueck" data-t="z_rueckgaengig">RÜCKGÄNGIG</span><span class="e-knopf" id="e-grund" data-t="z_grundeinstellung">GRUNDEINSTELLUNG</span></div>
+      </details>
+      <details class="e-teil"><summary data-t="z_verhalten">VERHALTEN</summary>
+        <p class="e-hinweis" data-t="z_verhalten_hinweis"></p>
+        <div class="schalter" id="e-zwischen"><div><span data-t="z_zwischensaetze">Zwischensätze</span><small data-t="z_zwischensaetze_k"></small></div><i></i></div>
+        <div class="e-zeile"><span data-t="z_antworten">Antworten</span><div class="e-wahl" id="e-stil"></div></div>
+        <div class="schalter" id="e-ruhe"><div><span data-t="z_nachtruhe">Nachtruhe</span><small data-t="z_nachtruhe_k"></small></div><i></i></div>
+        <div class="e-zeile" id="e-ruhezeit"><span data-t="z_von_bis">von … bis</span><span><select id="e-von"></select> – <select id="e-bis"></select></span></div>
+      </details>
+    </div>
+    <div class="e-meldung" id="e-meldung"></div>
+  </div>
+
+  <section class="seite2" id="seite2">
+    <div class="kennzahlen" id="kennzahlen"></div>
+    <div class="bereiche" id="bereiche"><div class="panel" data-t="lade_faehigkeiten">Lade Fähigkeiten …</div></div>
+    <div class="fusszeile2" id="fusszeile2"></div>
+  </section>
+
+  <div class="ticker" id="p-laufband">
+    <div class="marke" data-t="nachrichten">NACHRICHTEN</div>
+    <div class="bahn"><div class="lauf" id="lauf"><span data-t="lade_meldungen">Lade Meldungen …</span></div></div>
+  </div>
+
+  <footer class="panel" id="p-gespraech">
+    <h2 data-t="gespraech">Gespräch</h2>
+    <div class="verlauf" id="verlauf"></div>
+    <form class="eingabe" id="eingabe"><input id="frage" placeholder="Frag Jarvis …" data-t-ph="frag" autocomplete="off"><button data-t="senden">Senden</button></form>
+  </footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const TEXT = { bereit: tx("st_bereit"), hoert: tx("st_hoert"), denkt: tx("st_denkt"), spricht: tx("st_spricht"), fehler: tx("st_fehler") };
+const QUELLE = { ha: "Home Assistant", pc: "PC", app: "App", "app-extern": tx("q_app_extern"), alexa: "Alexa", test: "Test",
+  "echtzeit-pc": tx("q_echtzeit_pc"), "echtzeit-app": tx("q_echtzeit_app"), "echtzeit-extern": tx("q_echtzeit_extern"), echtzeit: tx("q_echtzeit") };
+const wetterName = (z) => (TEXTE.de["w_" + z] ? tx("w_" + z) : z);
+// Feste Texte der Seite (data-t, data-t-ph, data-t-title)
+document.documentElement.lang = SP;
+document.querySelectorAll("[data-t]").forEach((el) => { el.textContent = tx(el.dataset.t); });
+document.querySelectorAll("[data-t-ph]").forEach((el) => { el.placeholder = tx(el.dataset.tPh); });
+document.querySelectorAll("[data-t-title]").forEach((el) => { el.title = tx(el.dataset.tTitle); });
+const SYMBOL = {   // Wetter-Symbole (Strichzeichnung)
+  sonne: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  mond: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  wolke: '<path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/>',
+  regen: '<path d="M7 15h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 6.5 4.3 4.3 0 0 0 7 15zM8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+  schnee: '<path d="M7 15h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 6.5 4.3 4.3 0 0 0 7 15zM8 19h.01M12 20h.01M16 19h.01"/>',
+  blitz: '<path d="M7 15h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 6.5 4.3 4.3 0 0 0 7 15zM12 15l-2 4h4l-2 4"/>' };
+const SYMBOL_JE = { sunny: "sonne", "clear-night": "mond", partlycloudy: "wolke", cloudy: "wolke", fog: "wolke", windy: "wolke",
+  rainy: "regen", pouring: "regen", snowy: "schnee", "snowy-rainy": "schnee", hail: "schnee", lightning: "blitz", "lightning-rainy": "blitz" };
+const AKTION_SYMBOL = {   // Strichzeichnungen fuer Schnellaktionen (OBERFLAECHE.aktionen[].symbol)
+  briefing: '<path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/>',
+  radio: '<rect x="3" y="9" width="18" height="12"/><path d="M7 9l10-5"/><circle cx="8.5" cy="15" r="2"/>',
+  kopfhoerer: '<path d="M4 15v-3a8 8 0 0 1 16 0v3M4 15h3v5H4zM17 15h3v5h-3z"/>',
+  news: '<path d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 13h7"/>',
+  chip: '<rect x="4" y="4" width="16" height="16"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>',
+  ball: '<circle cx="12" cy="12" r="9"/><path d="M12 8l3 2.2-1.1 3.5h-3.8L9 10.2z"/>',
+  gamepad: '<path d="M6 9h12a3 3 0 0 1 3 3l-1 5a2 2 0 0 1-3.6 1L15 16H9l-1.4 2a2 2 0 0 1-3.6-1l-1-5a3 3 0 0 1 3-3zM8 11v4M6 13h4"/>',
+  monitor: '<rect x="3" y="4" width="18" height="12"/><path d="M8 20h8M12 16v4"/>',
+  liste: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  kalender: '<rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  licht: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
+  wetter: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2"/>',
+  haus: '<path d="M3 11l9-7 9 7v9H3zM9 20v-6h6v6"/>',
+  stern: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>' };
+const BOGEN = 139;     // Laenge der Datenboegen (r 185, rund 51 Grad)
+const AN = (b) => (OBERFLAECHE.bereiche || []).includes(b);
+const PERSON = (t) => String(t || "").replace(/\{(,? ?)person\}/g, (m, vor) => OBERFLAECHE.person ? vor + OBERFLAECHE.person : "");
+
+function nachtPruefen() {                  // nachtmodus "auto": zwischen 22 und 6 Uhr gedimmt
+  const h = new Date().getHours();
+  document.documentElement.classList.toggle("nacht", OBERFLAECHE.nachtmodus === "auto" && (h >= 22 || h < 6));
+}
+function oberflaecheAnwenden() {          // beliebig oft aufrufbar: beim Laden und bei jeder Aenderung
+  const O = OBERFLAECHE;
+  farbeSetzen();
+  document.documentElement.classList.toggle("ruhig", O.bewegung === "ruhig" || matchMedia("(prefers-reduced-motion: reduce)").matches);
+  nachtPruefen();
+  document.title = O.name; $("titel").textContent = O.name;
+  if ($("startlogo")) $("startlogo").textContent = O.name;
+  $("untertitel").textContent = O.untertitel || "";
+  [["systeme", "p-systeme"], ["haus", "p-haus"], ["kalender", "p-kalender"], ["welt", "p-welt"], ["verbindungen", "p-verbindungen"],
+   ["laufband", "p-laufband"], ["gespraech", "p-gespraech"], ["wetter", "wetter"], ["werte", "p-werte"], ["begruessung", "gruss"]]
+    .forEach(([b, id]) => $(id).classList.toggle("bereich-aus", !AN(b)));
+  const n = O.werte_namen || {};
+  $("n-strom").textContent = n.strom || "STROM"; $("n-euro").textContent = n.euro || "HEUTE"; $("n-last").textContent = n.last || "LAST";
+  document.querySelectorAll("#aktionen .aktion:not(.echtzeit)").forEach((x) => x.remove());
+  if (AN("aktionen")) $("aktionen").insertAdjacentHTML("beforeend", (O.aktionen || []).map((x) =>
+    `<span class="aktion" data-frage="${esc(x.frage)}"><svg viewBox="0 0 24 24">${AKTION_SYMBOL[x.symbol] || AKTION_SYMBOL.stern}</svg>${esc(x.text)}</span>`).join(""));
+}
+const PC = () => !!window.pywebview;
+let SEITE = "hud";        // "hud" oder "skills"; zustand() setzt className jede Sekunde neu und nimmt sie mit
+let letzteAntwort = "";   // Gespraechszustand (verlaufSchluessel steht bei zustand())
+
+// Klangbalken rund um den Kern
+(function () {
+  const g = $("balken");
+  for (let i = 0; i < 48; i++) {
+    const w = (i / 48) * Math.PI * 2, r = 106;
+    const x = 200 + Math.cos(w) * r, y = 200 + Math.sin(w) * r;
+    const el = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    el.setAttribute("x", x - 2); el.setAttribute("y", y - 10); el.setAttribute("width", 4); el.setAttribute("height", 20);
+    el.setAttribute("transform", `rotate(${(w * 180) / Math.PI + 90} ${x} ${y})`);
+    el.style.animationDelay = (Math.random() * 0.5).toFixed(2) + "s";
+    g.appendChild(el);
+  }
+})();
+
+async function lade(pfad) {
+  try { const r = await fetch(pfad + "?t=" + Date.now(), { cache: "no-store" }); return r.ok ? await r.json() : null; }
+  catch (e) { return null; }
+}
+
+function messbogen(wert, max, name, einheit, warn) {
+  const p = Math.max(0, Math.min(1, (wert ?? 0) / max)), u = 2 * Math.PI * 34;
+  const farbe = warn && wert >= warn ? "var(--amber)" : "var(--c)";
+  return `<svg viewBox="0 0 90 104"><circle cx="45" cy="45" r="34" fill="none" stroke="rgba(var(--c-rgb),.15)" stroke-width="6"/>
+    <circle cx="45" cy="45" r="34" fill="none" stroke="${farbe}" stroke-width="6" stroke-linecap="round"
+      stroke-dasharray="${(p * u).toFixed(1)} ${u.toFixed(1)}" transform="rotate(-90 45 45)" style="filter:drop-shadow(0 0 4px ${farbe})"/>
+    <text x="45" y="50" text-anchor="middle" class="w">${esc(wert ?? "–")}${esc(einheit)}</text>
+    <text x="45" y="100" text-anchor="middle" class="n">${esc(name)}</text></svg>`;
+}
+function datenbogen(id, anteil) { $(id).setAttribute("stroke-dasharray", `${Math.max(0.02, Math.min(1, anteil || 0)) * BOGEN} 400`); }
+// Seit 24.10.2026 maskiert alles, was ins HTML geht (Sicherheitspruefung): Im PC-Fenster hat das HUD Zugriff auf
+// die js_api, ein eingeschleustes Skript koennte sonst Fragen mit PC-Werkzeugen stellen.
+function zeile(name, wert, klasse = "") { return `<div class="zeile"><span>${esc(name)}</span><b class="${esc(klasse)}">${esc(wert)}</b></div>`; }
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function zahl(x, st = 0) { const n = parseFloat(x); return isNaN(n) ? "–" : n.toLocaleString(LOC, { maximumFractionDigits: st, minimumFractionDigits: st }); }
+
+// Text im Sprechtempo der Stimme (Florian, rund 15 Zeichen pro Sekunde), damit er nicht vorausrennt
+function tippe(el, text) {
+  let i = 0; el.textContent = "";
+  const t = setInterval(() => { i += 1; el.textContent = text.slice(0, i); if (i >= text.length) clearInterval(t); }, 66);
+}
+let wartend = null;   // neue Antwort, die erst mit dem Sprechen erscheint (spaetestens nach 8 s)
+
+function fragen(text) { if (PC() && text) window.pywebview.api.frage(text).catch(() => {}); }
+
+function begruessung() {
+  // parseInt: de-DE liefert "22 Uhr"; mit "+" wurde das NaN, und vor dem 24.10. hiess es deshalb immer "Abend"
+  const h = parseInt(new Date().toLocaleString("de-DE", { hour: "2-digit", hour12: false }), 10);   // nur die Stunde, sprachunabhaengig
+  const g = (OBERFLAECHE.begruessungen || []).find(([bis]) => h < bis);
+  $("gruss").textContent = g ? PERSON(g[1]) : "";
+}
+
+async function zustand() {
+  const z = await lade("zustand.json");
+  if (!z) { document.body.className = "fehler" + (PC() ? " mit-eingabe" : "") + (SEITE === "skills" ? " skills" : ""); $("zustand").textContent = tx("keine_verbindung"); return; }
+  if (z.oberflaeche && z.oberflaeche_stand !== OB_STAND) {      // Jarvis hat sein Aussehen geaendert (oder erster Abruf)
+    OB_STAND = z.oberflaeche_stand; OBERFLAECHE = oberflaecheSauber(z.oberflaeche);
+    try { localStorage.setItem("jarvis-oberflaeche", JSON.stringify({ stand: OB_STAND, o: z.oberflaeche })); } catch (e) { /* egal */ }
+    oberflaecheAnwenden(); begruessung();
+  }
+  const jetzt = Date.now() / 1000;
+  const admin = z.admin_bis > jetzt;
+  const st = et ? et.status : z.status;
+  document.body.className = [st, admin ? "admin" : "", PC() ? "mit-eingabe" : "", SEITE === "skills" ? "skills" : ""].join(" ");
+  $("zustand").textContent = (et ? "⚡ " : "") + (TEXT[st] || st);
+  const h = $("hinweis");
+  if (et) { h.className = "hinweis"; h.textContent = et.hinweis; }
+  else if (etMeldung && Date.now() < etMeldung.bis) { h.className = "hinweis amber"; h.textContent = etMeldung.text; }
+  else if (z.freigabe_offen) { h.className = "hinweis amber"; h.textContent = tx("freigabe_offen", z.freigabe_offen.aktion); }
+  else if (admin) {
+    const s = Math.round(z.admin_bis - jetzt);
+    h.className = "hinweis rot"; h.textContent = tx("admin", `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
+  } else if (z.status === "denkt" && z.werkzeug) { h.className = "hinweis"; h.textContent = "▸ " + z.werkzeug.name; }
+  else { h.className = "hinweis"; h.textContent = ""; }
+  const pcText = tx(!z.pc_online ? "pc_aus" : z.pc_steuerung === "unavailable" ? "pc_haengt" : z.pc_steuerung === "user" ? "pc_du" : "pc_verbunden");
+  $("netz").innerHTML =
+    `<div class="zeile"><span><i class="punkt an"></i>${esc(tx("gehirn"))}</span><b>${esc(z.modell)}</b></div>` +
+    `<div class="zeile"><span><i class="punkt ${z.pc_online ? "an" : ""}"></i>${esc(OBERFLAECHE.pc_name || "PC")}</span><b class="${z.pc_online && z.pc_steuerung !== "unavailable" ? "gut" : z.pc_online ? "warm" : ""}">${pcText}</b></div>` +
+    `<div class="zeile"><span><i class="punkt an"></i>${esc(tx("stimme"))}</span><b>${esc(z.stimme)}</b></div>` +
+    (OBERFLAECHE.verbindungen_extra || []).map(([a, b]) => `<div class="zeile"><span><i class="punkt an"></i>${esc(a)}</span><b>${esc(b)}</b></div>`).join("");
+  const v = (z.verlauf || []).slice(-3).reverse();
+  const schluessel = v.map((e) => e.zeit).join(",");
+  if (schluessel !== verlaufSchluessel) {     // nur bei neuer Antwort neu zeichnen, sonst liefe der Tippeffekt nie durch
+    const neu = v[0] ? v[0].antwort : "";
+    const tippen = verlaufSchluessel !== null && neu && neu !== letzteAntwort;
+    verlaufSchluessel = schluessel; letzteAntwort = neu;
+    $("verlauf").innerHTML = v.map((e, i) => `<div class="eintrag"><div class="f">${esc(e.frage)}<span class="m">${esc(QUELLE[e.quelle] || e.quelle)} · ${esc(e.dauer)} s</span></div>
+      <div class="a" ${i === 0 ? 'id="neueste"' : ""}>${i === 0 && tippen ? "…" : esc(e.antwort)}</div></div>`).join("")
+      || '<div class="eintrag"><span class="m">' + esc(tx(z.verlauf ? "noch_nichts" : "verlauf_geschuetzt")) + '</span></div>';
+    if (tippen) wartend = { text: neu, seit: Date.now() };
+  }
+  if (wartend && (z.status === "spricht" || Date.now() - wartend.seit > 8000)) {
+    if ($("neueste")) tippe($("neueste"), wartend.text);
+    wartend = null;
+  }
+}
+let verlaufSchluessel = null;
+
+async function daten() {
+  // Fertig aufbereitet von der Bruecke: system.json {messer, zeilen, last}, haus.json {strom_w, zeilen},
+  // kalender.json {liste}. Zeilen sind [Name, Wert, Klasse]; die Seite rechnet nichts Hausspezifisches.
+  const [x, p, k] = await Promise.all([AN("systeme") || AN("werte") ? lade("system.json") : null,
+    AN("haus") || AN("werte") ? lade("haus.json") : null, AN("kalender") ? lade("kalender.json") : null]);
+  if (x) {
+    if (Array.isArray(x.messer)) $("messer").innerHTML = x.messer.map((m) => messbogen(...m)).join("");
+    $("system").innerHTML = (x.zeilen || []).map((z) => zeile(...z)).join("");
+    if (typeof x.last === "number") { $("w-nas").textContent = x.last + " %"; datenbogen("bogen-nas", x.last / 100); }
+  }
+  if (p) {
+    $("haus").innerHTML = (p.zeilen || []).map((z) => zeile(...z)).join("");
+    if (typeof p.strom_w === "number") { $("w-strom").textContent = Math.round(p.strom_w) + " W"; datenbogen("bogen-strom", p.strom_w / 3000); }
+  }
+  if (k) $("kalender").innerHTML = (k.liste || []).slice(0, 8).map((e) =>
+    (e.neu ? `<div class="kopf">${esc(e.kopf)}</div>` : "") +
+    `<div class="termin"><i class="${e.art === "arb" ? "arb" : ""}"></i><span>${e.zeit ? esc(e.zeit) + " · " : ""}${esc(e.text)}</span></div>`).join("")
+    || '<div class="termin">' + esc(tx("keine_termine")) + '</div>';
+}
+
+async function welt() {
+  const l = await lade("lage.json");
+  if (!l) return;
+  const w = l.wetter || {};
+  const sym = SYMBOL[SYMBOL_JE[w.zustand] || "wolke"];
+  $("wetter").innerHTML = `<svg viewBox="0 0 24 24">${sym}</svg><b>${zahl(w.temp)}°</b><span>${esc(wetterName(w.zustand || ""))}<br>${esc(tx("bis", zahl(w.min), zahl(w.max)))}${parseFloat(w.regen_mm) > 0 ? " · " + zahl(w.regen_mm, 1) + " mm" : ""}</span>`;
+  if (l.strom && l.strom.heute_eur) $("w-euro").textContent = zahl(l.strom.heute_eur, 2) + " €";
+  const sz = l.schlagzeilen || [], md = l.mediathek || [];
+  $("welt").innerHTML =
+    sz.slice(0, 3).map((x) => `<div class="meldung" data-titel="${esc(x.titel)}"><em>${esc(x.oben)} · ${esc(x.zeit)}</em>${esc(x.titel)}</div>`).join("") +
+    (md.length ? '<div class="kopf">' + esc(tx("mediathek")) + '</div>' + md.slice(0, 3).map((x) =>
+      `<div class="meldung" data-titel=""><em>${esc(x.quelle)} · ${esc(x.art)}</em>${esc(x.titel)}</div>`).join("") : "");
+  if (sz.length) {
+    $("lauf").innerHTML = sz.map((x) => `<span data-titel="${esc(x.titel)}"><b>${esc(x.zeit)}</b><small>${esc(x.oben)}</small>${esc(x.titel)}</span>`).join("<span>◆</span>");
+    $("lauf").style.animationDuration = Math.max(60, sz.map((x) => x.titel + x.oben).join("").length * 0.22) *
+      (document.documentElement.classList.contains("ruhig") ? 1.8 : 1) + "s";
+  }
+}
+
+function uhr() {
+  const n = new Date();
+  const tz = {};
+  $("uhr").firstChild.textContent = n.toLocaleTimeString(LOC, { ...tz, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  $("datum").textContent = n.toLocaleDateString(LOC, { ...tz, weekday: "long", day: "2-digit", month: "long" }).toUpperCase();
+}
+
+function hochfahren() {
+  const zeilen = OBERFLAECHE.start || [[OBERFLAECHE.name, ""], [tx("arc"), tx("stabil")]];
+  zeilen.forEach(([t, w], i) => setTimeout(() => {
+    const d = document.createElement("div"); d.className = "zeile2";
+    d.innerHTML = "› " + esc(t) + (w ? ` … <b>${esc(w)}</b>` : ""); $("startzeilen").appendChild(d);
+  }, 150 + i * 200));
+  setTimeout(() => $("start").classList.add("weg"), 1500);
+  setTimeout(() => $("start").remove(), 2300);
+}
+
+oberflaecheAnwenden();
+
+// Eingabe und Klicks: nur im PC-Fenster (pywebview); der Token bleibt dort, nie in dieser Seite
+$("eingabe").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  const t = $("frage").value.trim();
+  if (!t || !PC()) return;
+  $("frage").value = "";
+  fragen(t);
+});
+// Schnellaktionen zentral: Jarvis kann die Knoepfe jederzeit neu zeichnen (Werkzeug oberflaeche)
+document.addEventListener("click", (e) => { const a = e.target.closest("#aktionen [data-frage]"); if (a) fragen(a.dataset.frage); });
+document.addEventListener("click", (e) => {
+  const m = e.target.closest("[data-titel]");
+  // Seit 24.10.2026: Die Schlagzeile ist fremder Text aus einem Feed. Ab PC-Client 12 geht sie als eigene Quelle
+  // (ohne PC-Werkzeuge) und als Daten markiert ans Gehirn; aeltere Clients bekommen nichts geschickt.
+  if (m && m.dataset.titel && api() && api().frage_meldung) api().frage_meldung(m.dataset.titel).catch(() => {});
+});
+
+// ---- Zweite Seite: Faehigkeiten (Katalog der Bruecke, assets/jarvis/faehigkeiten.json)
+const BEREICH_SYMBOL = {
+  haus: '<path d="M3 11l9-7 9 7v9H3zM9 20v-6h6v6"/>',
+  liste: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  welt: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  musik: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
+  ordner: '<path d="M3 6h6l2 2h10v11H3z"/>',
+  server: '<rect x="3" y="4" width="18" height="7"/><rect x="3" y="13" width="18" height="7"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+  gehirn: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>' };
+function seite(name) {
+  SEITE = name;
+  document.body.classList.toggle("skills", name === "skills");
+  document.querySelectorAll("#reiter span").forEach((s) => s.classList.toggle("aktiv", s.dataset.seite === name));
+  if (name === "skills") faehigkeiten();
+}
+async function faehigkeiten() {
+  const f = await lade("faehigkeiten.json");
+  if (!f) return;
+  const r = f.routinen || [];
+  const er = f.erinnerungen || {};
+  $("kennzahlen").innerHTML = [
+    `<div class="kennzahl"><b>${esc(f.faehigkeiten)}</b><span>${esc(tx("faehigkeiten"))}</span></div>`,
+    `<div class="kennzahl"><b>${esc(f.werkzeuge)}</b><span>${esc(tx("werkzeuge"))}</span></div>`,
+    `<div class="kennzahl"><b>${(f.bereiche || []).length}</b><span>${esc(tx("bereiche"))}</span></div>`,
+    ...r.map((x) => `<div class="kennzahl"><b class="${x.an ? "an" : "aus"}">${tx(x.an ? "an_gross" : "aus_gross")}</b><span>${esc(x.name)} · ${esc(x.tag)} ${esc(x.zeit)}</span></div>`),
+    `<div class="kennzahl"><b>${esc(er.anzahl ?? 0)}</b><span>${esc(tx("erinnerungen"))}${er.naechste ? esc(tx("naechste", er.naechste.wann.slice(8, 10) + "." + er.naechste.wann.slice(5, 7) + ". " + er.naechste.wann.slice(11))) : ""}</span></div>`,
+  ].join("");
+  $("bereiche").innerHTML = (f.bereiche || []).map((b) => `<div class="panel bereich"><h2><svg viewBox="0 0 24 24">${BEREICH_SYMBOL[b.symbol] || ""}</svg>${esc(b.name)}</h2>` +
+    b.faehigkeiten.map((s) => `<div class="skill"><div class="t">${esc(s.name)}${s.nur ? `<small>${esc(tx("nur", s.nur))}</small>` : ""}</div>` +
+      `<div class="d">${esc(s.text)}</div>` + (s.beispiele || []).map((x) => `<span class="beispiel" data-frage="${esc(x)}">„${esc(x)}“</span>`).join("") +
+      `</div>`).join("") + `</div>`).join("");
+  $("fusszeile2").textContent = tx("fuss", (f.eingaenge || []).join(" · "), f.stand) + (PC() ? tx("fuss_pc") : "");
+}
+document.querySelectorAll("#reiter span").forEach((s) => s.addEventListener("click", () => seite(s.dataset.seite)));
+$("bereiche").addEventListener("click", (e) => {
+  const b = e.target.closest(".beispiel");
+  if (b && PC()) { fragen(b.dataset.frage); seite("hud"); }
+});
+if (/[?&]seite=(skills|faehigkeiten)\b/.test(location.search)) seite("skills");
+
+// ---- Einstellungen im PC-Fenster (Client 5): Autostart und Desktop-Symbol; aeltere Clients haben die API nicht
+const api = () => (window.pywebview && window.pywebview.api && window.pywebview.api.einstellungen) ? window.pywebview.api : null;
+function einstZeigen(e) {
+  document.querySelectorAll("#einst .schalter[data-name]").forEach((s) => s.classList.toggle("an", !!e[s.dataset.name]));
+  $("einst-fuss").textContent = tx("pc_client_v", e.version);
+}
+function zahnradPruefen() { if (api()) $("zahnrad").classList.add("da"); }
+window.addEventListener("pywebviewready", zahnradPruefen);
+setTimeout(zahnradPruefen, 2000);
+
+// Update-Knopf (ab PC-Client 11): Version sehen, nachsehen, sofort aktualisieren. Quelle ist der Jarvis-Rechner oder,
+// wenn in den Einstellungen "update_github" steht, das neueste GitHub-Release. Gruener Punkt am Zahnrad = Update da.
+function updateZeigen(u) {
+  if (!u) return;
+  const neu = u.verfuegbar && u.verfuegbar > u.installiert;
+  $("einst-fuss").textContent = tx("pc_client_v", u.installiert);
+  $("zahnrad").classList.toggle("neu", !!neu);
+  const zeit = u.geprueft ? new Date(u.geprueft * 1000).toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit" }) : "";
+  $("v-text").textContent = u.fehler ? tx("pruefung_fehl", u.fehler)
+    : neu ? tx("version_da", u.verfuegbar, u.quelle)
+    : u.verfuegbar ? tx("aktuell", zeit, u.quelle) : "";
+  $("v-knopf").textContent = tx(neu ? "jetzt_aktualisieren" : "nach_updates");
+  $("v-knopf").dataset.neu = neu ? "1" : "";
+}
+function updatePruefen() {
+  const a = api();
+  if (!a || !a.update_pruefen) return;
+  $("aktualisierung").classList.add("da");
+  a.update_pruefen().then(updateZeigen).catch(() => {});
+}
+$("v-knopf").addEventListener("click", () => {
+  const a = api();
+  if (!a || !a.update_pruefen) return;
+  if ($("v-knopf").dataset.neu) {
+    $("v-text").textContent = tx("lade_neu");
+    a.update_jetzt().catch(() => {});
+    setTimeout(updatePruefen, 20000);          // kommt nur an, wenn das Update scheitert (sonst ist das Fenster neu)
+  } else { $("v-text").textContent = tx("suche"); updatePruefen(); }
+});
+window.addEventListener("pywebviewready", updatePruefen);
+setTimeout(updatePruefen, 2500);
+setInterval(updatePruefen, 3600000);
+$("zahnrad").addEventListener("click", () => {
+  const offen = $("einst").classList.toggle("offen");
+  if (offen && api()) api().einstellungen().then(einstZeigen).catch(() => {});
+});
+document.querySelectorAll("#einst .schalter[data-name]").forEach((s) => s.addEventListener("click", () => {
+  if (api()) api().einstellen(s.dataset.name, !s.classList.contains("an")).then(einstZeigen).catch(() => {});
+}));
+
+// ---- Aussehen und Verhalten im PC-Fenster (seit PC-Client 14, 25.10.2026, Wunsch aus dem Laptop-Test): dieselben Einstellungen wie im
+// Zahnrad der App. Der PC-Client reicht sie mit seinem Token an /v1/einstellungen der Bruecke durch (gleiche Pruefung wie
+// Werkzeug und App, Quelle pc); per Zuruf geht es weiter. Aeltere Clients ohne bruecke_einstellungen zeigen nur "Dieser PC".
+const bApi = () => { const a = api(); return a && a.bruecke_einstellungen ? a : null; };
+const FARB_PROBE = { rot: "#ff2d3d", cyan: "#3be8ff", blau: "#4da3ff", gruen: "#35f29a" };
+let ES = null, eUhr = null;
+const eName = (k, roh) => (TEXTE[SP]["z_" + k] !== undefined ? tx("z_" + k) : roh);
+function eMeldung(text, fehler) {
+  const m = $("e-meldung");
+  m.textContent = text; m.className = "e-meldung zeigen" + (fehler ? " fehler" : "");
+  clearTimeout(eUhr); eUhr = setTimeout(() => m.classList.remove("zeigen"), fehler ? 6000 : 1800);
+}
+function eSenden(d) {
+  const a = bApi();
+  if (!a) return;
+  $("e-bruecke").classList.add("laedt");
+  a.bruecke_einstellungen(d).then(eAntwort).catch(() => eAntwort(null));
+}
+function eLesen() { if (bApi()) { $("e-bruecke").classList.add("da"); eSenden({ art: "lesen" }); } }
+function eEinstellen(art, aenderung, aktion) {
+  const d = { art, aktion: aktion || "aendern" };
+  if (aenderung) d.aenderung = aenderung;
+  eSenden(d);
+}
+// Antwort der Bruecke in feste Form bringen (seit 0.3.0): fehlt einer Bruecke ein Feld oder hat es einen anderen Typ,
+// baut sich das Menue trotzdem auf, nur mit weniger Eintraegen
+function eNormal(r) {
+  const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
+  const texte = (x) => (Array.isArray(x) ? x.filter((y) => typeof y === "string") : []);
+  const o = obj(r.oberflaeche), opt = obj(r.optionen), vo = obj(opt.verhalten);
+  return Object.assign({}, r, {
+    oberflaeche: Object.assign({}, o, { bereiche: texte(o.bereiche), aktionen: Array.isArray(o.aktionen)
+      ? o.aktionen.filter((k) => k && typeof k.text === "string" && typeof k.frage === "string") : [] }),
+    verhalten: obj(r.verhalten),
+    optionen: Object.assign({}, opt, { farben: texte(opt.farben), bereiche: texte(opt.bereiche), symbole: texte(opt.symbole),
+      farb_namen: obj(opt.farb_namen), verhalten: Object.assign({}, vo, { antwortstil: texte(vo.antwortstil) }) })
+  });
+}
+function eAntwort(r) {
+  $("e-bruecke").classList.remove("laedt");
+  if (!r || typeof r !== "object" || r.fehler) { eMeldung((r && typeof r.fehler === "string" && r.fehler) || tx("z_jarvis_antwortet_nicht"), true); return; }
+  ES = eNormal(r);
+  if (r.meldung) { if (r.ok) eMeldung(tx("z_gespeichert")); else eMeldung(String(r.meldung).replace(/^Geht so nicht: /, ""), true); }
+  if (r.oberflaeche && r.oberflaeche_stand !== OB_STAND) {      // sofort anwenden, nicht erst beim naechsten Abruf
+    OB_STAND = r.oberflaeche_stand; OBERFLAECHE = oberflaecheSauber(r.oberflaeche);
+    oberflaecheAnwenden(); begruessung();
+  }
+  eAussehen(); eVerhalten();
+}
+function eSchalter(id, an) { $(id).classList.toggle("an", !!an); }
+function eAussehen() {
+  const o = ES.oberflaeche, opt = ES.optionen;
+  $("e-farben").innerHTML = opt.farben.filter((f) => f !== "eigene").map((f) =>
+    `<div class="e-farbe${o.farbe === f ? " an" : ""}" data-farbe="${esc(f)}" title="${esc(eName("farbe_" + f, (opt.farb_namen || {})[f] || f))}" style="background:${FARB_PROBE[f] || "#888"}"></div>`).join("") +
+    (opt.farben.includes("eigene") ? `<div class="e-farbe${o.farbe === "eigene" ? " an" : ""}" data-farbe="eigene" title="${esc(tx("z_eigene_farbe_titel"))}" ` +
+      `style="background:conic-gradient(#ff2d3d,#ffc24a,#35f29a,#3be8ff,#4da3ff,#c06bff,#ff2d3d)"></div>` : "");
+  $("e-eigenzeile").style.display = o.farbe === "eigene" ? "" : "none";
+  if (o.farbe === "eigene" && o.farben) $("e-eigen").value = o.farben.c;
+  for (const k of ["name", "person", "untertitel"]) { const el = $("e-" + k); if (document.activeElement !== el) el.value = o[k] || ""; }
+  eSchalter("e-nacht", o.nachtmodus === "auto"); eSchalter("e-ruhig", o.bewegung === "ruhig");
+  $("e-bereiche").innerHTML = opt.bereiche.map((b) => `<div class="schalter${o.bereiche.includes(b) ? " an" : ""}" data-bereich="${esc(b)}">` +
+    `<div><span>${esc(eName("hb_" + b, b))}</span></div><i></i></div>`).join("");
+  const l = o.aktionen || [];
+  $("e-knoepfe").innerHTML = l.map((k, i) => `<div class="e-knopfzeile"><svg viewBox="0 0 24 24">${AKTION_SYMBOL[k.symbol] || AKTION_SYMBOL.stern}</svg>` +
+    `<div><b>${esc(k.text)}</b><small>${esc(k.frage)}</small></div>` +
+    (i ? `<span class="e-klein" data-hoch="${i}" title="${esc(tx("z_nach_oben"))}">▲</span>` : "") +
+    `<span class="e-klein" data-weg="${i}" title="${esc(tx("z_entfernen"))}">✕</span></div>`).join("");
+  $("e-neu").style.display = l.length >= 10 ? "none" : "";
+  if (!$("e-k-symbol").options.length) $("e-k-symbol").innerHTML = opt.symbole.map((x) => `<option value="${esc(x)}">${esc(eName("sy_" + x, x))}</option>`).join("");
+}
+function eVerhalten() {
+  const v = ES.verhalten, opt = ES.optionen.verhalten;
+  eSchalter("e-zwischen", v.zwischensaetze === "an"); eSchalter("e-ruhe", v.nachtruhe === "an");
+  $("e-stil").innerHTML = opt.antwortstil.map((x) => `<span data-stil="${esc(x)}" class="${v.antwortstil === x ? "an" : ""}">${esc(eName("stil_" + x, x))}</span>`).join("");
+  $("e-ruhezeit").style.display = v.nachtruhe === "an" ? "" : "none";
+  const stunden = (sel) => Array.from({ length: 24 }, (_, h) => `<option value="${h}"${h === sel ? " selected" : ""}>${esc(tx("z_uhr", h))}</option>`).join("");
+  $("e-von").innerHTML = stunden(v.nachtruhe_von); $("e-bis").innerHTML = stunden(v.nachtruhe_bis);
+}
+$("einst").addEventListener("click", (e) => {
+  const t = e.target.closest("[data-farbe],[data-bereich],[data-stil],[data-weg],[data-hoch],#e-nacht,#e-ruhig,#e-zwischen,#e-ruhe,#e-rueck,#e-grund,#e-k-dazu");
+  if (!t || !ES) return;
+  const o = ES.oberflaeche;
+  if (t.dataset.farbe) eEinstellen("oberflaeche", t.dataset.farbe === "eigene" ? { farbe: "eigene", farben: { c: $("e-eigen").value } } : { farbe: t.dataset.farbe });
+  else if (t.dataset.bereich) { const b = t.dataset.bereich; eEinstellen("oberflaeche", o.bereiche.includes(b) ? { bereiche_aus: [b] } : { bereiche_an: [b] }); }
+  else if (t.dataset.stil) eEinstellen("verhalten", { antwortstil: t.dataset.stil });
+  else if (t.dataset.weg || t.dataset.hoch) {
+    const l = (o.aktionen || []).slice(), i = +(t.dataset.weg || t.dataset.hoch);
+    if (t.dataset.weg) l.splice(i, 1); else l.splice(i - 1, 0, l.splice(i, 1)[0]);
+    eEinstellen("oberflaeche", { aktionen: l });
+  } else switch (t.id) {
+    case "e-nacht": eEinstellen("oberflaeche", { nachtmodus: o.nachtmodus === "auto" ? "aus" : "auto" }); break;
+    case "e-ruhig": eEinstellen("oberflaeche", { bewegung: o.bewegung === "ruhig" ? "voll" : "ruhig" }); break;
+    case "e-zwischen": eEinstellen("verhalten", { zwischensaetze: ES.verhalten.zwischensaetze === "an" ? "aus" : "an" }); break;
+    case "e-ruhe": eEinstellen("verhalten", { nachtruhe: ES.verhalten.nachtruhe === "an" ? "aus" : "an" }); break;
+    case "e-rueck": eEinstellen("oberflaeche", null, "rueckgaengig"); break;
+    case "e-grund": if (confirm(tx("z_grund_frage"))) eEinstellen("oberflaeche", null, "grundeinstellung"); break;
+    case "e-k-dazu": {
+      const text = $("e-k-text").value.trim(), frage = $("e-k-frage").value.trim();
+      if (!text || !frage) { eMeldung(tx("z_beschriftung_fehlt"), true); break; }
+      eEinstellen("oberflaeche", { aktionen: (o.aktionen || []).concat([{ text, frage, symbol: $("e-k-symbol").value }]) });
+      $("e-k-text").value = ""; $("e-k-frage").value = "";
+      break;
+    }
+  }
+});
+$("e-eigen").addEventListener("change", () => eEinstellen("oberflaeche", { farbe: "eigene", farben: { c: $("e-eigen").value } }));
+document.querySelectorAll("#einst input[data-schluessel]").forEach((el) => {
+  const speichern = () => {
+    const k = el.dataset.schluessel, v = el.value.trim();
+    if (ES && ES.oberflaeche && v !== (ES.oberflaeche[k] || "")) eEinstellen("oberflaeche", { [k]: v });
+  };
+  el.addEventListener("change", speichern);
+  el.addEventListener("keydown", (e) => { if (e.key === "Enter") el.blur(); });
+});
+["e-von", "e-bis"].forEach((id) => $(id).addEventListener("change", () =>
+  eEinstellen("verhalten", { [id === "e-von" ? "nachtruhe_von" : "nachtruhe_bis"]: +$(id).value })));
+$("zahnrad").addEventListener("click", () => { if ($("einst").classList.contains("offen")) eLesen(); });
+setInterval(() => { if (document.body.classList.contains("skills")) faehigkeiten(); }, 60000);
+
+/* ---------- Echtzeit im PC-Fenster (Gemini Live, seit 24.10.2026, aus der App 3.6 uebernommen)
+   Gemini spricht direkt (Sprache rein, Sprache raus). Fuer Haus, PC und Alltag ruft es jarvis_fragen; das geht ueber den
+   PC-Client an die Bruecke (Quelle echtzeit-pc, PC-Werkzeuge nur am Haupt-PC). Der Gemini-Schluessel bleibt auf dem NAS,
+   das Fenster bekommt einen Einmal-Schluessel (30 min). Das Mikrofon gibt Chromium nur in einem sicheren Kontext her,
+   deshalb laedt der PC-Client (ab Version 10) dieses HUD ueber http://127.0.0.1. Echo-Unterdrueckung macht Chromium,
+   so klappt Reinreden auch ueber Lautsprecher. Protokoll laut API-Referenz: erst "setup", dann realtimeInput (PCM
+   16 kHz), Antworten als serverContent (PCM 24 kHz), toolCall/toolResponse, sessionResumptionUpdate. */
+const ECHTZEIT_WS = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=";
+const ECHTZEIT_STILLE_MS = 120000;           // nach 2 Minuten Stille endet die Sitzung (Mikrofon nicht dauerhaft offen)
+const SAMMLER = `class S extends AudioWorkletProcessor {
+  constructor() { super(); this.b = new Int16Array(1600); this.n = 0; this.pos = 0; this.schritt = sampleRate / 16000; }
+  process(e) { const k = e[0] && e[0][0]; if (!k) return true;
+    for (; this.pos < k.length; this.pos += this.schritt) {        // auf 16 kHz umrechnen (Zwischenwert linear)
+      const i = Math.floor(this.pos), f = this.pos - i, v = Math.max(-1, Math.min(1, k[i] * (1 - f) + (k[i + 1] ?? k[i]) * f));
+      this.b[this.n++] = v < 0 ? v * 32768 : v * 32767;
+      if (this.n === 1600) { this.port.postMessage(this.b.buffer.slice(0)); this.n = 0; } }
+    this.pos -= k.length; return true; } }
+registerProcessor("sammler", S);`;
+var et = null, etMeldung = null;             // var statt let: zustand() liest beide schon beim ersten Aufruf
+
+const etApi = () => (api() && api().echtzeit_token) ? api() : null;
+function etZeigen() { $("echtzeit-knopf").classList.toggle("an", !!et); zustandKurz(); }
+function zustandKurz() {                      // sofort umschalten, nicht erst beim naechsten Abruf von zustand.json
+  const st = et ? et.status : "bereit";
+  ["bereit", "hoert", "denkt", "spricht", "fehler"].forEach((k) => document.body.classList.remove(k));
+  document.body.classList.add(st);
+  $("zustand").textContent = (et ? "⚡ " : "") + (TEXT[st] || st);
+  if (et) { $("hinweis").className = "hinweis"; $("hinweis").textContent = et.hinweis; }
+}
+function etStatus(s) { if (et) { et.status = s; zustandKurz(); } }
+function etHinweis(t) { if (et) { et.hinweis = t; zustandKurz(); } }
+function b64(buf) { let s = ""; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); }
+function echtzeitSenden(m) { if (et && et.ws && et.ws.readyState === 1) et.ws.send(JSON.stringify(m)); }
+
+window.echtzeitStart = async function () {
+  const a0 = etApi();
+  if (!a0 || et) return;
+  etMeldung = null;
+  et = { stop: false, status: "denkt", hinweis: tx("et_startet"), handle: null, wiederholt: 0, wartet: new Set(),
+         abgebrochen: new Set(), offen: {}, naechste: 0, quellen: [], letzteStimme: 0, letzteAntwort: Date.now(),
+         bereit: false, begruesst: false, pausiert: false, ende: 0 };
+  etZeigen();
+  a0.echtzeit_aktiv(true).catch(() => {});
+  let a;
+  try { a = await a0.echtzeit_token(); } catch (e) { a = { fehler: String(e) }; }
+  if (!et) return;
+  if (!a || !a.token) { echtzeitStopp(tx("et_geht_nicht", (a && a.fehler) || tx("keine_antwort"))); return; }
+  et.a = a;
+  let schritt = tx("mikrofon");
+  try {
+    et.strom = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+    schritt = tx("tonverarbeitung");
+    et.ein = new AudioContext();
+    const quelle = et.ein.createMediaStreamSource(et.strom);
+    try {
+      await et.ein.audioWorklet.addModule(URL.createObjectURL(new Blob([SAMMLER], { type: "application/javascript" })));
+      const knoten = new AudioWorkletNode(et.ein, "sammler");
+      knoten.port.onmessage = (e) => echtzeitMikro(e.data);
+      quelle.connect(knoten);
+      et.weg = "AudioWorklet";
+    } catch (x) {                             // Rueckfall wie in der App: ScriptProcessor braucht kein Modul
+      const proc = et.ein.createScriptProcessor(4096, 1, 1), sch = et.ein.sampleRate / 16000, puf = new Int16Array(1600);
+      let pos = 0, n = 0;
+      proc.onaudioprocess = (e) => {
+        const k = e.inputBuffer.getChannelData(0);
+        for (; pos < k.length; pos += sch) {
+          const i = Math.floor(pos), f = pos - i, v = Math.max(-1, Math.min(1, k[i] * (1 - f) + (k[i + 1] ?? k[i]) * f));
+          puf[n++] = v < 0 ? v * 32768 : v * 32767;
+          if (n === 1600) { echtzeitMikro(puf.buffer.slice(0)); n = 0; }
+        }
+        pos -= k.length;
+      };
+      quelle.connect(proc); proc.connect(et.ein.destination);     // ohne Ziel feuert er nicht; die Ausgabe bleibt stumm
+      et.proc = proc; et.weg = "ScriptProcessor (" + x.name + ")";
+    }
+    schritt = tx("wiedergabe");
+    et.aus = new AudioContext();
+    // Ohne Klick ins Fenster (Start per "Hey Jarvis, Echtzeit") beginnt ein AudioContext angehalten, wenn die
+    // Autoplay-Regel greift; der PC-Client schaltet sie ab Version 10 ab, sonst hilft ein Klick ins Fenster.
+    for (const c of [et.ein, et.aus]) if (c.state === "suspended") { try { await c.resume(); } catch (e) {} }
+  } catch (e) { echtzeitStopp(tx("et_schritt", schritt, e.name + (e.message ? ": " + e.message : ""))); return; }
+  if (!et) return;
+  if (et.ein.state === "suspended" || et.aus.state === "suspended") etHinweis(tx("et_klick"));
+  et.uhr = setInterval(echtzeitWache, 1000);
+  echtzeitVerbinden();
+};
+document.addEventListener("pointerdown", () => { if (et) { try { et.ein && et.ein.resume(); et.aus && et.aus.resume(); } catch (e) {} } });
+
+function echtzeitVerbinden() {
+  const ws = new WebSocket(ECHTZEIT_WS + encodeURIComponent(et.a.token));
+  et.ws = ws; et.bereit = false;
+  ws.onopen = () => { const s = JSON.parse(JSON.stringify(et.a.setup)); if (et.handle) s.sessionResumption = { handle: et.handle }; ws.send(JSON.stringify({ setup: s })); };
+  ws.onmessage = async (ev) => { let m; try { m = JSON.parse(typeof ev.data === "string" ? ev.data : await ev.data.text()); } catch (e) { return; } echtzeitNachricht(m); };
+  ws.onclose = (ev) => {
+    if (!et || et.stop || et.ws !== ws) return;
+    if (et.handle && et.wiederholt < 5) { et.wiederholt++; setTimeout(() => et && !et.stop && echtzeitVerbinden(), 500); }   // Google trennt etwa alle 10 min
+    else echtzeitStopp(tx("et_weg", ev.code + (ev.reason ? ", " + ev.reason : "")));
+  };
+}
+function echtzeitNachricht(m) {
+  if (m.setupComplete) {
+    et.bereit = true; etStatus("hoert"); if (et.hinweis !== tx("et_klick")) etHinweis(tx("et_laeuft"));
+    if (!et.begruesst) { et.begruesst = true; et.er = ""; echtzeitSenden({ clientContent: { turns: [{ role: "user", parts: [{ text: tx("et_gruss") }] }], turnComplete: true } }); }
+  }
+  const u = m.sessionResumptionUpdate;
+  if (u && u.resumable && u.newHandle) et.handle = u.newHandle;
+  if (m.toolCall) for (const fc of m.toolCall.functionCalls || []) echtzeitWerkzeug(fc);
+  if (m.toolCallCancellation) for (const i of m.toolCallCancellation.ids || []) et.abgebrochen.add(i);
+  const sc = m.serverContent;
+  if (sc) {
+    // Mitschrift: ein Wortwechsel = Frage + alles, was Jarvis bis zur naechsten Frage sagt (auch nach jarvis_fragen)
+    if (sc.inputTranscription && sc.inputTranscription.text) {
+      if (et.antwortFertig) echtzeitMerken();
+      et.du = (et.du || "") + sc.inputTranscription.text;
+    }
+    if (sc.outputTranscription && sc.outputTranscription.text) et.er = (et.er || "") + sc.outputTranscription.text;
+    if (sc.turnComplete) { if (et.du) et.antwortFertig = true; else et.er = ""; }   // Begruessung ohne Frage: nicht merken
+    if (sc.interrupted) echtzeitLeeren();
+    for (const p of (sc.modelTurn && sc.modelTurn.parts) || []) if (p.inlineData && p.inlineData.data) echtzeitSpielen(p.inlineData.data);
+    if (sc.turnComplete) et.letzteAntwort = Date.now();
+  }
+}
+function echtzeitSpielen(daten) {
+  const roh = atob(daten), n = roh.length >> 1, f = new Float32Array(n);
+  for (let i = 0; i < n; i++) { let v = roh.charCodeAt(2 * i) | (roh.charCodeAt(2 * i + 1) << 8); if (v > 32767) v -= 65536; f[i] = v / 32768; }
+  const buf = et.aus.createBuffer(1, n, 24000);
+  buf.getChannelData(0).set(f);
+  const q = et.aus.createBufferSource();
+  q.buffer = buf; q.connect(et.aus.destination);
+  const ab = Math.max(et.aus.currentTime + 0.05, et.naechste);
+  q.start(ab); et.naechste = ab + buf.duration; et.quellen.push(q);
+  q.onended = () => { if (!et) return; et.quellen = et.quellen.filter((x) => x !== q); if (!et.quellen.length && et.status === "spricht") etStatus("hoert"); };
+  if (et.status !== "spricht") etStatus("spricht");
+}
+function echtzeitLeeren() { for (const q of et.quellen) { try { q.stop(); } catch (e) {} } et.quellen = []; et.naechste = 0; etStatus("hoert"); }
+function echtzeitMikro(buf) {
+  if (!et || !et.bereit) return;
+  const a = new Int16Array(buf);
+  let summe = 0; for (let i = 0; i < a.length; i += 4) summe += a[i] * a[i];
+  const pegel = Math.sqrt(summe / (a.length / 4));
+  if (pegel > 900) et.letzteStimme = Date.now();
+  // Waehrend Jarvis spricht nur laute Stimme durchlassen (Reinreden); das Echo des Lautsprechers bleibt nach der
+  // Echounterdrueckung meist darunter. Pause meldet Google per audioStreamEnd.
+  if (et.aus.currentTime < et.naechste && pegel < 2500) {
+    if (!et.pausiert) { echtzeitSenden({ realtimeInput: { audioStreamEnd: true } }); et.pausiert = true; }
+    return;
+  }
+  et.pausiert = false;
+  echtzeitSenden({ realtimeInput: { audio: { data: b64(buf), mimeType: "audio/pcm;rate=16000" } } });
+}
+function echtzeitWerkzeug(fc) {
+  if (fc.name === "sitzung_beenden") {         // "Stopp", Verabschiedung: Abschiedssatz ausreden lassen, dann Schluss
+    echtzeitSenden({ toolResponse: { functionResponses: [{ id: fc.id, name: fc.name, response: { result: "ok" } }] } });
+    et.ende = Date.now();
+    return;
+  }
+  et.wartet.add(fc.id); et.offen[fc.id] = fc;
+  etHinweis(tx("hausgehirn"));
+  const a0 = etApi();
+  (a0 ? a0.echtzeit_frage((fc.args && fc.args.bitte) || "") : Promise.reject())
+    .then((t) => echtzeitAntwort(fc.id, t), () => echtzeitAntwort(fc.id, tx("hausgehirn_weg")));
+}
+function echtzeitAntwort(id, text) {
+  if (!et) return;
+  et.wartet.delete(id); etHinweis(tx("et_laeuft"));
+  const fc = et.offen[id];
+  if (!fc || et.abgebrochen.has(id)) return;
+  echtzeitSenden({ toolResponse: { functionResponses: [{ id, name: fc.name, response: { result: text, scheduling: "WHEN_IDLE" } }] } });
+}
+function echtzeitWache() {
+  if (!et) return;
+  if (et.ende && ((!et.quellen.length && Date.now() - et.ende > 1500) || Date.now() - et.ende > 10000)) { echtzeitStopp(tx("et_ende_hey")); return; }
+  if (!et.bereit) return;
+  const still = Date.now() - Math.max(et.letzteStimme, et.letzteAntwort);
+  if (still > ECHTZEIT_STILLE_MS && !et.quellen.length && !et.wartet.size) echtzeitStopp(tx("et_still"));
+}
+function echtzeitMerken() {      // Wortwechsel in den Jarvis-Verlauf: die naechste Sitzung und der normale Jarvis kennen ihn
+  if (!et) return;
+  const du = (et.du || "").trim(), er = (et.er || "").trim();
+  et.du = ""; et.er = ""; et.antwortFertig = false;
+  const a0 = etApi();
+  if (du && a0) a0.echtzeit_verlauf(du, er).catch(() => {});
+}
+window.echtzeitStopp = echtzeitStopp;
+function echtzeitStopp(meldung) {
+  if (!et) return;
+  echtzeitMerken();
+  const e = et; et = null; e.stop = true;
+  clearInterval(e.uhr);
+  try { e.ws && e.ws.close(); } catch (x) {}
+  try { e.strom && e.strom.getTracks().forEach((t) => t.stop()); } catch (x) {}
+  try { e.ein && e.ein.close(); } catch (x) {}
+  try { e.aus && e.aus.close(); } catch (x) {}
+  const a0 = etApi();
+  if (a0) a0.echtzeit_aktiv(false).catch(() => {});
+  etMeldung = meldung ? { text: meldung, bis: Date.now() + 10000 } : null;
+  etZeigen(); zustand();
+}
+$("echtzeit-knopf").addEventListener("click", () => { if (et) echtzeitStopp(tx("et_ende")); else window.echtzeitStart(); });
+function echtzeitKnopfPruefen() { if (etApi()) $("echtzeit-knopf").classList.add("da"); }
+window.addEventListener("pywebviewready", echtzeitKnopfPruefen);
+setTimeout(echtzeitKnopfPruefen, 2000);
+
+begruessung(); setInterval(begruessung, 600000);
+uhr(); setInterval(uhr, 1000);
+setInterval(nachtPruefen, 60000);
+// Erst den ersten Zustand abwarten (hoechstens 1,2 s), damit Logo und Startzeilen schon die eigenen sind
+Promise.race([zustand().catch(() => {}), new Promise((r) => setTimeout(r, 1200))]).then(hochfahren);
+setInterval(zustand, 1000);
+daten(); setInterval(daten, 10000);
+welt(); setInterval(welt, 30000);
+</script>
+</body>
+</html>

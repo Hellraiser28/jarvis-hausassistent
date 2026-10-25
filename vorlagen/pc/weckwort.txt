@@ -1,0 +1,3 @@
+# openWakeWord ohne seine Abhaengigkeiten (tflite gibt es fuer Windows nicht; der Client nutzt ONNX).
+# Pruefsumme laut PyPI, Wheel am 24.10.2026 geladen und nachgerechnet.
+openwakeword==0.6.0 --hash=sha256:6f423a4e3ae9dd0e3cd12b50ff8abf69679f687b4ab349d7c82c021c0e2abc9d

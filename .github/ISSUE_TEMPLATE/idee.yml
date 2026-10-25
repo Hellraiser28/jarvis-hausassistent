@@ -1,0 +1,21 @@
+name: Idee oder Wunsch
+description: Eine neue Fähigkeit, eine Einstellung oder etwas, das besser gehen könnte.
+labels: ["idee"]
+body:
+  - type: textarea
+    id: wunsch
+    attributes:
+      label: Was wünschst du dir?
+      description: Am besten als Situation aus dem Alltag („Wenn ich morgens …, soll Jarvis …“).
+    validations:
+      required: true
+  - type: textarea
+    id: warum
+    attributes:
+      label: Warum, und wie machst du es heute?
+  - type: checkboxes
+    id: grenzen
+    attributes:
+      label: Grenzen
+      options:
+        - label: Die Idee braucht keine Kameras, Babyfone, Türschlösser oder Zahlungen ohne Freigabe.

@@ -1,0 +1,67 @@
+# Release bauen: Setup.exe und Linux-Paket aus genau diesem Stand, mit Pruefsummen.
+# - Tag v<Version> (z. B. v0.2.0): baut beides und legt einen ENTWURF eines Releases an. Text, App (Jarvis-App.apk und
+#   Jarvis-App.json, signiert ausserhalb von GitHub) und das Veroeffentlichen erledigt der Projektinhaber von Hand.
+# - Von Hand (Actions -> Release bauen -> Run workflow): baut nur und haengt die Dateien als Artefakt an.
+# - Gibt es zum Tag schon ein Release (von Hand mit lokal gebauten, geprueften Dateien angelegt), bleibt es unberuehrt:
+#   Die Setup.exe baut nicht byte-gleich, die Pruefsummen im Release-Text gehoeren zu genau den hochgeladenen Dateien.
+#   Der Lauf dient dann nur dem Vergleich (das Linux-Paket muss byte-gleich sein).
+# Actions sind auf Commit-SHAs festgenagelt (Lieferkette); neue Versionen erst, wenn sie zwei Wochen alt sind.
+name: Release bauen
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bauen:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write        # nur fuer den Release-Entwurf
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Version bestimmen
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then V="${GITHUB_REF_NAME#v}"; else V="0.0.0"; fi
+          echo "$V" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "Tag muss v<x.y.z> heissen" >&2; exit 1; }
+          echo "VERSION=$V" >> "$GITHUB_ENV"
+
+      - name: Einheitentests
+        run: |
+          python3 -B vorlagen/bruecke/test_oberflaeche.py
+          python3 -B vorlagen/bruecke/test_verhalten.py
+
+      - name: Setup.exe bauen
+        run: sh installer/bauen.sh "$VERSION"
+
+      - name: Linux-Paket bauen
+        run: sh linux/bauen.sh
+
+      - name: Dateien sammeln
+        run: |
+          mkdir -p ausgabe
+          cp installer/dist/Jarvis-Setup.exe linux/dist/Jarvis-Linux.tar.gz ausgabe/
+          cd ausgabe && sha256sum Jarvis-Setup.exe Jarvis-Linux.tar.gz > SHA256SUMS.txt && cat SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: jarvis-${{ env.VERSION }}
+          path: ausgabe/
+
+      - name: Release-Entwurf
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME gibt es schon, es bleibt unberuehrt (Dateien nur als Artefakt)."
+            exit 0
+          fi
+          gh release create "$GITHUB_REF_NAME" ausgabe/* --repo "$GITHUB_REPOSITORY" --draft --title "J.A.R.V.I.S. $VERSION" \
+            --notes "Entwurf aus GitHub Actions. Text, Jarvis-App.apk und Jarvis-App.json ergänzen, dann veröffentlichen."

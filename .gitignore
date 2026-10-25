@@ -1,0 +1,5 @@
+installer/dateien/
+installer/dist/
+linux/dist/
+__pycache__/
+*.pyc

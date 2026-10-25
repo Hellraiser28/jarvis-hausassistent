@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Release-Fassung: Die Adresse der Bruecke steht erst nach der Kopplung fest, Android kann hier aber keine
+     Adressbereiche ausdruecken. Klartext ist deshalb grundsaetzlich erlaubt; die App selbst laesst http nur zu
+     Adressen im eigenen Netz zu (MainActivity.normAdresse: private IPv4, Tailscale 100.64/10, *.local, *.lan,
+     *.home.arpa, *.fritz.box), alles andere nur ueber https. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

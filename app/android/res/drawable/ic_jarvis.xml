@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Roter Arc-Reaktor (Vordergrund des adaptiven Symbols, 108x108 mit sicherer Zone 66) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:strokeColor="#FFFFC24A" android:strokeWidth="1" android:strokeAlpha="0.7"
+        android:pathData="M54,22a32,32 0 1,1 0,64a32,32 0 1,1 0,-64" />
+    <path android:strokeColor="#FFFF2D3D" android:strokeWidth="5"
+        android:pathData="M54,27a27,27 0 0,1 23.4,13.5" />
+    <path android:strokeColor="#FFFF2D3D" android:strokeWidth="5" android:strokeAlpha="0.8"
+        android:pathData="M81,54a27,27 0 0,1 -13.5,23.4" />
+    <path android:strokeColor="#FFFF2D3D" android:strokeWidth="5"
+        android:pathData="M40.5,77.4a27,27 0 0,1 -13.5,-23.4" />
+    <path android:fillColor="#FFFF2D3D" android:fillAlpha="0.55"
+        android:pathData="M54,36a18,18 0 1,1 0,36a18,18 0 1,1 0,-36" />
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="1.6"
+        android:pathData="M54,42 L64.4,60 L43.6,60 Z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M54,49a5,5 0 1,1 0,10a5,5 0 1,1 0,-10" />
+</vector>
