@@ -654,7 +654,7 @@ function fragenMitAnhang(text) {
   blase("ich", "📎 " + a.name + (text ? " – " + text : ""));
   $("teil").textContent = "";
   const basis = { name: a.name, typ: a.typ, daten: a.daten }, o = a.datei;
-  if (o && typeof J.frageMitAnhangOriginal === "function") J.frageMitAnhangOriginal(text, JSON.stringify(basis), o.size, a.originalTyp);
+  if (o && typeof J.frageMitAnhangOriginal === "function") J.frageMitAnhangOriginal(text, JSON.stringify(basis), o.size, a.originalTyp, o.name);
   else if (o && J.originalAlsDaten) {           // Web-App: das Original im Browser kodieren
     o.arrayBuffer().then((b) => J.frageMitAnhang(text, JSON.stringify(Object.assign(basis, { original: { typ: a.originalTyp, daten: base64(b) } }))),
                          () => J.frageMitAnhang(text, JSON.stringify(basis)));
@@ -688,15 +688,13 @@ if (J && typeof J.frageMitAnhang === "function") {
 
 /* ---------- Neu in dieser Version (seit 4.3): Wer per Update kommt statt ueber GitHub, sieht trotzdem,
    was neu ist. Einmal nach einem Update; nach einer Neuinstallation (noch nicht gekoppelt) nicht. */
-const NEU = { version: "4.4", titel: "Jarvis 0.3.3",
-  de: ["Jarvis gibt Dateien zurück: PDFs, bearbeitete Bilder und umgewandelte Dateien erscheinen im Gespräch, zum "
-       + "Öffnen, Teilen oder Speichern.",
-       "Sag zum Beispiel „Mach mir daraus ein PDF“, „Mach den Himmel blau“ oder „Wandle das in Word um“. Was davon "
-       + "geht, hängt von den Diensten ab, die bei der Einrichtung gewählt wurden; PDFs gehen immer."],
-  en: ["Jarvis hands files back: PDFs, edited pictures and converted files show up in the conversation, ready to "
-       + "open, share or save.",
-       "Say for example \"Make a PDF of this\", \"Make the sky blue\" or \"Convert this to Word\". What works "
-       + "depends on the services chosen during setup; PDFs always work."] };
+const NEU = { version: "4.5", titel: "Jarvis 0.3.4",
+  de: ["Sicherer: Dateien von Jarvis bekommt nur noch das Gerät, das danach gefragt hat. Beim Umwandeln geht das "
+       + "Original deiner Datei mit, aus einer FLAC wird eine MP3 in voller Qualität.",
+       "„Öffnen“ gibt es nur noch für Bilder, PDFs, Ton, Video und Text; alles andere teilst oder speicherst du."],
+  en: ["Safer: only the device that asked gets Jarvis' files. When converting, the original of your file goes along, "
+       + "so a FLAC becomes an MP3 in full quality.",
+       "\"Open\" is only offered for pictures, PDFs, audio, video and text; everything else you share or save."] };
 (function () {
   let gesehen;
   try { gesehen = localStorage.getItem("jarvis-neu-gesehen"); } catch (e) { return; }
@@ -752,6 +750,8 @@ window.onFehler = (t) => { blase("jarvis fehler", t); window.onStatus("bereit");
 window.onHinweis = (t) => { $("teil").textContent = t; };
 /* ---------- Dateien von Jarvis (seit 4.4, 0.3.3): PDF, bearbeitete Bilder, Umwandlungen. Die Schicht holt sie mit
    Token vorab (dateiLaden), danach laufen Oeffnen, Teilen und Speichern direkt im Klick. */
+// Seit 4.5 (Pruefbericht 0.3.3, Fund 12): "Oeffnen" nur fuer diese Typen, sonst nur Teilen und Speichern
+const DIREKT_OEFFNEN = /^(image\/(jpeg|png|webp|gif)|application\/pdf|audio\/[a-z0-9.+-]+|video\/(mp4|webm)|text\/(plain|csv))$/;
 const DATEI_SYMBOL = (t) => t.startsWith("image/") ? "🖼️" : t === "application/pdf" ? "📄" : t.startsWith("audio/") ? "🎵"
   : t.startsWith("video/") ? "🎬" : "📦";
 function groesseText(n) { return n >= 1048576 ? (n / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
@@ -763,7 +763,7 @@ window.onDateien = (liste) => {
     k.innerHTML = `<div class="dkopf"><span class="sym">${DATEI_SYMBOL(typ)}</span><div><b>${esc(d.name)}</b>` +
       `<small>${esc(groesseText(d.groesse || 0))}${d.info ? " · " + esc(d.info) : ""}</small></div></div>` +
       (typ.startsWith("image/") ? '<img alt="">' : "") +
-      `<div class="dknoepfe"><button type="button" data-a="dateiOeffnen" disabled>${esc(tx("datei_oeffnen"))}</button>` +
+      `<div class="dknoepfe">` + (DIREKT_OEFFNEN.test(typ) ? `<button type="button" data-a="dateiOeffnen" disabled>${esc(tx("datei_oeffnen"))}</button>` : "") +
       `<button type="button" data-a="dateiTeilen" disabled>${esc(tx("datei_teilen"))}</button>` +
       `<button type="button" data-a="dateiSpeichern" disabled>${esc(tx("datei_speichern"))}</button></div>`;
     $("verlauf").appendChild(k);

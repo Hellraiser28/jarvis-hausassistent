@@ -47,6 +47,10 @@ important ones:
   token via the bridge; the local pass-through sits under a random path per start. Everything the pages
   display is escaped.
 - **Test mode:** tests with the source `test…` run tools with an effect only as a dry run.
+- **Files only for the device that asked** (since 0.3.4): attachments and results belong to the device and the
+  request. No other paired device can download them, see them in the history or slip them to a tool. Only file
+  types from an allowlist are opened directly, on Windows with the mark of the web; everything else can only be
+  saved or shared. Questions about headlines don't trigger image or conversion jobs.
 - **Secrets** never in the chat, never in Git, never in command lines. They live in files that only your own
   user account can read. The setup restricts the PC client's folder to this account (plus SYSTEM and
   Administrators), even if it lies outside the user profile.

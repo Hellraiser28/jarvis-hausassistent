@@ -5,6 +5,7 @@ HUD-Seite aus (fuer den Browsertest). Laeuft im Repo (tests/ neben spiegel/pc/) 
 import ast
 import base64
 import hashlib
+import html.parser
 import os
 import re
 import sys
@@ -18,10 +19,10 @@ else:
     sys.exit("jarvis_pc.py nicht gefunden")
 
 baum = ast.parse(open(pfad, encoding="utf-8").read())
-teile = [n for n in baum.body if (isinstance(n, ast.Assign) and any(
-    isinstance(z, ast.Name) and z.id == "_INLINE_SKRIPT" for z in n.targets)) or (
-    isinstance(n, ast.FunctionDef) and n.name in ("hud_csp", "eigene_seite"))]
-umgebung = {"re": re, "base64": base64, "hashlib": hashlib, "urllib": urllib, "HUD_PORT": 8771, "_HUD_GEHEIM": "/abc123"}
+teile = [n for n in baum.body if (isinstance(n, ast.ClassDef) and n.name == "_Skripte") or (
+    isinstance(n, ast.FunctionDef) and n.name in ("hud_csp", "eigene_seite", "_inline_skripte"))]
+umgebung = {"re": re, "base64": base64, "hashlib": hashlib, "urllib": urllib, "html": html, "HUD_PORT": 8771,
+            "_HUD_GEHEIM": "/abc123"}
 exec(compile(ast.Module(body=teile, type_ignores=[]), pfad, "exec"), umgebung)
 eigene_seite, hud_csp = umgebung["eigene_seite"], umgebung["hud_csp"]
 

@@ -32,6 +32,7 @@ import ctypes
 import faulthandler
 import hashlib
 import hmac
+import html.parser
 import http.server
 import io
 import json
@@ -45,12 +46,13 @@ import subprocess
 import sys
 import threading
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
 import wave
 
-VERSION = 19
+VERSION = 20
 WINDOWS = sys.platform == "win32"
 
 # Vor den schweren Importen: auch ein Absturz beim Laden landet so in der Datei
@@ -105,6 +107,13 @@ SPRACHE = E.get("sprache") if E.get("sprache") in ("de", "en") else "de"
 # Neu in dieser Version (seit 16): Wer per Update kommt statt ueber GitHub, sieht so trotzdem,
 # was neu ist. Einmal im Fenster nach einem Update, nicht nach einer Neuinstallation (BESTAND: dieser PC lief schon).
 NEUIGKEITEN = {
+    20: {"titel": "Jarvis 0.3.4 · Sicherheit",
+         "de": ["Dateien von Jarvis bekommt nur noch das Gerät, das danach gefragt hat.",
+                "Direkt öffnen lassen sich nur noch Bilder, PDFs, Ton, Video, Text und Office-Dateien; alles andere über "
+                "„Speichern unter …“. Gespeicherte Dateien sind unter Windows als aus dem Internet markiert."],
+         "en": ["Only the device that asked gets Jarvis' files.",
+                "Only pictures, PDFs, audio, video, text and Office files open directly; everything else via \"Save as "
+                "…\". Saved files are marked as coming from the internet on Windows."]},
     19: {"titel": "Jarvis 0.3.3 · Original",
          "de": ["Beim Umwandeln nimmt Jarvis jetzt das Original deiner Datei (bis 50 MB): Aus einer FLAC wird eine MP3 "
                 "in voller Qualität, Fotos bleiben in voller Auflösung.",
@@ -349,17 +358,36 @@ def bruecke_holen(pfad, zeit=30):
 
 # ------------------------------------------------------------------ Dateien von Jarvis (Version 18, 0.3.3)
 # Die Bruecke liefert PDFs, bearbeitete Bilder und Umwandlungen unter /v1/datei/<a + 24 hex> nur mit Token. Oeffnen
-# legt die Datei in einen eigenen Ordner unter TEMP und startet das zugeordnete Programm (ausfuehrbare Endungen nie,
-# die gehen nur ueber Speichern); Speichern fragt mit dem Dialog des Systems nach dem Ort.
+# legt die Datei in einen eigenen Ordner unter TEMP und startet das zugeordnete Programm; Speichern fragt mit dem Dialog
+# des Systems nach dem Ort. Seit Version 20 (Pruefbericht 0.3.3, Fund 8) oeffnet der Client nur Dateien aus einer
+# Erlaubnisliste direkt, alles andere nur ueber Speichern, und markiert jede Datei unter Windows als aus dem Internet
+# (Zone.Identifier, ZoneId=3): Office blockiert dann Makros, SmartScreen prueft.
 DATEI_KENNUNG = re.compile(r"^a[0-9a-f]{24}$")
 DATEI_ORDNER = os.path.join(os.environ.get("TEMP") or os.environ.get("TMPDIR") or "/tmp", "Jarvis-Dateien")
-NICHT_STARTEN = re.compile(r"\.(exe|bat|cmd|com|ps1|psm1|vbs|vbe|js|jse|wsf|wsh|msi|msp|lnk|scr|hta|cpl|jar|reg|url|pif|"
-                           r"inf|sh|appimage|desktop|run|py|pyw)$", re.I)
+DIREKT_OEFFNEN = re.compile(r"\.(pdf|png|jpe?g|webp|gif|mp3|wav|flac|ogg|opus|m4a|mp4|webm|txt|csv|docx|xlsx|pptx|odt|ods|"
+                            r"odp)$", re.I)
+WINDOWS_GERAETE = re.compile(r"^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$", re.I)
 
 
 def _datei_name(name):
-    n = re.sub(r'[\\/:*?"<>|\x00-\x1f]+', "_", str(name or "")).strip(" .") or "datei"
+    """Seit Version 20 (Fund 10) ohne Steuer-, Format- und Richtungszeichen (U+202E tarnt sonst "fdp.exe" als PDF)
+    und ohne Windows-Geraetenamen."""
+    n = "".join(c for c in str(name or "") if unicodedata.category(c) not in ("Cc", "Cf", "Cs", "Co", "Cn"))
+    n = re.sub(r'[\\/:*?"<>|]+', "_", n).strip(" .") or "datei"
+    if WINDOWS_GERAETE.match(n):
+        n = "_" + n
     return n[-120:]
+
+
+def _herkunft_markieren(pfad):
+    """Mark of the Web: unter Windows (NTFS) wie ein Download aus dem Internet markieren; sonst nichts."""
+    if not WINDOWS:
+        return
+    try:
+        with open(pfad + ":Zone.Identifier", "w", encoding="ascii") as f:
+            f.write("[ZoneTransfer]\r\nZoneId=3\r\n")
+    except OSError:
+        pass                        # z. B. FAT-Stick ohne alternative Datenstroeme
 
 
 def datei_holen(kennung):
@@ -384,7 +412,7 @@ def datei_vorschau(kennung):
 
 def datei_oeffnen(kennung, name):
     name = _datei_name(name)
-    if NICHT_STARTEN.search(name):
+    if not DIREKT_OEFFNEN.search(name):
         return {"fehler": tx("Diese Art Datei öffne ich nicht direkt, bitte über Speichern.",
                              "I don't open this kind of file directly, please use Save.")}
     try:
@@ -394,6 +422,7 @@ def datei_oeffnen(kennung, name):
         pfad = os.path.join(ordner, name)
         with open(pfad, "wb") as f:
             f.write(roh)
+        _herkunft_markieren(pfad)
         if WINDOWS:
             os.startfile(pfad)
         else:
@@ -414,6 +443,7 @@ def datei_speichern(kennung, name):
         roh = datei_holen(kennung)
         with open(ziel, "wb") as f:
             f.write(roh)
+        _herkunft_markieren(ziel)
         return {"gespeichert": os.path.basename(ziel)}
     except Exception as e:
         return {"fehler": "%s: %s" % (type(e).__name__, e)}
@@ -1141,7 +1171,34 @@ _HUD_GEHEIM = "/" + secrets.token_urlsafe(18)
 _HUD_DATEN = ("system.json", "haus.json", "kalender.json", "lage.json", "faehigkeiten.json")
 
 
-_INLINE_SKRIPT = re.compile(rb"<script(?![^>]*\ssrc=)[^>]*>(.*?)</script>", re.S | re.I)
+class _Skripte(html.parser.HTMLParser):
+    """Eingebettete Skripte (ohne src), gelesen wie ein Browser (seit 0.3.4, CodeQL: ein regulaerer Ausdruck liest
+    HTML anders als der Browser). Skriptinhalt bleibt roh, Zeichenreferenzen werden darin nicht aufgeloest."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.skripte, self._teil = [], None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script" and not any(k == "src" for k, _ in attrs):
+            self._teil = []
+
+    def handle_data(self, data):
+        if self._teil is not None:
+            self._teil.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._teil is not None:
+            self.skripte.append("".join(self._teil))
+            self._teil = None
+
+
+def _inline_skripte(html_roh):
+    """Bytes der HUD-Seite -> Skriptinhalte als Bytes (genau die Bytes, die der Browser hasht)."""
+    p = _Skripte()
+    p.feed(html_roh.decode("utf-8", "surrogateescape"))
+    p.close()
+    return [s.encode("utf-8", "surrogateescape") for s in p.skripte]
 
 
 def hud_csp(html):
@@ -1150,7 +1207,7 @@ def hud_csp(html):
     HTML-Parser auf LF). 'unsafe-eval' braucht pywebview (api.js baut die Fensterfunktionen mit new Function), blob: das
     Echtzeit-Worklet. Verbindungen nur zur Durchreiche selbst und zu Gemini Live."""
     hashes = " ".join("'sha256-%s'" % base64.b64encode(hashlib.sha256(
-        s.replace(b"\r\n", b"\n").replace(b"\r", b"\n")).digest()).decode() for s in _INLINE_SKRIPT.findall(html))
+        s.replace(b"\r\n", b"\n").replace(b"\r", b"\n")).digest()).decode() for s in _inline_skripte(html))
     return ("default-src 'none'; script-src %s 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' "
             "https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' "
             "wss://generativelanguage.googleapis.com; img-src 'self' data:; media-src 'self' blob: data:; "

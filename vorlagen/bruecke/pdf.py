@@ -21,7 +21,10 @@ RAND = 56.7                   # 2 cm
 GROESSE = 11.0
 ZEILE = 1.38                  # Zeilenabstand als Vielfaches der Schriftgroesse
 UEBER = {1: 18.0, 2: 14.0, 3: 12.0}
-MAX_BILDPUNKTE = 16_000_000   # PNG mit Transparenz wird in Python entpackt
+MAX_BILDPUNKTE = 4_000_000    # PNG mit Transparenz wird in Python entfiltert (seit 0.3.4: 4 statt 16 MP, Fund 5)
+MAX_KANTE = 12_000            # seit 0.3.4: alle Bilder, auch JPEG und PNG ohne Transparenz (Bombe im Betrachter)
+MAX_PUNKTE_ALLE = 50_000_000
+MAX_BILDER = 20
 ERSATZ = {"→": "->", "←": "<-", "⇒": "=>", "↔": "<->", "✓": "v", "✔": "v",
           "✗": "x", " ": " ", " ": " ", " ": " ", "−": "-", "‐": "-", "‑": "-",
           "≤": "<=", "≥": ">=", "≈": "~", "×": "x"}
@@ -208,6 +211,7 @@ def _jpeg(roh):
         laenge = struct.unpack(">H", roh[i + 2:i + 4])[0]
         if marke in (0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF):
             bits, h, w, k = roh[i + 4], *struct.unpack(">HH", roh[i + 5:i + 9]), roh[i + 9]
+            _masse_pruefen(w, h)
             raum = {1: "/DeviceGray", 3: "/DeviceRGB", 4: "/DeviceCMYK"}.get(k)
             if not raum or bits != 8:
                 raise Fehler("JPEG mit %d Farbkanaelen/%d Bit wird nicht unterstuetzt" % (k, bits))
@@ -270,6 +274,7 @@ def _png(roh):
         p += 12 + laenge
     if not w or interlace:
         raise Fehler("PNG mit Zeilensprung (interlaced) wird nicht unterstuetzt")
+    _masse_pruefen(w, h)
     daten = b"".join(idat)
     if typ in (0, 2, 3):
         farben = {0: 1, 2: 3, 3: 1}[typ]
@@ -282,7 +287,13 @@ def _png(roh):
         if w * h > MAX_BILDPUNKTE:
             raise Fehler("PNG mit Transparenz ist zu gross (%d Megapixel)" % (w * h // 1_000_000))
         bpp = 2 if typ == 4 else 4
-        pixel = _entfiltern(zlib.decompress(daten), w, h, bpp)
+        # Seit 0.3.4 (Fund 5): nur so viel entpacken, wie das Bild haben darf; zlib schafft sonst 1000:1
+        erwartet = h * (1 + w * bpp)
+        d = zlib.decompressobj()
+        roh_px = d.decompress(daten, erwartet + 1)
+        if len(roh_px) != erwartet or d.unconsumed_tail:
+            raise Fehler("PNG beschaedigt oder groesser als angegeben")
+        pixel = _entfiltern(roh_px, w, h, bpp)
         farbe = bytes(pixel[i] for i in range(len(pixel)) if i % bpp != bpp - 1) if bpp == 2 else \
             b"".join(bytes(pixel[i:i + 3]) for i in range(0, len(pixel), 4))
         alpha = bytes(pixel[bpp - 1::bpp])
@@ -292,11 +303,22 @@ def _png(roh):
     raise Fehler("PNG mit %d Bit Tiefe (Typ %d) wird nicht unterstuetzt" % (tiefe, typ))
 
 
+def _masse_pruefen(w, h):
+    if not w or not h or w > MAX_KANTE or h > MAX_KANTE or w * h > MAX_PUNKTE_ALLE:
+        raise Fehler("Bild mit %dx%d Bildpunkten ist zu gross fuer ein PDF" % (w or 0, h or 0))
+
+
 def bild_lesen(roh):
-    if roh[:3] == b"\xff\xd8\xff":
-        return _jpeg(roh)
-    if roh[:8] == b"\x89PNG\r\n\x1a\n":
-        return _png(roh)
+    """Seit 0.3.4 (Fund 5): Jeder Lesefehler eines kaputten Kopfs wird zu Fehler (vorher IndexError, struct.error)."""
+    try:
+        if roh[:3] == b"\xff\xd8\xff":
+            return _jpeg(roh)
+        if roh[:8] == b"\x89PNG\r\n\x1a\n":
+            return _png(roh)
+    except Fehler:
+        raise
+    except (IndexError, struct.error, zlib.error, ValueError, KeyError, MemoryError) as e:
+        raise Fehler("Bild beschaedigt (%s)" % type(e).__name__)
     raise Fehler("Bilder gehen als JPEG oder PNG in ein PDF")
 
 
@@ -317,6 +339,8 @@ def erstellen(titel="", text="", bilder=(), autor="Jarvis"):
     # Nur Bilder ("Foto als PDF"): der Titel steht dann nur in den Metadaten, keine leere Titelseite davor
     hat_text = str(text or "").strip() or (str(titel or "").strip() and not bilder)
     textseiten = _text_seiten(titel, text) if hat_text else []
+    if len(bilder) > MAX_BILDER:
+        raise Fehler("Hoechstens %d Bilder je PDF" % MAX_BILDER)
     bildinfo = [bild_lesen(b) for b in bilder]
     gesamt = len(textseiten) + len(bildinfo)
     if not gesamt:

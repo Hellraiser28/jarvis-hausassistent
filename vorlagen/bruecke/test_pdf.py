@@ -104,5 +104,36 @@ try:
 except pdf.Fehler:
     pruef("leer abgelehnt", True)
 
+# Seit 0.3.4 (Pruefbericht 0.3.3, Fund 5)
+import time as _zeit  # noqa: E402
+
+
+def png_bombe(w, h, entpackt):
+    """RGBA-PNG mit kleinem Kopf, dessen IDAT viel mehr entpackt, als das Bild haben darf."""
+    def stueck(art, inhalt):
+        return struct.pack(">I", len(inhalt)) + art + inhalt + struct.pack(">I", zlib.crc32(art + inhalt) & 0xffffffff)
+    return (b"\x89PNG\r\n\x1a\n" + stueck(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)) +
+            stueck(b"IDAT", zlib.compress(b"\x00" * entpackt, 9)) + stueck(b"IEND", b""))
+
+
+t0 = _zeit.time()
+for name, daten in (("PNG-Bombe 10x10 mit 50 MB entpackt", png_bombe(10, 10, 50 * 1024 * 1024)),
+                    ("JPEG-Kopf mit 60000x60000", jpeg_kopf(60000, 60000)),
+                    ("PNG mit Transparenz ueber 4 MP", png_bombe(3000, 3000, 10)),
+                    ("PNG-Kopf abgeschnitten", b"\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR\x00\x00")):
+    try:
+        pdf.erstellen("x", "", [daten])
+        pruef("abgelehnt: " + name, False)
+    except pdf.Fehler:
+        pruef("abgelehnt: " + name, True)
+pruef("Bomben-Proben schnell (unter 5 s)", _zeit.time() - t0 < 5)
+try:
+    pdf.erstellen("x", "", [jpeg_kopf(100, 100)] * (pdf.MAX_BILDER + 1))
+    pruef("zu viele Bilder abgelehnt", False)
+except pdf.Fehler:
+    pruef("zu viele Bilder abgelehnt", True)
+roh, n = pdf.erstellen("ok", "", [png_rgba(40, 30)])
+pruef("normales RGBA-PNG geht weiter", n == 1 and aufbau(roh))
+
 print("PDF: %d ok, %d Fehler" % (ok, fehler))
 sys.exit(1 if fehler else 0)

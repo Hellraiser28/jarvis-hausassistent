@@ -468,6 +468,11 @@ neu() {
            test_anhang.py test_ed25519.py test_pdf.py test_ausgabe.py test_bilddienst.py test_konvertieren.py; do
     if [ -f "$projekt/einrichtung/$f" ] && ! cmp -s "$HIER/$f" "$projekt/einrichtung/$f" && [ "$f" != jarvis_pc.py ]; then
       install -m 644 "$HIER/$f" "$projekt/einrichtung/$f.neu"
+      # Seit 0.3.4 (Pruefbericht 0.3.3, Fund 16): Sicherheitsmodule nicht nur nebenbei erwaehnen
+      case "$f" in
+        anhang.py|ed25519.py|ausgabe.py|pdf.py|bilddienst.py|konvertieren.py|zusatzdienste.py)
+          printf '   %s%s%s\n' "$ROT" "$(t "WICHTIG: einrichtung/$f ist ein Sicherheitsmodul und wurde nicht ersetzt. $f.neu enthält Sicherheitskorrekturen: Claude im Jarvis-Ordner bitten, sie zu übernehmen, bevor Jarvis weiterläuft." "IMPORTANT: einrichtung/$f is a security module and was not replaced. $f.neu contains security fixes: ask Claude in the Jarvis folder to apply them before Jarvis keeps running.")" "$AUS" ;;
+      esac
       hinweis "$(t "einrichtung/$f behalten (vielleicht angepasst), die neue Vorlage liegt als $f.neu daneben." "kept einrichtung/$f (maybe customized), the new template is next to it as $f.neu.")"
     else
       install -m 644 "$HIER/$f" "$projekt/einrichtung/$f"

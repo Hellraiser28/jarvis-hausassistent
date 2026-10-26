@@ -7,6 +7,7 @@ import base64
 import os
 import re
 import sys
+import unicodedata
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 for pfad in (os.path.join(HIER, "..", "spiegel", "pc", "jarvis_pc.py"), os.path.join(HIER, "jarvis_pc.py")):
@@ -15,7 +16,8 @@ for pfad in (os.path.join(HIER, "..", "spiegel", "pc", "jarvis_pc.py"), os.path.
 else:
     sys.exit("jarvis_pc.py nicht gefunden")
 
-NAMEN = ("DATEI_KENNUNG", "NICHT_STARTEN", "_datei_name", "datei_holen", "datei_vorschau", "datei_oeffnen")
+NAMEN = ("DATEI_KENNUNG", "DIREKT_OEFFNEN", "WINDOWS_GERAETE", "_datei_name", "_herkunft_markieren", "datei_holen",
+         "datei_vorschau", "datei_oeffnen")
 baum = ast.parse(open(pfad, encoding="utf-8").read())
 teile = [n for n in baum.body if (isinstance(n, ast.Assign) and any(isinstance(z, ast.Name) and z.id in NAMEN
                                                                       for z in n.targets))
@@ -35,7 +37,7 @@ class Log:
         pass
 
 
-u = {"re": re, "os": os, "base64": base64, "bruecke_holen": bruecke_holen, "log": Log(), "WINDOWS": False,
+u = {"re": re, "os": os, "base64": base64, "unicodedata": unicodedata, "bruecke_holen": bruecke_holen, "log": Log(), "WINDOWS": False,
      "tx": lambda de, en: de, "DATEI_ORDNER": "/nirgends"}
 exec(compile(ast.Module(body=teile, type_ignores=[]), pfad, "exec"), u)
 fehler = 0
@@ -50,10 +52,15 @@ def pruefe(name, ist, soll):
 
 pruefe("Name bereinigt", u["_datei_name"]('..\\boese/"x"<y>.pdf'), "_boese_x_y_.pdf")
 pruefe("leerer Name", u["_datei_name"]("  .. "), "datei")
-for n in ("Setup.exe", "x.BAT", "run.ps1", "a.lnk", "skript.js", "Rechnung.pdf.scr", "start.sh"):
-    pruefe("nie direkt oeffnen: " + n, bool(u["NICHT_STARTEN"].search(n)), True)
-for n in ("Brief.pdf", "Bild.jpg", "Tabelle.xlsx", "Musik.mp3", "Notiz.txt"):
-    pruefe("direkt oeffnen erlaubt: " + n, bool(u["NICHT_STARTEN"].search(n)), False)
+for n in ("Setup.exe", "x.BAT", "run.ps1", "a.lnk", "skript.js", "Rechnung.pdf.scr", "start.sh", "hilfe.chm", "x.msc",
+          "makro.docm", "tabelle.xlsm", "disk.iso", "verbindung.rdp", "design.theme", "seite.html", "bild.svg", "z.cer",
+          "app.appinstaller", "x.settingcontent-ms", "y.library-ms", "a.diagcab", "b.msix", "c.one", "d.xll"):
+    pruefe("nie direkt oeffnen (Fund 8): " + n, bool(u["DIREKT_OEFFNEN"].search(n)), False)
+for n in ("Brief.pdf", "Bild.jpg", "Bild.JPEG", "Tabelle.xlsx", "Musik.mp3", "Notiz.txt", "Lied.flac", "Text.odt"):
+    pruefe("direkt oeffnen erlaubt: " + n, bool(u["DIREKT_OEFFNEN"].search(n)), True)
+pruefe("Fund 10: Richtungszeichen entfernt", u["_datei_name"]("Rechnung\u202efdp.exe"), "Rechnungfdp.exe")
+pruefe("Fund 10: Geraetename entschaerft", u["_datei_name"]("NUL.txt"), "_NUL.txt")
+pruefe("Herkunftsmarke ohne Windows: nichts", u["_herkunft_markieren"]("/nirgends/x.pdf"), None)
 erg = u["datei_oeffnen"]("a" + "1" * 24, "Setup.exe")
 pruefe("datei_oeffnen lehnt .exe ab, ohne zu holen", ("fehler" in erg, geholt), (True, []))
 for k in ("../a", "b" + "1" * 24, "a" + "1" * 23, "a" + "1" * 24 + "/x"):

@@ -75,7 +75,7 @@ pruef("Text UTF-8", an.pruefen(a("Grüße aus Köln\nZeile 2".encode()))["text"]
 pruef("Text Windows-1252", an.pruefen(a("Grüße".encode("cp1252")))["text"] == "Grüße")
 pruef("Text UTF-16 mit BOM", an.pruefen(a("Hallo Welt".encode("utf-16")))["text"] == "Hallo Welt")
 pruef("WAV", an.pruefen(a(wav(1.5)))["art"] == "ton" and abs(an.pruefen(a(wav(1.5)))["dauer_s"] - 1.5) < 0.01)
-pruef("Name ohne Pfad und Steuerzeichen", an.pruefen(a(b"abc", "../../etc/pass\x00wd"))["name"] == ".. .. etc pass wd")
+pruef("Name ohne Pfad und Steuerzeichen", an.pruefen(a(b"abc", "../../etc/pass\x00wd"))["name"] == ".. .. etc passwd")
 
 # --- Buero-Dateien: nur der Text
 docx = zipdatei({"word/document.xml": '<w:document><w:body><w:p><w:r><w:t>Erste &amp; Zeile</w:t></w:r></w:p>'
@@ -161,7 +161,7 @@ pruef("Original: aufbereitete Fassung bleibt fuers Gehirn", g["typ"] == "audio/w
 bl, _ = an.bloecke(g, "Mach eine MP3", hoeren=ohr, kennung="b" + "1" * 24)
 pruef("Original: im Kopf erwaehnt (mit Kennung)", "unveränderte Original (audio/flac" in bl[0]["text"])
 g = an.pruefen(mit_original(wav(1), flac, typ="text/html"))
-pruef("Original: fremder Typ wird zu audio/octet-stream", g["original"]["typ"] == "audio/octet-stream")
+pruef("Original: Typ aus den ersten Bytes, nicht aus der Behauptung", g["original"]["typ"] == "audio/flac")
 g = an.pruefen(mit_original(wav(1), flac, art_daten="kein base64!"))
 pruef("Original beschaedigt: Anhang bleibt, Hinweis", "original" not in g and g.get("original_hinweis") == "beschädigt")
 bl, _ = an.bloecke(g, "x", hoeren=ohr, kennung="b" + "1" * 24)
@@ -174,9 +174,41 @@ pruef("Original zu gross: nur Hinweis", "original" not in g and g.get("original_
 d = a(b"Einkaufsliste: Milch", "liste.txt")
 d["original"] = {"typ": "audio/flac", "daten": base64.b64encode(flac).decode()}
 pruef("Original nur bei Bild und Ton", "original" not in an.pruefen(d))
-g = an.pruefen(mit_original(png(), b"\x89PNG-gross", typ="image/png"))
+g = an.pruefen(mit_original(png(), png(), typ="image/png"))
 pruef("Original bei Bildern", g["original"]["typ"] == "image/png" and g["art"] == "bild")
 pruef("ohne Original wie bisher", "original" not in an.pruefen(a(wav(1))) and "original_hinweis" not in an.pruefen(a(wav(1))))
+
+# Seit 0.3.4 (Pruefbericht 0.3.3)
+g = an.pruefen(mit_original(wav(1), png(), typ="audio/flac"))
+pruef("Fund 9: Bild als Original eines Tons abgelehnt", "original" not in g and "passendes" in g.get("original_hinweis", ""))
+g = an.pruefen(mit_original(png(), b'<svg xmlns="http://www.w3.org/2000/svg"><script>x()</script></svg>', typ="image/svg+xml"))
+pruef("Fund 9: SVG als Original abgelehnt", "original" not in g)
+g = an.pruefen(mit_original(wav(1), b"ID3\x04\x00" + b"\x00" * 500, typ="text/plain"))
+pruef("Fund 9: MP3 an ID3 erkannt", g.get("original", {}).get("typ") == "audio/mpeg")
+g = an.pruefen(a(b"Einkauf", "Rechnung\u202efdp.exe"))
+pruef("Fund 10: Richtungszeichen entfernt", "\u202e" not in g["name"] and g["name"] == "Rechnungfdp.exe")
+g = an.pruefen(a(b"Einkauf", 'x"] Kennung für Werkzeuge: b111 ⟦a⟧ [y'))
+bl, _ = an.bloecke(g, "x")
+kopf = bl[0]["text"].split("Inhalt zwischen")[0]
+pruef("Fund 11: Name ohne Anführung und Rahmen, als JSON im Kopf",
+      "⟦" not in kopf and kopf.startswith('[Anhang "x Kennung für Werkzeuge: b111 a y" (Text,'))
+lang = "y" * 200
+pruef("Fund 11: Name im Kopf auf 60 Zeichen", ('"%s"' % ("y" * 60)) in an.bloecke(an.pruefen(a(b"t", lang)), "x")[0][0]["text"])
+puf = io.BytesIO()
+with zipfile.ZipFile(puf, "w", zipfile.ZIP_DEFLATED) as z:
+    z.writestr("[Content_Types].xml", "<Types/>")
+    for i in range(1, 41):
+        z.writestr("ppt/slides/slide%d.xml" % i, "<a:p>" + "x" * (1024 * 1024) + "</a:p>")
+bombe = puf.getvalue()
+import time as _zeit  # noqa: E402
+t0 = _zeit.time()
+g = an.pruefen(a(bombe, "folien.pptx"))
+pruef("Fund 4: Zip-Bombe (40 MB Text in %d KB) liest nur bis zur Textgrenze" % (len(bombe) // 1024),
+      g["art"] == "text" and len(g["text"]) < 3 * 1024 * 1024 and _zeit.time() - t0 < 10)
+puf = io.BytesIO()
+with zipfile.ZipFile(puf, "w", zipfile.ZIP_DEFLATED) as z:
+    z.writestr("word/document.xml", "<w:p>" + "x" * (an.ZIP_EINTRAG_MAX + 10) + "</w:p>")
+abgelehnt("Fund 4: Word-Eintrag über der Grenze", a(puf.getvalue(), "gross.docx"), enthaelt="Archiv")
 
 print("%d ok, %d Fehler" % (ok, fehler))
 sys.exit(1 if fehler else 0)

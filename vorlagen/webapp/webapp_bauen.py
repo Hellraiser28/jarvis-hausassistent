@@ -10,6 +10,7 @@ Ohne Angaben sucht es app.html, jarvis-web.js und jarvis.png neben sich, dann im
 die Content-Security-Policy mit den Hashes der beiden Inline-Skripte, die die Bruecke fuer /app senden soll."""
 import base64
 import hashlib
+import html.parser
 import json
 import os
 import re
@@ -60,10 +61,39 @@ def schreiben(name, daten):
     os.replace(pfad + ".neu", pfad)
 
 
+class _Skripte(html.parser.HTMLParser):
+    """Eingebettete Skripte (ohne src), gelesen wie ein Browser (seit 0.3.4, CodeQL: ein regulaerer Ausdruck liest
+    HTML anders als der Browser). Skriptinhalt bleibt roh, Zeichenreferenzen werden darin nicht aufgeloest."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.skripte, self._teil = [], None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script" and not any(k == "src" for k, _ in attrs):
+            self._teil = []
+
+    def handle_data(self, data):
+        if self._teil is not None:
+            self._teil.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == "script" and self._teil is not None:
+            self.skripte.append("".join(self._teil))
+            self._teil = None
+
+
+def inline_skripte(text):
+    p = _Skripte()
+    p.feed(text)
+    p.close()
+    return p.skripte
+
+
 schreiben("index.html", seite)
 # CSP: Skripte nur genau diese beiden (Hash), Stile inline erlaubt (die Seite setzt style-Attribute), Schrift von Google
 hashes = " ".join("'sha256-%s'" % base64.b64encode(hashlib.sha256(s.encode("utf-8")).digest()).decode()
-                  for s in re.findall(r"<script>(.*?)</script>", seite, re.S))
+                  for s in inline_skripte(seite))
 schreiben("csp.txt", ("default-src 'none'; script-src %s; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                       "font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data: blob:; "
                       "media-src 'self' blob: data:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; "

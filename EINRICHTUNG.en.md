@@ -694,19 +694,33 @@ build time. The person can still change things. After the yes, you save the answ
       anything that doesn't match the pattern exactly is refused.
     - Path: the bridge stores every attachment and writes its ID into the attachment header
       (`anhang.bloecke(…, kennung=…)`). The MCP tools `pdf_erstellen`, `bild_bearbeiten`, `bild_erzeugen`,
-      `datei_umwandeln` and `umwandeln_moeglich` fetch incoming files by ID and store results with the source of the
-      question (environment variable `JARVIS_QUELLE` of the tool server). After the answer, the bridge collects the
-      new results of exactly this source with `ablage.neu_fuer(DATEN, quelle, seit)` and returns them as
-      `dateien: [{kennung, name, typ, groesse, info}]` in the `/v1/frage` answer, in the history and in the push
-      message.
-    - Download: `GET /v1/datei/a…`, token only, also through the outside access (only this path, only `a…`). Headers
+      `datei_umwandeln` and `umwandeln_moeglich` fetch incoming files by ID and store results.
+    - **Owner (since 0.3.4, review of 0.3.3, not negotiable):** every file belongs to the device that asked (device ID
+      or `haupt`) and to one request (its own random ID per question). Before each question to a brain the bridge
+      writes `ablage/aktiv/<pid of the brain>.json` with owner and request; the tool server is a child process of the
+      brain and reads it via `os.getppid()` (`ausgabe.aktiv_lesen`). Tools only accept files of the same owner and store
+      results with owner and request. After the answer the bridge collects exactly this request's results with
+      `ablage.neu_fuer(DATEN, anfrage)` (under a lock) and returns them as `dateien: [{kennung, name, typ, groesse,
+      info}]` in the `/v1/frage` answer, in the history and in the push message. Don't collect by source and time: two
+      phones share the source `app`.
+    - Download: `GET /v1/datei/a…`, only by the device the file belongs to, also through the outside access (only this
+      path, only `a…`). `/v1/zustand` shows files in the history only to their owner. Headers
       `Content-Security-Policy: default-src 'none'; sandbox`, `X-Content-Type-Options: nosniff` and
-      `Content-Disposition: attachment`; HTML, SVG and JavaScript go out as `application/octet-stream`. Incoming files
-      can never be downloaded.
+      `Content-Disposition: attachment`; the type only from a list of allowed types (`ausgabe.ausliefer_typ`),
+      everything else as `application/octet-stream`. Incoming files can never be downloaded.
+    - Under the source `meldung` (question about a headline) the image and conversion tools only dry-run: they cost
+      money and hand data to third parties; outside text doesn't trigger them.
+    - Large requests: check token and device before reading a single byte of the body; at most two requests over 2 MB
+      at the same time (otherwise 503); set a body limit in the reverse proxy that matches the bridge's limit.
+    - Bombs: read ZIP contents with a limit for the sum and for the number of slides and stop at the text limit;
+      decompress PNG only up to the expected size, limit image dimensions for every image kind.
     - Devices: app from 4.4 and the web app show file cards with a preview (images only) and Open, Share, Save; the
       web app needs `blob:` in `img-src` for that. The PC client from 18 shows them in the HUD conversation with Open
-      and "Save as …". It never opens program files (`.exe`, `.bat`, `.ps1`, `.js`, `.lnk` and similar) directly,
-      those can only be saved.
+      and "Save as …". Client, app and web app open only files from an allowlist directly (PDF, images, audio, video,
+      text, Office without macros), everything else only save or share; a blocklist always has gaps (`.chm`, `.docm`,
+      `.rdp`, `.iso` …). On Windows every saved or opened file gets the mark of the web (`:Zone.Identifier`,
+      `ZoneId=3`). File names without control, format and direction characters (U+202E otherwise disguises "fdp.exe"
+      as a PDF) and without Windows device names (CON, NUL …).
     - Persona: a paragraph saying that files are only made with these tools and never handed to other tools, and that
       Jarvis never reads out paths or IDs. Without that sentence a brain in testing passed the task to another tool.
     - PDF: text as simple Markdown (headings with `#`, bullets, numbers, `**bold**`), A4, page numbers. Photos one per
@@ -736,13 +750,23 @@ build time. The person can still change things. After the yes, you save the answ
       `geheim\` (template above; `zusatzdienste.py` reads both forms). Names: `BILD_DIENST`, `CLOUDFLARE_KONTO`,
       `CLOUDFLARE_TOKEN`, `BILD_TAGESLIMIT`, `OPENAI_SCHLUESSEL`, `OPENAI_BILDMODELL`, `OPENAI_BILDMODELL_GENAU`,
       `OPENAI_BILDQUALITAET`, `GEMINI_SCHLUESSEL_BILDER`, `TRANSMUTE_ADRESSE`, `TRANSMUTE_SCHLUESSEL`. None of them goes
-      into answers, logs or the skills overview; `zusatzdienste.uebersicht` only names the service.
+      into answers, logs or the skills overview; `zusatzdienste.uebersicht` only names the service. The `.env` has
+      permissions 600 and is in `.gitignore`. The form is checked (Cloudflare account 32 hex characters, OpenAI `sk-`,
+      Gemini `AIza`), so a wrongly referenced key of another service isn't sent.
+    - Costs: keep the Cloudflare counter under a file lock and reserve the cost before the call (concurrent requests
+      otherwise all pass the same check), refund on failure. For paid images (OpenAI, Gemini) a daily limit,
+      `BILD_TAGESLIMIT_BEZAHLT` (default 20).
+    - Service answers: error texts don't go to the brain (outside text), only the HTTP status; don't follow redirects
+      (urllib otherwise carries the Authorization header to another host); read limits; IDs and extensions from
+      answers only in the expected form. The original is recognized by its first bytes (no SVG, the kind must match the
+      attachment) and only goes to `datei_umwandeln`.
     - Privacy: images for editing are sent to the chosen provider. Tell the person while setting up; private photos
       (children, ID cards) better not. No images that expose, sexualize or misrepresent real people (NEVER.md).
     - Acceptance (test mode, source `test…`): PDF from typed text with umlauts, PDF from a photo with text, an image
       edited, an image created, PNG converted to JPG, a FLAC with its original into an MP3 at the full sample rate
       (measure with `ffprobe`). Every file arrives as a card on the device and opens. Without a
-      token the download is refused, a `b…` ID can't be downloaded, and the result of another source doesn't show up.
+      token the download is refused, a `b…` ID can't be downloaded, another device's result can't be downloaded (404)
+      and doesn't show up, and a tool refuses another device's ID.
 
 ### Speed (measured, build it this way from the start)
 

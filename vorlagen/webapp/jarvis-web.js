@@ -24,6 +24,7 @@
     return null;
   };
   const QUELLE = /[?&]test=1(&|$)/.test(location.search) ? "test-webapp" : "app";
+  const DIREKT = /^(image\/(jpeg|png|webp|gif)|application\/pdf|audio\/[a-z0-9.+-]+|video\/(mp4|webm)|text\/(plain|csv))$/;
   const dateien = {};               // seit 0.3.3: Kennung -> {url, name, typ, blob} der Dateien von Jarvis
   const tok = () => L("jarvis-token");
   const zufall = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, "0")).join("");
@@ -168,15 +169,19 @@
     // laufen danach direkt im Klick, sonst blockt der Browser sie.
     dateiLaden: async (k, name, typ) => {
       try {
-        const b = await ruf("GET", "/v1/datei/" + k, undefined, true);
+        const roh = await ruf("GET", "/v1/datei/" + k, undefined, true);
+        // seit 0.3.4 (Pruefbericht 0.3.3, Fund 12): neu verpacken, nur bekannte Typen behalten; ein blob: im Ursprung
+        // der Web-App traegt die Sandbox-Kopfzeilen der Bruecke nicht mehr
+        const t = DIREKT.test(roh.type) ? roh.type : "application/octet-stream";
+        const b = new Blob([roh], { type: t });
         const url = URL.createObjectURL(b);
-        dateien[k] = { url, name: String(name || "datei"), typ: String(typ || b.type || ""), blob: b };
-        rueck("onDateiBereit", k, String(typ || "").startsWith("image/") ? url : "", true);
+        dateien[k] = { url, name: String(name || "datei"), typ: t, blob: b };
+        rueck("onDateiBereit", k, /^image\/(jpeg|png|webp|gif)$/.test(t) ? url : "", true);
       } catch (e) {
         rueck("onDateiBereit", k, "", false, e.code === 404 ? T("datei_fehlt") : T("web_fehler", e.message));
       }
     },
-    dateiOeffnen: (k) => { const d = dateien[k]; if (d) window.open(d.url, "_blank", "noopener"); },
+    dateiOeffnen: (k) => { const d = dateien[k]; if (d && DIREKT.test(d.typ)) window.open(d.url, "_blank", "noopener"); },
     dateiSpeichern: (k) => {
       const d = dateien[k];
       if (!d) return;

@@ -7,9 +7,14 @@ Zugaenge verlassen dieses Modul nur in Richtung des jeweiligen Dienstes, nie in 
   BILD_DIENST=cloudflare|openai|gemini|aus   CLOUDFLARE_KONTO, CLOUDFLARE_TOKEN   GEMINI_SCHLUESSEL_BILDER (bezahlt)
   OPENAI_SCHLUESSEL (bezahlt)  OPENAI_BILDMODELL, OPENAI_BILDMODELL_GENAU, OPENAI_BILDQUALITAET (low|medium|high)
   BILD_TAGESLIMIT=9000                  (Neurons je Tag bei Cloudflare, gratis sind 10.000)
+  BILD_TAGESLIMIT_BEZAHLT=20            (Bilder je Tag bei OpenAI und Gemini, seit 0.3.4)
+Seit 0.3.4 (Pruefbericht 0.3.3, Fund 15) wird die Form geprueft: Cloudflare-Konto 32 Hexzeichen, OpenAI-Schluessel mit
+"sk-", Gemini mit "AIza". Ein Wert in falscher Form gilt als nicht eingerichtet, so geht z. B. ein falsch verwiesener
+Schluessel eines anderen Dienstes nicht als Bearer an Cloudflare.
   TRANSMUTE_ADRESSE=http://...:3313     TRANSMUTE_SCHLUESSEL
 """
 import os
+import re
 
 
 def _env_datei(basis):
@@ -45,25 +50,41 @@ def _wert(e, name):
     return zeilen[0] if len(zeilen) == 1 and "=" not in zeilen[0] else ""
 
 
+FORM = {"CLOUDFLARE_KONTO": re.compile(r"^[0-9a-f]{32}$"),
+        "CLOUDFLARE_TOKEN": re.compile(r"^(?!sk-|AIza)[A-Za-z0-9_-]{20,200}$"),
+        "OPENAI_SCHLUESSEL": re.compile(r"^sk-(?!ant-)[A-Za-z0-9_-]{20,300}$"),
+        "GEMINI_SCHLUESSEL_BILDER": re.compile(r"^AIza[A-Za-z0-9_-]{20,100}$"),
+        "TRANSMUTE_SCHLUESSEL": re.compile(r"^(?!sk-|AIza)[A-Za-z0-9_.~+/=-]{8,300}$")}
+
+
+def _gepruefter_wert(e, name):
+    w = _wert(e, name)
+    return w if w and FORM[name].match(w) else ""
+
+
 def lesen(basis):
     e = _env_datei(basis)
-    cf_konto, cf_token = _wert(e, "CLOUDFLARE_KONTO"), _wert(e, "CLOUDFLARE_TOKEN")
-    gemini = _wert(e, "GEMINI_SCHLUESSEL_BILDER")
-    openai = _wert(e, "OPENAI_SCHLUESSEL")
+    cf_konto, cf_token = _gepruefter_wert(e, "CLOUDFLARE_KONTO"), _gepruefter_wert(e, "CLOUDFLARE_TOKEN")
+    gemini = _gepruefter_wert(e, "GEMINI_SCHLUESSEL_BILDER")
+    openai = _gepruefter_wert(e, "OPENAI_SCHLUESSEL")
     dienst = (e.get("BILD_DIENST") or ("cloudflare" if cf_konto and cf_token else "aus")).lower()
     try:
         limit = int(e.get("BILD_TAGESLIMIT") or 9000)
     except ValueError:
         limit = 9000
+    try:
+        bezahlt = max(0, min(int(e.get("BILD_TAGESLIMIT_BEZAHLT") or 20), 500))
+    except ValueError:
+        bezahlt = 20
     return {
         "bild": {"dienst": dienst, "cf_konto": cf_konto, "cf_token": cf_token, "gemini_schluessel": gemini,
                  "openai_schluessel": openai, "openai_modell": e.get("OPENAI_BILDMODELL", ""),
                  "openai_modell_genau": e.get("OPENAI_BILDMODELL_GENAU", ""),
                  "openai_qualitaet": e.get("OPENAI_BILDQUALITAET", "") if e.get("OPENAI_BILDQUALITAET", "") in
                  ("low", "medium", "high") else "",
-                 "tageslimit": max(0, min(limit, 10000)) if dienst == "cloudflare" else limit},
+                 "tageslimit": max(0, min(limit, 10000)) if dienst == "cloudflare" else limit, "bezahlt_limit": bezahlt},
         "transmute": {"adresse": str(e.get("TRANSMUTE_ADRESSE") or "").rstrip("/"),
-                      "schluessel": _wert(e, "TRANSMUTE_SCHLUESSEL")},
+                      "schluessel": _gepruefter_wert(e, "TRANSMUTE_SCHLUESSEL")},
     }
 
 

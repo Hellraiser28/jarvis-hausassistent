@@ -793,9 +793,37 @@ public class MainActivity extends Activity {
     }
 
     static String sichererName(String n) {
-        String s = (n == null ? "" : n).replaceAll("[\\\\/:*?\"<>|\\x00-\\x1f]+", "_").trim();
+        // Seit 4.5 (Pruefbericht 0.3.3, Fund 10): ohne Steuer-, Format- und Richtungszeichen (\p{C}: U+202E tarnt sonst
+        // "fdp.exe" als PDF) und ohne Windows-Geraetenamen
+        String s = (n == null ? "" : n).replaceAll("\\p{C}+", "").replaceAll("[\\\\/:*?\"<>|]+", "_").trim();
         if (s.isEmpty() || s.startsWith(".")) s = "datei" + s;
+        if (s.matches("(?i)(con|prn|aux|nul|com[0-9]|lpt[0-9])(\\..*)?")) s = "_" + s;
         return s.length() > 120 ? s.substring(s.length() - 120) : s;
+    }
+
+    /** Seit 4.5 (Pruefbericht 0.3.3, Fund 12): nur diese Typen oeffnet die App direkt, alles andere nur teilen oder
+     *  speichern (eine APK wuerde sonst den Installationsdialog zeigen). */
+    static boolean direktOeffnen(String typ) {
+        return typ != null && typ.matches("image/(jpeg|png|webp|gif)|application/pdf|audio/[a-z0-9.+-]+|video/(mp4|webm)|text/(plain|csv)");
+    }
+
+    /** Seit 4.5 (CodeQL "Uncontrolled data used in content resolution"): Adressen aus Auswahl- und Speichern-Dialogen
+     *  nur als content:// eines fremden Anbieters; eigene Anbieter nur fuers Kamerafoto, file:// nie. Sonst koennte eine
+     *  untergeschobene Adresse private Dateien der App lesen oder ueberschreiben. */
+    boolean sichereAdresse(Uri u, boolean kamera) {
+        if (u == null || !"content".equals(u.getScheme()) || u.getAuthority() == null) return false;
+        String a = u.getAuthority();
+        if (a.equals(getPackageName() + ".kamera")) return kamera;
+        return !a.equals(getPackageName()) && !a.startsWith(getPackageName() + ".");
+    }
+
+    /** Anzeigename einer gewaehlten Datei laut Anbieter, "" wenn unbekannt. */
+    String dateiName(Uri u) {
+        try (Cursor c = getContentResolver().query(u, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (c != null && c.moveToFirst() && !c.isNull(0)) return c.getString(0);
+        } catch (Exception ignored) {
+        }
+        return "";
     }
 
     void dateiHolen(final String kennung, final String name, final String typ) {
@@ -836,6 +864,7 @@ public class MainActivity extends Activity {
         if (d == null) return;
         Uri u = KameraAblage.ausgabeAdresse(getPackageName(), kennung, d[0]);
         String typ = d[1].isEmpty() ? "application/octet-stream" : d[1];
+        if ("oeffnen".equals(art) && !direktOeffnen(typ)) art = "teilen";       // seit 4.5 (Fund 12)
         try {
             if ("oeffnen".equals(art)) {
                 Intent i = new Intent(Intent.ACTION_VIEW).setDataAndType(u, typ).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -882,6 +911,11 @@ public class MainActivity extends Activity {
                 d = k == null ? null : dateien.get(k);
             }
             if (ergebnis == RESULT_OK && daten != null && daten.getData() != null && d != null) {
+                if (!sichereAdresse(daten.getData(), false)) {          // seit 4.5 (CodeQL)
+                    js("window.onHinweis && window.onHinweis(" + q(tx("Dieser Speicherort geht nicht.",
+                            "This location doesn't work.")) + ")");
+                    return;
+                }
                 try {
                     InputStream ein = new java.io.FileInputStream(new File(dateiOrdner(k), d[0]));
                     OutputStream aus = getContentResolver().openOutputStream(daten.getData());
@@ -907,6 +941,11 @@ public class MainActivity extends Activity {
         }
         if (code == DATEI_AUSWAHL && dateiRueckruf != null) {
             Uri[] gewaehlt = WebChromeClient.FileChooserParams.parseResult(ergebnis, daten);
+            if (gewaehlt != null) {          // seit 4.5 (CodeQL): nur sichere Adressen an Seite und Original
+                ArrayList<Uri> gut = new ArrayList<Uri>();
+                for (Uri u : gewaehlt) if (sichereAdresse(u, false)) gut.add(u);
+                gewaehlt = gut.isEmpty() ? null : gut.toArray(new Uri[0]);
+            }
             letzteDatei = gewaehlt != null && gewaehlt.length > 0 ? gewaehlt[0] : null;
             dateiRueckruf.onReceiveValue(gewaehlt);
             dateiRueckruf = null;
@@ -979,7 +1018,7 @@ public class MainActivity extends Activity {
     static ArrayList<String> saetze(String text) {
         ArrayList<String> aus = new ArrayList<String>();
         for (String absatz : text.split("\\n+")) {
-            for (String satz : absatz.split("(?<=[.!?…])\\s+(?=[A-ZÄÖÜ0-9„\"'])")) {
+            for (String satz : absatz.split("(?<=[.!?…])\\s++(?=[A-ZÄÖÜ0-9„\"'])")) {     // ++: kein Zurueckgehen (CodeQL)
                 if (!satz.trim().isEmpty()) aus.add(satz.trim());
             }
         }
@@ -1381,13 +1420,16 @@ public class MainActivity extends Activity {
          *  aus der Auswahl, statt es als riesige Zeichenkette durch die WebView zu reichen. Passt die Datei nicht
          *  (andere Groesse, zu gross, nicht lesbar), geht nur die aufbereitete Fassung, wie bisher. */
         @JavascriptInterface
-        public void frageMitAnhangOriginal(String text, String anhang, double groesse, String typ) {
+        public void frageMitAnhangOriginal(String text, String anhang, double groesse, String typ, String name) {
             try {
                 JSONObject a = new JSONObject(anhang);
                 Uri u = letzteDatei;
+                letzteDatei = null;               // seit 4.5 (Fund 13): eine Auswahl gilt fuer genau einen Anhang
                 long n = u == null ? -1 : dateiGroesse(u);
                 String t = text == null ? "" : text;
-                if (n > 0 && n <= ORIGINAL_MAX && n == (long) groesse) MainActivity.this.frage(t, "app", a, u, n, typ);
+                // seit 4.5 (Fund 13): Groesse UND Name muessen zur gewaehlten Datei passen
+                boolean passt = n > 0 && n <= ORIGINAL_MAX && n == (long) groesse && name != null && name.equals(dateiName(u));
+                if (passt) MainActivity.this.frage(t, "app", a, u, n, typ);
                 else MainActivity.this.frage(t, "app", a);
             } catch (Exception e) {
                 js("onFehler(" + q(fehlertext(e)) + ")");

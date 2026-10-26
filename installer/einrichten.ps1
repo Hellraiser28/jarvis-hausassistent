@@ -340,6 +340,10 @@ function Neu($A) {
     $Neu = Join-Path $Mitgeliefert $f
     if ((Test-Path -LiteralPath $Dort) -and (Pruefsumme $Dort) -ne (Pruefsumme $Neu)) {
       Copy-Item $Neu "$Dort.neu" -Force
+      # Seit 0.3.4 (Pruefbericht 0.3.3, Fund 16): Sicherheitsmodule nicht nur nebenbei erwaehnen
+      if (@('anhang.py', 'ed25519.py', 'ausgabe.py', 'pdf.py', 'bilddienst.py', 'konvertieren.py', 'zusatzdienste.py') -contains $f) {
+        Write-Host ('   ' + (T 'WICHTIG: einrichtung\{0} ist ein Sicherheitsmodul und wurde nicht ersetzt. {0}.neu enthält Sicherheitskorrekturen: Claude im Jarvis-Ordner bitten, sie zu übernehmen, bevor Jarvis weiterläuft.' 'IMPORTANT: einrichtung\{0} is a security module and was not replaced. {0}.neu contains security fixes: ask Claude in the Jarvis folder to apply them before Jarvis keeps running.') -f $f) -ForegroundColor Red
+      }
       Hinweis ((T 'einrichtung\{0} behalten (vielleicht angepasst), die neue Vorlage liegt als {0}.neu daneben.' 'kept einrichtung\{0} (maybe customized), the new template is next to it as {0}.neu.') -f $f)
     } else { Copy-Item $Neu $Dort -Force }
   }

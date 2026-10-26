@@ -1,5 +1,34 @@
 # Änderungen
 
+## 0.3.4 – 2026-10-26
+
+Sicherheit nach einer unabhängigen Prüfung von 0.3.3 und nach GitHub-CodeQL. *English: security fixes after an
+independent review of 0.3.3 and GitHub CodeQL.*
+
+- **Dateien gehören dem Gerät, das gefragt hat:** Ergebnisse und Anhänge sind an Gerät und Anfrage gebunden. Abholen,
+  der Verlauf in `/v1/zustand` und die Werkzeuge prüfen das; vorher konnte jedes gekoppelte Gerät die Ergebnisse aller
+  anderen holen, und bei zwei Handys gleichzeitig konnte ein Ergebnis beim falschen landen. Die Brücke gibt dem
+  Werkzeug-Server des Gehirns vor jeder Frage mit, wer fragt (`ablage/aktiv/<pid>.json`).
+- **Schlagzeilen:** Fragen zu einer Schlagzeile lösen keine Bild- oder Umwandel-Aufträge aus.
+- **Bomben und große Anfragen:** Grenze für die entpackte Summe einer PowerPoint/Word-Datei und für die Zahl der
+  Folien (vorher wurden aus 41 KB 40 MB Text); PNG wird nur bis zur erwarteten Größe entpackt, Bildmaße sind bei
+  allen Bildarten begrenzt; höchstens zwei große Anfragen gleichzeitig.
+- **Kosten:** Der Cloudflare-Zähler reserviert vor dem Aufruf unter einer Dateisperre; für OpenAI und Gemini gibt es
+  ein Tageslimit (`BILD_TAGESLIMIT_BEZAHLT`, Standard 20).
+- **PC-Client 20:** Öffnet nur noch Dateien aus einer Erlaubnisliste direkt, alles andere über „Speichern unter …“;
+  unter Windows mit Herkunftsmarke (Mark of the Web). Dateinamen ohne Richtungszeichen (U+202E) und Gerätenamen.
+- **App 4.5 und Web-App:** „Öffnen“ nur für Bilder, PDF, Ton, Video und Text; Adressen aus Auswahl- und
+  Speichern-Dialogen nur von fremden Anbietern (CodeQL); das Original muss in Größe und Name zur gewählten Datei
+  passen.
+- **Original und Dienste:** Das Original wird an den ersten Bytes erkannt (kein SVG); Fehlertexte der Dienste gehen
+  nicht mehr ans Gehirn, Weiterleitungen werden nicht verfolgt, Zugänge werden auf ihre Form geprüft.
+- **Dateiname im Kopf des Anhangs** als JSON-Zeichenkette und ohne Rahmen- oder Anführungszeichen.
+- **CodeQL:** Skripte für die Content-Security-Policy werden mit einem HTML-Parser gelesen statt mit einem regulären
+  Ausdruck (gleiche Prüfsummen auf allen Seiten).
+- **Setup:** warnt deutlich, wenn ein Sicherheitsmodul bei einem erneuten Lauf nicht ersetzt wurde.
+- Tests: `test_ausgabe.py` (30), `test_anhang.py` (54), `test_pdf.py` (23), `test_bilddienst.py` mit gleichzeitigen
+  Aufträgen und ohne jede echte Netzanfrage.
+
 ## 0.3.3 – 2026-10-26
 
 Jarvis gibt Dateien zurück: PDFs, Bilder, umgewandelte Dateien. Welche Dienste er dafür nutzt, fragt das Setup.

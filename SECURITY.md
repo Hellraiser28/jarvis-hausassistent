@@ -45,6 +45,10 @@ Die Regeln stehen ausführlich in `EINRICHTUNG.md` (Phase 2, „Sicherheit“). 
   Token über die Brücke, die lokale Durchreiche liegt unter einem zufälligen Pfad je Start. Alles, was die Seiten
   anzeigen, wird maskiert.
 - **Testmodus:** Proben mit der Quelle `test…` führen Werkzeuge mit Wirkung nur trocken aus.
+- **Dateien nur für das Gerät, das gefragt hat** (seit 0.3.4): Anhänge und Ergebnisse gehören dem Gerät und der
+  Anfrage. Kein anderes gekoppeltes Gerät kann sie abholen, im Verlauf sehen oder einem Werkzeug unterschieben.
+  Direkt geöffnet werden nur Dateiarten aus einer Erlaubnisliste, unter Windows mit Herkunftsmarke; alles andere
+  lässt sich nur speichern oder teilen. Fragen zu Schlagzeilen lösen keine Bild- oder Umwandel-Aufträge aus.
 - **Geheimnisse** nie im Chat, nie in Git, nie in Befehlszeilen. Sie liegen in Dateien, die nur das eigene
   Benutzerkonto lesen kann. Den Ordner des PC-Clients setzt das Setup auf Rechte nur für dieses Konto (dazu SYSTEM und
   Administratoren), auch wenn er außerhalb des Benutzerprofils liegt.

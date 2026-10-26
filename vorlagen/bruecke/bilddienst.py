@@ -13,12 +13,16 @@ Claude selbst gibt nur Text aus; Bilder kommen von einem Anbieter, den das Setup
   Groesse ab. OpenAI verlangt fuer GPT-Image-Modelle unter Umstaenden eine Organisations-Verifizierung. Groessen nur
   aus der Standardliste (1024x1024, 1536x1024, 1024x1536, auto), die koennen alle GPT-Image-Modelle.
 Der Tageszaehler (daten/bild_zaehler.json) schaetzt die Neurons nach Cloudflares Preisliste und bleibt unter dem Limit;
-fuer 9B zu wenig uebrig -> 4B mit Hinweis.
+fuer 9B zu wenig uebrig -> 4B mit Hinweis. Seit 0.3.4 (Pruefbericht 0.3.3, Fund 7) unter Dateisperre mit Reservierung
+vor dem Aufruf, dazu ein Tageslimit fuer bezahlte Bilder (OpenAI, Gemini).
 """
 import base64
+import binascii
+import contextlib
 import json
 import math
 import os
+import re
 import struct
 import time
 import urllib.error
@@ -86,23 +90,54 @@ def _tag_utc():
     return time.strftime("%Y-%m-%d", time.gmtime())
 
 
-def _zaehler(daten, plus=0.0):
-    pfad = os.path.join(daten, "bild_zaehler.json")
+# ------------------------------------------------------------------ Tageszaehler (seit 0.3.4 unter Sperre, Fund 7)
+# Mehrere Werkzeug-Server (einer je Gehirn) buchen gleichzeitig: Pruefen und Reservieren passieren unter einer
+# Dateisperre, VOR dem Aufruf. Schlaegt der Aufruf fehl, wird die Reservierung zurueckgebucht.
+
+@contextlib.contextmanager
+def _gesperrt(daten):
+    fd = os.open(os.path.join(daten, "bild_zaehler.lock"), os.O_RDWR | os.O_CREAT, 0o600)
     try:
-        with open(pfad, encoding="utf-8") as f:
+        try:
+            import fcntl
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        except ImportError:                 # Windows
+            import msvcrt
+            msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+        yield
+    finally:
+        os.close(fd)
+
+
+def _zaehler(daten):
+    try:
+        with open(os.path.join(daten, "bild_zaehler.json"), encoding="utf-8") as f:
             z = json.load(f)
     except (OSError, ValueError):
         z = {}
     if z.get("tag") != _tag_utc():
-        z = {"tag": _tag_utc(), "neurons": 0.0, "bilder": 0}
-    if plus:
-        z["neurons"] = round(z.get("neurons", 0) + plus, 1)
-        z["bilder"] = z.get("bilder", 0) + 1
+        z = {"tag": _tag_utc(), "neurons": 0.0, "bilder": 0, "bezahlt": 0}
+    z.setdefault("bezahlt", 0)
+    return z
+
+
+def _buchen(daten, neurons=0.0, bezahlt=0, bilder=0, grenze_neurons=None, grenze_bezahlt=None):
+    """Unter Sperre pruefen und buchen. False, wenn eine Grenze ueberschritten wuerde (dann bleibt alles, wie es war)."""
+    pfad = os.path.join(daten, "bild_zaehler.json")
+    with _gesperrt(daten):
+        z = _zaehler(daten)
+        if grenze_neurons is not None and z.get("neurons", 0) + neurons > grenze_neurons:
+            return False
+        if grenze_bezahlt is not None and z.get("bezahlt", 0) + bezahlt > grenze_bezahlt:
+            return False
+        z["neurons"] = round(max(0.0, z.get("neurons", 0) + neurons), 1)
+        z["bezahlt"] = max(0, z.get("bezahlt", 0) + bezahlt)
+        z["bilder"] = max(0, z.get("bilder", 0) + bilder)
         with open(pfad + ".neu", "w", encoding="utf-8") as f:
             json.dump(z, f)
         os.chmod(pfad + ".neu", 0o600)
         os.replace(pfad + ".neu", pfad)
-    return z
+        return True
 
 
 def _wieder_ab():
@@ -113,8 +148,47 @@ def _wieder_ab():
 
 def stand(daten, cfg):
     z = _zaehler(daten)
-    return {"tag": z["tag"], "neurons": z.get("neurons", 0), "bilder": z.get("bilder", 0),
-            "limit": cfg.get("tageslimit", 9000), "wieder_ab": _wieder_ab()}
+    return {"tag": z["tag"], "neurons": z.get("neurons", 0), "bilder": z.get("bilder", 0), "bezahlt": z.get("bezahlt", 0),
+            "limit": cfg.get("tageslimit", 9000), "limit_bezahlt": cfg.get("bezahlt_limit", 20), "wieder_ab": _wieder_ab()}
+
+
+# ------------------------------------------------------------------ Netz (seit 0.3.4, Fund 14)
+
+class _KeineWeiterleitung(urllib.request.HTTPRedirectHandler):
+    """Weiterleitungen nicht verfolgen: urllib nimmt die Authorization-Kopfzeile sonst zu einem anderen Host mit."""
+
+    def redirect_request(self, *a, **k):
+        return None
+
+
+_OEFFNER = urllib.request.build_opener(_KeineWeiterleitung)
+LESEN_MAX = 40 * 1024 * 1024
+
+
+def _json_holen(req, timeout):
+    with _OEFFNER.open(req, timeout=timeout) as r:
+        roh = r.read(LESEN_MAX + 1)
+    if len(roh) > LESEN_MAX:
+        raise Fehler("Die Antwort des Bilddienstes ist zu gross.")
+    return json.loads(roh.decode("utf-8", "replace"))
+
+
+def _fehlertext(e, feld):
+    """Fehlertext des Dienstes, nur zum Erkennen bekannter Faelle; ans Gehirn geht er nicht (fremder Text)."""
+    try:
+        d = json.loads(e.read(65536).decode("utf-8", "replace"))
+    except Exception:
+        return ""
+    if feld == "errors":
+        return "; ".join(str(x.get("message")) for x in d.get("errors", []) if isinstance(x, dict))[:300]
+    return str((d.get("error") or {}).get("message") or "")[:300]
+
+
+def _b64(text):
+    try:
+        return base64.b64decode(re.sub(r"\s+", "", str(text or "")), validate=True)
+    except (ValueError, binascii.Error):
+        raise Fehler("Der Bilddienst hat kein gueltiges Bild geliefert.")
 
 
 def _formular(felder, dateien):
@@ -134,39 +208,40 @@ def _cloudflare(cfg, daten, auftrag, bild=None, typ="image/jpeg", genau=False, m
         raise Fehler("Cloudflare ist nicht eingerichtet (Konto-ID und Token fehlen).")
     ein = groesse(bild) if bild else None
     aus = masse or (ausgabe_masse(*ein) if ein else (1024, 1024))
-    z = _zaehler(daten)
-    frei = cfg.get("tageslimit", 9000) - z.get("neurons", 0)
+    limit = cfg.get("tageslimit", 9000)
     modell, hinweis = (CF_9B if genau else CF_4B), ""
-    if modell == CF_9B and neurons(CF_9B, ein, aus) > frei:
-        modell, hinweis = CF_4B, "Für das genauere Modell reicht das Gratis-Kontingent heute nicht mehr, deshalb das schnellere."
     kosten = neurons(modell, ein, aus)
-    if kosten > frei:
-        raise Fehler("Das Gratis-Kontingent für Bilder ist für heute aufgebraucht, ab %s Uhr geht es wieder." % _wieder_ab())
-    felder = {"prompt": auftrag[:2000], "width": str(aus[0]), "height": str(aus[1])}
-    dateien = {"input_image_0": ("bild", typ, bild)} if bild else {}
-    koerper, art = _formular(felder, dateien)
-    req = urllib.request.Request("https://api.cloudflare.com/client/v4/accounts/%s/ai/run/%s" % (cfg["cf_konto"], modell),
-                                 data=koerper, headers={"Authorization": "Bearer " + cfg["cf_token"], "Content-Type": art})
+    if not _buchen(daten, neurons=kosten, grenze_neurons=limit):       # reservieren, bevor der Aufruf rausgeht
+        if modell != CF_9B:
+            raise Fehler("Das Gratis-Kontingent für Bilder ist für heute aufgebraucht, ab %s Uhr geht es wieder." % _wieder_ab())
+        modell, hinweis = CF_4B, "Für das genauere Modell reicht das Gratis-Kontingent heute nicht mehr, deshalb das schnellere."
+        kosten = neurons(modell, ein, aus)
+        if not _buchen(daten, neurons=kosten, grenze_neurons=limit):
+            raise Fehler("Das Gratis-Kontingent für Bilder ist für heute aufgebraucht, ab %s Uhr geht es wieder." % _wieder_ab())
     try:
-        with urllib.request.urlopen(req, timeout=100) as r:
-            d = json.loads(r.read().decode())
-    except urllib.error.HTTPError as e:
+        felder = {"prompt": auftrag[:2000], "width": str(aus[0]), "height": str(aus[1])}
+        dateien = {"input_image_0": ("bild", typ, bild)} if bild else {}
+        koerper, art = _formular(felder, dateien)
+        req = urllib.request.Request("https://api.cloudflare.com/client/v4/accounts/%s/ai/run/%s" % (cfg["cf_konto"], modell),
+                                     data=koerper, headers={"Authorization": "Bearer " + cfg["cf_token"], "Content-Type": art})
         try:
-            meld = "; ".join(str(x.get("message")) for x in json.loads(e.read().decode()).get("errors", []))[:200]
-        except Exception:
-            meld = ""
-        if e.code == 429 or "neuron" in meld.lower() or "limit" in meld.lower():
-            raise Fehler("Cloudflare meldet: Tageskontingent erreicht, ab %s Uhr geht es wieder." % _wieder_ab())
-        if e.code in (401, 403):
-            raise Fehler("Cloudflare lehnt den Zugang ab (%d)." % e.code)
-        raise Fehler("Cloudflare: HTTP %d %s" % (e.code, meld))
-    except OSError as e:
-        raise Fehler("Cloudflare nicht erreichbar (%s)." % type(e).__name__)
-    b64 = (d.get("result") or {}).get("image")
-    if not b64:
-        raise Fehler("Cloudflare hat kein Bild geliefert.")
-    roh = base64.b64decode(b64)
-    _zaehler(daten, kosten)
+            d = _json_holen(req, 100)
+        except urllib.error.HTTPError as e:
+            meld = _fehlertext(e, "errors").lower()
+            if e.code == 429 or "neuron" in meld or "limit" in meld:
+                raise Fehler("Cloudflare meldet: Tageskontingent erreicht, ab %s Uhr geht es wieder." % _wieder_ab())
+            if e.code in (401, 403):
+                raise Fehler("Cloudflare lehnt den Zugang ab (%d)." % e.code)
+            raise Fehler("Cloudflare: HTTP %d" % e.code)
+        except OSError as e:
+            raise Fehler("Cloudflare nicht erreichbar (%s)." % type(e).__name__)
+        roh = _b64((d.get("result") or {}).get("image"))
+        if not roh:
+            raise Fehler("Cloudflare hat kein Bild geliefert.")
+    except Fehler:
+        _buchen(daten, neurons=-kosten)          # Reservierung zurueck
+        raise
+    _buchen(daten, bilder=1)
     return roh, ("image/png" if roh[:4] == b"\x89PNG" else "image/jpeg"), {
         "modell": modell.split("/")[-1], "hinweis": hinweis, "neurons": round(kosten)}
 
@@ -184,8 +259,7 @@ def _gemini(cfg, auftrag, bild=None, typ="image/jpeg", seitenverhaeltnis=None):
                                  data=json.dumps(koerper).encode(),
                                  headers={"x-goog-api-key": cfg["gemini_schluessel"], "Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=100) as r:
-            d = json.loads(r.read().decode())
+        d = _json_holen(req, 100)
     except urllib.error.HTTPError as e:
         if e.code == 429:
             raise Fehler("Gemini lehnt Bilder ab: Kontingent erschöpft oder kein bezahltes Kontingent (429).")
@@ -194,9 +268,11 @@ def _gemini(cfg, auftrag, bild=None, typ="image/jpeg", seitenverhaeltnis=None):
         raise Fehler("Gemini nicht erreichbar (%s)." % type(e).__name__)
     for teil in ((d.get("candidates") or [{}])[0].get("content") or {}).get("parts", []):
         if "inlineData" in teil:
-            return base64.b64decode(teil["inlineData"]["data"]), teil["inlineData"].get("mimeType", "image/png"), {
-                "modell": GEMINI_MODELL, "hinweis": "", "neurons": 0}
-    raise Fehler("Gemini hat kein Bild geliefert (%s)." % ((d.get("candidates") or [{}])[0].get("finishReason") or "ohne Grund"))
+            typ_aus = str(teil["inlineData"].get("mimeType") or "")
+            return _b64(teil["inlineData"].get("data")), typ_aus if typ_aus in ("image/png", "image/jpeg", "image/webp") \
+                else "image/png", {"modell": GEMINI_MODELL, "hinweis": "", "neurons": 0}
+    grund = str((d.get("candidates") or [{}])[0].get("finishReason") or "")
+    raise Fehler("Gemini hat kein Bild geliefert%s." % ((" (%s)" % grund) if re.fullmatch(r"[A-Z_]{1,40}", grund) else ""))
 
 
 def _openai(cfg, auftrag, bild=None, typ="image/jpeg", genau=False, format=None):
@@ -218,30 +294,41 @@ def _openai(cfg, auftrag, bild=None, typ="image/jpeg", genau=False, format=None)
     req = urllib.request.Request(adresse, data=koerper,
                                  headers={"Authorization": "Bearer " + cfg["openai_schluessel"], "Content-Type": art})
     try:
-        with urllib.request.urlopen(req, timeout=180) as r:
-            d = json.loads(r.read().decode())
+        d = _json_holen(req, 180)
     except urllib.error.HTTPError as e:
-        try:
-            meld = str((json.loads(e.read().decode()).get("error") or {}).get("message") or "")[:200]
-        except Exception:
-            meld = ""
+        meld = _fehlertext(e, "error").lower()
         if e.code == 401:
             raise Fehler("OpenAI lehnt den Schlüssel ab (401).")
         if e.code == 429:
             raise Fehler("OpenAI meldet: Limit oder Guthaben erschöpft (429).")
-        if e.code == 403 and "verif" in meld.lower():
+        if e.code == 403 and "verif" in meld:
             raise Fehler("OpenAI verlangt für Bildmodelle eine Verifizierung der Organisation (Entwicklerkonsole, "
                          "Einstellungen, Organisation).")
-        raise Fehler("OpenAI: HTTP %d %s" % (e.code, meld))
+        if e.code == 400 and ("safety" in meld or "moderation" in meld):
+            raise Fehler("OpenAI hat den Auftrag abgelehnt (Inhaltsrichtlinie).")
+        raise Fehler("OpenAI: HTTP %d" % e.code)
     except OSError as e:
         raise Fehler("OpenAI nicht erreichbar (%s)." % type(e).__name__)
-    b64 = ((d.get("data") or [{}])[0] or {}).get("b64_json")
-    if not b64:
+    roh = _b64(((d.get("data") or [{}])[0] or {}).get("b64_json"))
+    if not roh:
         raise Fehler("OpenAI hat kein Bild geliefert.")
-    roh = base64.b64decode(b64)
     nutzung = d.get("usage") or {}
     return roh, ("image/png" if roh[:4] == b"\x89PNG" else "image/jpeg"), {
         "modell": modell, "hinweis": "", "neurons": 0, "token": nutzung.get("output_tokens") or 0}
+
+
+def _bezahlt(cfg, daten, aufruf):
+    """OpenAI und Gemini kosten je Bild: Tageslimit (BILD_TAGESLIMIT_BEZAHLT, Standard 20), reserviert vor dem Aufruf."""
+    if not _buchen(daten, bezahlt=1, grenze_bezahlt=cfg.get("bezahlt_limit", 20)):
+        raise Fehler("Heute sind schon %d bezahlte Bilder entstanden, das ist die eingestellte Grenze "
+                     "(BILD_TAGESLIMIT_BEZAHLT). Morgen geht es wieder." % cfg.get("bezahlt_limit", 20))
+    try:
+        erg = aufruf()
+    except Fehler:
+        _buchen(daten, bezahlt=-1)
+        raise
+    _buchen(daten, bilder=1)
+    return erg
 
 
 def bearbeiten(cfg, daten, bild, typ, auftrag, genau=False):
@@ -249,9 +336,9 @@ def bearbeiten(cfg, daten, bild, typ, auftrag, genau=False):
     if cfg.get("dienst") == "cloudflare":
         return _cloudflare(cfg, daten, auftrag, bild, typ, genau)
     if cfg.get("dienst") == "gemini":
-        return _gemini(cfg, auftrag, bild, typ)
+        return _bezahlt(cfg, daten, lambda: _gemini(cfg, auftrag, bild, typ))
     if cfg.get("dienst") == "openai":
-        return _openai(cfg, auftrag, bild, typ, genau)
+        return _bezahlt(cfg, daten, lambda: _openai(cfg, auftrag, bild, typ, genau))
     raise Fehler("Bilder bearbeiten ist nicht eingerichtet.")
 
 
@@ -264,7 +351,7 @@ def erzeugen(cfg, daten, beschreibung, format="quadrat", genau=False):
     if cfg.get("dienst") == "cloudflare":
         return _cloudflare(cfg, daten, beschreibung, None, genau=genau, masse=masse)
     if cfg.get("dienst") == "gemini":
-        return _gemini(cfg, beschreibung, None, seitenverhaeltnis=verhaeltnis)
+        return _bezahlt(cfg, daten, lambda: _gemini(cfg, beschreibung, None, seitenverhaeltnis=verhaeltnis))
     if cfg.get("dienst") == "openai":
-        return _openai(cfg, beschreibung, None, genau=genau, format=format)
+        return _bezahlt(cfg, daten, lambda: _openai(cfg, beschreibung, None, genau=genau, format=format))
     raise Fehler("Bilder erzeugen ist nicht eingerichtet.")

@@ -685,19 +685,33 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
       kein Pfad: Alles, was nicht genau dem Muster entspricht, wird abgelehnt.
     - Weg: Die Brücke legt jeden Anhang ab und schreibt seine Kennung in den Kopf des Anhangs
       (`anhang.bloecke(…, kennung=…)`). Die MCP-Werkzeuge `pdf_erstellen`, `bild_bearbeiten`, `bild_erzeugen`,
-      `datei_umwandeln` und `umwandeln_moeglich` holen Eingänge über die Kennung und legen Ergebnisse mit der Quelle
-      der Frage ab (Umgebungsvariable `JARVIS_QUELLE` des Werkzeug-Servers). Nach der Antwort sammelt die Brücke mit
-      `ablage.neu_fuer(DATEN, quelle, seit)` die neuen Ergebnisse genau dieser Quelle und gibt sie als
+      `datei_umwandeln` und `umwandeln_moeglich` holen Eingänge über die Kennung und legen Ergebnisse ab.
+    - **Besitzer (seit 0.3.4, Prüfbericht 0.3.3, nicht verhandelbar):** Jede Datei gehört dem Gerät, das gefragt hat
+      (Geräte-ID oder `haupt`), und einer Anfrage (eigene Zufallskennung je Frage). Vor jeder Frage an ein Gehirn
+      schreibt die Brücke `ablage/aktiv/<pid des Gehirns>.json` mit Besitzer und Anfrage; der Werkzeug-Server ist ein
+      Kindprozess des Gehirns und liest es über `os.getppid()` (`ausgabe.aktiv_lesen`). Werkzeuge nehmen nur Dateien
+      desselben Besitzers an und legen Ergebnisse mit Besitzer und Anfrage ab. Nach der Antwort sammelt die Brücke mit
+      `ablage.neu_fuer(DATEN, anfrage)` genau die Ergebnisse dieser Anfrage ein (unter Sperre) und gibt sie als
       `dateien: [{kennung, name, typ, groesse, info}]` in der Antwort von `/v1/frage`, im Verlauf und in der
-      Push-Meldung mit.
-    - Abholen: `GET /v1/datei/a…`, nur mit Token, auch über den Zugang von außen (nur dieser Pfad, nur `a…`).
-      Kopfzeilen `Content-Security-Policy: default-src 'none'; sandbox`, `X-Content-Type-Options: nosniff` und
-      `Content-Disposition: attachment`; HTML, SVG und JavaScript gehen als `application/octet-stream` raus. Eingänge
-      lassen sich nie abholen.
+      Push-Meldung mit. Nicht nach Quelle und Zeit einsammeln: Zwei Handys haben dieselbe Quelle `app`.
+    - Abholen: `GET /v1/datei/a…`, nur durch das Gerät, dem die Datei gehört, auch über den Zugang von außen (nur
+      dieser Pfad, nur `a…`). `/v1/zustand` zeigt Dateien im Verlauf nur ihrem Besitzer. Kopfzeilen
+      `Content-Security-Policy: default-src 'none'; sandbox`, `X-Content-Type-Options: nosniff` und
+      `Content-Disposition: attachment`; der Typ nur aus einer Liste erlaubter Typen (`ausgabe.ausliefer_typ`), alles
+      andere als `application/octet-stream`. Eingänge lassen sich nie abholen.
+    - Unter der Quelle `meldung` (Frage zu einer Schlagzeile) laufen Bild- und Umwandel-Werkzeuge nur trocken: Sie
+      kosten Geld und geben Daten an Dritte, fremder Text löst sie nicht aus.
+    - Große Anfragen: Token und Gerät prüfen, bevor ein Byte des Körpers gelesen wird; höchstens zwei Anfragen über
+      2 MB gleichzeitig (sonst 503); im Reverse-Proxy eine Körpergrenze setzen, die zur Grenze der Brücke passt.
+    - Bomben: ZIP-Inhalte mit einer Grenze für die Summe und für die Zahl der Folien lesen und an der Textgrenze
+      abbrechen; PNG nur bis zur erwarteten Größe entpacken, Bildmaße bei allen Bildarten begrenzen.
     - Geräte: App ab 4.4 und Web-App zeigen Dateikarten mit Vorschau (nur Bilder) und Öffnen, Teilen, Speichern; die
       Web-App braucht dafür `blob:` in `img-src`. Der PC-Client ab 18 zeigt sie im Gespräch des HUD mit Öffnen und
-      „Speichern unter …“. Programmdateien (`.exe`, `.bat`, `.ps1`, `.js`, `.lnk` und ähnliche) öffnet er nie
-      direkt, die lassen sich nur speichern.
+      „Speichern unter …“. Direkt öffnen Client, App und Web-App nur Dateien aus einer Erlaubnisliste (PDF, Bilder,
+      Ton, Video, Text, Office ohne Makros), alles andere nur speichern oder teilen; eine Sperrliste hat immer Lücken
+      (`.chm`, `.docm`, `.rdp`, `.iso` …). Unter Windows bekommt jede gespeicherte oder geöffnete Datei die
+      Herkunftsmarke (`:Zone.Identifier`, `ZoneId=3`). Dateinamen ohne Steuer-, Format- und Richtungszeichen (U+202E
+      tarnt sonst „fdp.exe“ als PDF) und ohne Windows-Gerätenamen (CON, NUL …).
     - Persona: ein Absatz, dass Dateien nur über diese Werkzeuge entstehen und nie an andere Werkzeuge weitergereicht
       werden, und dass Jarvis keine Pfade oder Kennungen vorliest. Ohne diesen Satz hat ein Gehirn im Test den
       Auftrag an ein anderes Werkzeug gegeben.
@@ -728,15 +742,25 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
       `geheim\` (Vorlage oben, `zusatzdienste.py` liest beide Formen). Namen: `BILD_DIENST`, `CLOUDFLARE_KONTO`,
       `CLOUDFLARE_TOKEN`, `BILD_TAGESLIMIT`, `OPENAI_SCHLUESSEL`, `OPENAI_BILDMODELL`, `OPENAI_BILDMODELL_GENAU`,
       `OPENAI_BILDQUALITAET`, `GEMINI_SCHLUESSEL_BILDER`, `TRANSMUTE_ADRESSE`, `TRANSMUTE_SCHLUESSEL`. Keiner davon
-      geht in Antworten, Protokoll oder Fähigkeiten-Übersicht; `zusatzdienste.uebersicht` nennt nur den Dienst.
+      geht in Antworten, Protokoll oder Fähigkeiten-Übersicht; `zusatzdienste.uebersicht` nennt nur den Dienst. Die
+      `.env` hat die Rechte 600 und steht in `.gitignore`. Die Form wird geprüft (Cloudflare-Konto 32 Hexzeichen,
+      OpenAI `sk-`, Gemini `AIza`), ein falsch verwiesener Schlüssel eines anderen Dienstes geht so nicht raus.
+    - Kosten: Den Zähler für Cloudflare unter einer Dateisperre führen und die Kosten vor dem Aufruf reservieren
+      (gleichzeitige Aufträge bestehen sonst alle dieselbe Prüfung), bei einem Fehler zurückbuchen. Für bezahlte
+      Bilder (OpenAI, Gemini) ein Tageslimit, `BILD_TAGESLIMIT_BEZAHLT` (Standard 20).
+    - Antworten der Dienste: Fehlertexte nicht ans Gehirn (fremder Text), nur den HTTP-Status; keine Weiterleitungen
+      verfolgen (urllib nimmt die Authorization-Kopfzeile sonst zu einem anderen Host mit); Lesegrenzen; Kennungen und
+      Endungen aus Antworten nur in erwarteter Form. Das Original wird an den ersten Bytes erkannt (kein SVG, die Art
+      muss zum Anhang passen) und geht nur an `datei_umwandeln`.
     - Datenschutz: Bilder zum Bearbeiten gehen an den gewählten Anbieter. Sag das der Person beim Einrichten, private
       Fotos (Kinder, Ausweise) lieber nicht. Keine Bilder, die echte Personen bloßstellen, sexualisieren oder ihnen
       etwas unterschieben (NEVER.md).
     - Abnahme (Testmodus, Quelle `test…`): PDF aus getipptem Text mit Umlauten, PDF aus einem Foto mit Text, ein Bild
       verändert, ein Bild erzeugt, PNG nach JPG umgewandelt, eine FLAC mit Original zur MP3 mit voller
       Abtastrate (mit `ffprobe` nachmessen). Jede Datei kommt als Karte im Gerät an und lässt sich
-      öffnen. Ohne Token wird das Abholen abgelehnt, eine `b…`-Kennung lässt sich nicht abholen, und das Ergebnis
-      einer anderen Quelle taucht nicht auf.
+      öffnen. Ohne Token wird das Abholen abgelehnt, eine `b…`-Kennung lässt sich nicht abholen, das Ergebnis eines
+      anderen Geräts lässt sich nicht abholen (404) und taucht nicht auf, und ein Werkzeug lehnt die Kennung eines
+      anderen Geräts ab.
 
 ### Tempo (gemessen, von Anfang an so bauen)
 
