@@ -28,6 +28,9 @@ Die Regeln stehen ausführlich in `EINRICHTUNG.md` (Phase 2, „Sicherheit“). 
 - **App und PC-Client prüfen die Brücke, bevor sie ihr Token schicken** (HMAC über eine Zufallszahl, gebildet mit
   dem Hash des Tokens). In einem fremden WLAN mit gleicher Adresse geht so weder das Token noch eine Update-Anfrage an
   ein fremdes Gerät. Die Web-App kann das nicht, siehe „Bekannte Grenzen“.
+- **Auch die erste Kopplung ist geschützt** (seit 0.3.2): Setup, Linux-Installer und App schicken den Kopplungscode
+  erst, wenn die Gegenstelle mit ihm bewiesen hat, dass sie ihn kennt (HMAC mit einem PBKDF2-Schlüssel aus dem Code,
+  200000 Runden, damit eine abgefangene Antwort das Raten nicht leicht macht).
 - **Aussehen nur über geprüfte Einstellungen:** Jarvis ändert sein Aussehen über ein eigenes Werkzeug mit festen
   Schlüsseln und geprüften Werten, nie über den Code der Seite. Fremder Text und Routinen ändern es nicht.
 - **Echtzeit je Gerät abschaltbar**, per Schalter am Rechner, nicht per Sprachbefehl.
@@ -50,8 +53,10 @@ Die Regeln stehen ausführlich in `EINRICHTUNG.md` (Phase 2, „Sicherheit“). 
   Ausnahmen: Windows-MCP ist nur über diesen Stichtag festgelegt (ohne Prüfsummen), ein schon installiertes uv wird in
   seiner Version genommen, Claude Code und Git kommen aktuell von ihren offiziellen Quellen.
 - **Updates:**
-    - Der PC-Client holt neue Fassungen von der eigenen Brücke, erst nach ihrem Beweis und nur mit Signatur (HMAC mit
-      dem Token-Hash über die SHA-256). Ist GitHub eingestellt, nur Releases mit Tag `pc-<Nummer>` und Prüfsumme. Er
+    - Der PC-Client holt neue Fassungen von der eigenen Brücke, erst nach ihrem Beweis und nur mit Signatur. Seit
+      0.3.2 ist das Ed25519 über Version und Prüfsumme mit einem eigenen Schlüssel der Brücke, den der Client bei der
+      Kopplung festhält; wer das Token mitliest, kann damit kein Update mehr bauen. Ist GitHub eingestellt, nur Releases
+      mit Tag `pc-<Nummer>`, Prüfsumme und Ed25519-Signatur des Projekts (der öffentliche Schlüssel steht im Client). Er
       sucht alle sechs Stunden; `"auto_update": false` in den Einstellungen lässt nur noch den Knopf.
     - Die Release-App fragt GitHub nach einer neuen Fassung (`Jarvis-App.json` mit SHA-256) und lädt sie erst auf
       Tipp. Android installiert nur, was mit demselben Schlüssel signiert ist.
@@ -60,7 +65,9 @@ Die Regeln stehen ausführlich in `EINRICHTUNG.md` (Phase 2, „Sicherheit“). 
 ## Bekannte Grenzen
 
 - **Jarvis unterscheidet keine Stimmen.** Wer im Raum spricht, spricht mit den Rechten des Geräts. Aufträge mit
-  Shell von Lautsprechern aus lassen sich deshalb abschalten.
+  Shell von Lautsprechern aus lassen sich deshalb abschalten. Seit 0.3.2 gibt es am PC per Sprache und per Echtzeit
+  standardmäßig keine PC-Werkzeuge, weil auch Ton aus den eigenen Lautsprechern (ein Video, eine Webseite) als
+  Sprecher zählt. Wer das einschaltet, nimmt genau das in Kauf.
 - **Ein Gehirn mit Shell** erreicht auch gesperrte Dateien. Davor schützen dann nur Anweisung und Freigabe.
 - **Die Web-App** kommt per HTTP, ihr Geräte-Token liegt im Browser-Speicher dieser Adresse. Antwortet in einem
   fremden Netz ein anderes Gerät unter derselben Adresse, kann es das Token auslesen; ein Beweis der Brücke hilft

@@ -36,7 +36,11 @@ jobs:
         run: |
           python3 -B vorlagen/bruecke/test_oberflaeche.py
           python3 -B vorlagen/bruecke/test_verhalten.py
+          python3 -B vorlagen/bruecke/test_anhang.py
+          python3 -B vorlagen/bruecke/test_ed25519.py
           python3 -B vorlagen/pc/test_echtzeit_befehl.py
+          python3 -B vorlagen/pc/test_fenster_schutz.py
+          python3 -B vorlagen/pc/test_neuigkeiten.py
 
       - name: Setup.exe bauen
         run: sh installer/bauen.sh "$VERSION"

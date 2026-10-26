@@ -30,6 +30,9 @@ important ones:
 - **The app and PC client check the bridge before they send their token** (HMAC over a random number, computed with
   the hash of the token). This way, on a foreign Wi-Fi network with the same address, neither the token nor an update
   request goes to a foreign device. The web app cannot do this, see "Known limits".
+- **The first pairing is protected too** (since 0.3.2): setup, Linux installer and app only send the pairing code once
+  the other side has proven with it that it knows it (HMAC with a PBKDF2 key from the code, 200000 rounds, so an
+  intercepted answer doesn't make guessing easy).
 - **Appearance only via checked settings:** Jarvis changes its appearance via a dedicated tool with fixed
   keys and checked values, never via the page's code. Third-party text and routines don't change it.
 - **Real-time mode can be switched off per device**, with a switch at the computer, not by voice command.
@@ -52,8 +55,10 @@ important ones:
   Exceptions: Windows-MCP is pinned only via this cut-off date (without checksums), an already installed uv is used in
   its existing version, and Claude Code and Git come in their current version from their official sources.
 - **Updates:**
-    - The PC client gets new versions from your own bridge, only after its proof and only with a signature (HMAC with
-      the token hash over the SHA-256). If GitHub is configured, only releases with tag `pc-<Nummer>` and a checksum. It
+    - The PC client gets new versions from your own bridge, only after its proof and only with a signature. Since
+      0.3.2 that is Ed25519 over version and checksum with the bridge's own key, which the client keeps from pairing;
+      whoever reads the token can no longer build an update with it. If GitHub is configured, only releases with tag
+      `pc-<Nummer>`, a checksum and the project's Ed25519 signature (the public key is in the client). It
       checks every six hours; `"auto_update": false` in the settings leaves only the button.
     - The release app asks GitHub for a new version (`Jarvis-App.json` with SHA-256) and downloads it only on
       tap. Android only installs what is signed with the same key.
@@ -62,7 +67,9 @@ important ones:
 ## Known limits
 
 - **Jarvis does not tell voices apart.** Whoever speaks in the room speaks with the device's permissions. Jobs with a
-  shell from speakers can therefore be switched off.
+  shell from speakers can therefore be switched off. Since 0.3.2, speech and real-time mode at the PC get no PC tools
+  by default, because sound from the PC's own speakers (a video, a web page) counts as a speaker too. Switching it on
+  means accepting exactly that.
 - **A brain with a shell** can also reach blocked files. Then only instruction and approval protect against that.
 - **The web app** comes via HTTP; its device token lives in the browser storage for that address. If, on a
   foreign network, a different device answers under the same address, it can read the token; a proof from the bridge

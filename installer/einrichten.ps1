@@ -59,6 +59,24 @@ function Bruecke-Echt([string]$Bruecke, [string]$Token) {
   $Soll = Hex ($Mac.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("jarvis-lan:$Nonce")))
   return ([string]$R.beweis -ceq $Soll)
 }
+# Seit 0.3.2 (Pruefbericht 0.3.1, Fund 1): Bevor der Kopplungscode rausgeht, beweist die Gegenstelle, dass sie ihn
+# kennt (HMAC mit PBKDF2 aus Code, Salz und Runden). Ein fremdes Geraet unter der Adresse bekaeme sonst den Code, gaebe
+# selbst ein Token aus und bestuende damit jeden spaeteren Brueckenbeweis. Eine Bruecke ohne diesen Beweis (vor 0.3.2)
+# wird abgelehnt, sonst muesste ein Faelscher nur so tun, als kenne er ihn nicht.
+function Koppel-Beweis([string]$Bruecke, [string]$Code) {
+  $Nonce = Zufall
+  try { $R = Invoke-RestMethod -Uri "$Bruecke/v1/koppeln/beweis?nonce=$Nonce" -TimeoutSec 15 } catch { return $false }
+  $Runden = 0
+  if (-not [int]::TryParse([string]$R.runden, [ref]$Runden) -or $Runden -lt 100000 -or $Runden -gt 2000000) { return $false }
+  if ([string]$R.salz -cnotmatch '^[0-9a-f]{16,128}$') { return $false }
+  $Salz = [byte[]]::new(([string]$R.salz).Length / 2)
+  for ($i = 0; $i -lt $Salz.Length; $i++) { $Salz[$i] = [Convert]::ToByte(([string]$R.salz).Substring($i * 2, 2), 16) }
+  $Norm = $Code.ToUpper() -creplace '[^A-Z0-9]', ''
+  $Kdf = New-Object System.Security.Cryptography.Rfc2898DeriveBytes($Norm, $Salz, $Runden, [System.Security.Cryptography.HashAlgorithmName]::SHA256)
+  $Mac = [System.Security.Cryptography.HMACSHA256]::new($Kdf.GetBytes(32))
+  $Soll = Hex ($Mac.ComputeHash([System.Text.Encoding]::UTF8.GetBytes("jarvis-koppeln:$Nonce")))
+  return ([string]$R.beweis -ceq $Soll)
+}
 # Werte aus /v1/client nur in ihrer erwarteten Form (seit 0.3.0, Sicherheitspruefung): Ports als Zahl, Sprache de/en,
 # Adressen per http(s) auf dem Rechner der Bruecke, sonst kurze Texte
 function Client-Wert([string]$k, $v, $BrueckenHost, $BrueckenIp) {
@@ -124,6 +142,10 @@ function Verbinden($A) {
     Write-Host ("   $Ziel " + (T 'nur für dein Konto (dazu SYSTEM und Administratoren).' 'only for your account (plus SYSTEM and administrators).'))
   } catch {
     Hinweis ((T 'Ordnerrechte ließen sich nicht setzen: ' 'Folder permissions couldn''t be set: ') + $_.Exception.Message)
+    # Seit 0.3.2 (Pruefbericht 0.3.1, Fund 10): ausserhalb des eigenen Profils abbrechen, bevor das Token hineinkommt
+    if (-not ($Ziel + '\').StartsWith($env:LOCALAPPDATA + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+      throw (T 'Ohne eigene Ordnerrechte richte ich außerhalb des Benutzerprofils nichts ein, andere Konten könnten sonst das Token lesen. Bitte einen Ordner unter %LOCALAPPDATA% wählen.' 'Without dedicated folder permissions I won''t set up anything outside your user profile, other accounts could read the token. Please choose a folder under %LOCALAPPDATA%.')
+    }
     Hinweis (T 'Am sichersten ist ein Ordner im eigenen Benutzerprofil (Vorgabe: %LOCALAPPDATA%\Jarvis).' 'Safest is a folder in your own user profile (default: %LOCALAPPDATA%\Jarvis).')
   }
   foreach ($Wolke in $env:OneDrive, $env:OneDriveConsumer, $env:OneDriveCommercial) {
@@ -157,10 +179,16 @@ function Verbinden($A) {
     $Alt = Get-Content $EinstPfad -Raw | ConvertFrom-Json
     if ($Alt.bruecke -eq $Bruecke) { $Token = $Alt.token }
   }
+  $UpdateSchluessel = $null
   if ($A['code']) {
+    if (-not (Koppel-Beweis $Bruecke $A['code'])) {
+      throw (T 'Unter dieser Adresse antwortet etwas, das deinen Kopplungscode nicht kennt. Der Code bleibt hier. Adresse prüfen, einen neuen Code erzeugen oder (bei einem Jarvis vor 0.3.2) zuerst den Jarvis aktualisieren.' 'Something answers at this address that doesn''t know your pairing code. The code stays here. Check the address, create a new code or (for a Jarvis before 0.3.2) update the Jarvis first.')
+    }
     $Antwort = Invoke-RestMethod -Method Post -Uri "$Bruecke/v1/koppeln" -ContentType 'application/json; charset=utf-8' `
       -Body ([System.Text.Encoding]::UTF8.GetBytes((@{ code = $A['code'].Trim().ToUpper(); name = $env:COMPUTERNAME } | ConvertTo-Json))) -TimeoutSec 15
     $Token = $Antwort.token
+    # seit 0.3.2: oeffentlicher Update-Schluessel der Bruecke; der Client prueft Updates dagegen (Ed25519)
+    if ([string]$Antwort.update_schluessel -cmatch '^[0-9a-f]{64}$') { $UpdateSchluessel = [string]$Antwort.update_schluessel }
   }
   if (-not $Token) { throw (T 'Kein Kopplungscode und keine frühere Kopplung mit diesem Jarvis gefunden.' 'No pairing code and no earlier pairing with this Jarvis found.') }
   if (-not $A['code'] -and -not $Alt.ohne_brueckenbeweis -and -not (Bruecke-Echt $Bruecke $Token)) {
@@ -212,6 +240,11 @@ function Verbinden($A) {
       if ($null -ne $Alt.$k) { $Einst[$k] = $Alt.$k }
     }
   }
+  if ($UpdateSchluessel) { $Einst['update_schluessel'] = $UpdateSchluessel }
+  elseif ($Alt -and $Alt.bruecke -eq $Bruecke -and ([string]$Alt.update_schluessel -cmatch '^[0-9a-f]{64}$')) { $Einst['update_schluessel'] = [string]$Alt.update_schluessel }
+  # Version des mitgelieferten Clients: Nach einer Neuinstallation zeigt er keine "Neu in dieser Version"-Hinweise
+  $CV = Select-String -Path (Join-Path $Mitgeliefert 'jarvis_pc.py') -Pattern '^VERSION = (\d+)' | Select-Object -First 1
+  if ($CV) { $Einst['zuletzt_version'] = [int]$CV.Matches[0].Groups[1].Value }
   Schreibe $EinstPfad ($Einst | ConvertTo-Json)
   Write-Host ('   ' + (T 'Einstellungen gespeichert (Token nur in dieser Datei, für dein Benutzerkonto).' 'Settings saved (token only in this file, for your user account).'))
 

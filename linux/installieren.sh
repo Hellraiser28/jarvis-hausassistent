@@ -246,7 +246,7 @@ verbinden() {
   [ -f "$EINST" ] && alt=$(cat "$EINST")
   local programm
   programm=$(cat <<'PYEOF'
-import hashlib, hmac, json, os, secrets, socket, sys, urllib.error, urllib.parse, urllib.request
+import hashlib, hmac, json, os, re, secrets, socket, sys, urllib.error, urllib.parse, urllib.request
 EN = len(sys.argv) > 2 and sys.argv[2] == "true"
 
 
@@ -264,7 +264,25 @@ def bruecke_echt(adresse, token):
     except (urllib.error.URLError, ValueError, OSError):
         return False
     beweis = str(d.get("beweis", "")) if isinstance(d, dict) else ""
-    return hmac.compare_digest(beweis, hmac.new(th.encode(), ("jarvis-lan:" + nonce).encode(), hashlib.sha256).hexdigest())
+    soll = hmac.new(th.encode(), ("jarvis-lan:" + nonce).encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(beweis.encode("utf-8", "replace"), soll.encode())   # Bytes: Umlaute werfen sonst
+
+
+def koppel_beweis(adresse, code):
+    """Seit 0.3.2 (Pruefbericht 0.3.1, Fund 1): Bevor der Kopplungscode rausgeht, beweist die Gegenstelle, dass sie ihn
+    kennt (HMAC mit PBKDF2 aus Code, Salz und Runden). Ein fremdes Geraet unter der Adresse sieht den Code so nie. Eine
+    Bruecke ohne diesen Beweis (vor 0.3.2) wird abgelehnt."""
+    nonce = secrets.token_hex(16)
+    try:
+        d = json.loads(urllib.request.urlopen("%s/v1/koppeln/beweis?nonce=%s" % (adresse, nonce), timeout=15).read().decode())
+        runden, salz = int(d["runden"]), bytes.fromhex(d["salz"])
+    except (urllib.error.URLError, ValueError, OSError, KeyError, TypeError):
+        return False
+    if not 100000 <= runden <= 2000000 or not 8 <= len(salz) <= 64:
+        return False
+    schluessel = hashlib.pbkdf2_hmac("sha256", re.sub(r"[^A-Z0-9]", "", code.upper()).encode(), salz, runden)
+    soll = hmac.new(schluessel, ("jarvis-koppeln:" + nonce).encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(str(d.get("beweis", "")).encode("utf-8", "replace"), soll.encode())
 
 
 def ip(name):
@@ -304,11 +322,21 @@ if not isinstance(a, dict):
     a = {}
 if a.get("bruecke") == adresse:
     token = a.get("token")
+update_schluessel = None
 if code.strip():
+    if not koppel_beweis(adresse, code.strip()):
+        sys.exit("   Something answers at this address that doesn't know your pairing code. The code stays here. Check the"
+                 " address, create a new code or (for a Jarvis before 0.3.2) update the Jarvis first." if EN else
+                 "   Unter dieser Adresse antwortet etwas, das deinen Kopplungscode nicht kennt. Der Code bleibt hier."
+                 " Adresse prüfen, einen neuen Code erzeugen oder (bei einem Jarvis vor 0.3.2) zuerst den Jarvis aktualisieren.")
     req = urllib.request.Request(adresse + "/v1/koppeln", headers={"Content-Type": "application/json"},
                                  data=json.dumps({"code": code.strip().upper(), "name": geraet}).encode())
     try:
-        token = json.loads(urllib.request.urlopen(req, timeout=15).read().decode())["token"]
+        antwort = json.loads(urllib.request.urlopen(req, timeout=15).read().decode())
+        token = antwort["token"]
+        # seit 0.3.2: oeffentlicher Update-Schluessel der Bruecke; der Client prueft Updates dagegen (Ed25519)
+        if re.fullmatch(r"[0-9a-f]{64}", str(antwort.get("update_schluessel", ""))):
+            update_schluessel = antwort["update_schluessel"]
     except urllib.error.HTTPError as e:
         try:
             grund = json.loads(e.read().decode()).get("fehler", "")
@@ -344,6 +372,17 @@ for k in ("dateien", "hud", "ohr_port", "stimme_port", "sprache", "stimme", "aus
     v = c.get(k) if isinstance(c, dict) else None
     if gueltig(k, v, adresse):
         e[k] = v
+if update_schluessel:
+    e["update_schluessel"] = update_schluessel
+elif a.get("bruecke") == adresse and re.fullmatch(r"[0-9a-f]{64}", str(a.get("update_schluessel", ""))):
+    e["update_schluessel"] = a["update_schluessel"]
+# Version des mitgelieferten Clients: Nach einer Neuinstallation zeigt er keine "Neu in dieser Version"-Hinweise
+try:
+    v = re.search(r"^VERSION = (\d+)", open(sys.argv[3], encoding="utf-8").read(), re.M)
+    if v:
+        e["zuletzt_version"] = int(v.group(1))
+except (IndexError, OSError):
+    pass
 pfad = sys.argv[1]
 with open(pfad + ".neu", "w", encoding="utf-8") as f:
     json.dump(e, f, ensure_ascii=False, indent=1)
@@ -354,7 +393,7 @@ print(("   Paired. Settings in %s (readable only by your account)." if EN else
 PYEOF
 )
   printf '%s\n%s\n%s\n%s\n%s\n%s\n%s' "$adresse" "$host" "$JARVIS_CODE" "$name" "$JARVIS_NAME" "$autostart $menue $ohne" "$alt" | \
-    "$PY" -I -c "$programm" "$EINST" "$EN" || fehler "$(t "Kopplung fehlgeschlagen." "Pairing failed.")"
+    "$PY" -I -c "$programm" "$EINST" "$EN" "$HIER/jarvis_pc.py" || fehler "$(t "Kopplung fehlgeschlagen." "Pairing failed.")"
 
   schritt "$(t "Pakete (feste Versionen mit Prüfsummen)" "Packages (pinned versions with checksums)")"
   local liste=$HIER/pakete-linux.txt

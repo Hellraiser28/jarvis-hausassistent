@@ -39,7 +39,9 @@ All images show made-up sample data.
   any time. For anything that needs knowledge or tools it asks Claude, the house brain with its tools (calendar,
   home, lists, news, PC).
 - **One assistant, many ways in:** "Hey Jarvis" on your PC (Windows and Linux) with its own window, an Android
-  app, a web app for the iPhone, Home Assistant, announcements on speakers, push messages to the family.
+  app, a web app for the iPhone, Home Assistant, announcements on speakers, push messages to the family. Hand
+  it photos, PDFs, documents and voice messages with the paperclip, take a photo right away on the phone, or drag them
+  into the PC window.
 - **Your Jarvis, not mine.** The setup asks about you, the personality, what it should do and your interface
   (colors, panels, greeting, your own buttons). Claude only builds what you want.
 - **Changes its appearance on request:** "Jarvis, turn green", "show me blue", "hide the ticker", "undo that". On the
@@ -186,6 +188,8 @@ test, you're welcome (see [CONTRIBUTING.en.md](CONTRIBUTING.en.md)).
 - The `edge-tts` voice sends the answer text to Microsoft Edge's read-aloud service. The fallback voice Piper stays
   local.
 - Real-time mode (if chosen) sends audio, instructions and answers to Google.
+- Files you attach: images, PDF and text go to Claude with the question. The Jarvis host transcribes audio
+  itself, only the transcript goes to Claude.
 - Speaking: on the PC, the Jarvis host recognizes speech itself. The Android app uses the phone's speech
   recognition (usually Google, depending on the device); on the iPhone the keyboard dictates (Apple).
 - Web search, weather, news and the other skills query their respective services.
@@ -195,7 +199,7 @@ test, you're welcome (see [CONTRIBUTING.en.md](CONTRIBUTING.en.md)).
 
 ## Security
 
-How Jarvis is built, its limits and how to report a vulnerability: [SECURITY.en.md](SECURITY.en.md).
+What Jarvis never does: [NEVER.en.md](NEVER.en.md). How Jarvis is built, its limits and how to report a vulnerability: [SECURITY.en.md](SECURITY.en.md).
 
 ## Contents
 

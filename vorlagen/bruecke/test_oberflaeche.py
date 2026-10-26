@@ -140,5 +140,36 @@ for a in ({"aktionen": []}, {"app_aktionen": []}, {"knopf_dazu": {"text": "a", "
     pruef("Knopf-Aenderung erkannt: %r" % a, ob.betrifft_knoepfe(a))
 for a in ({"farbe": "blau"}, {"bereiche_aus": ["aktionen"]}, {}, None, "aktionen", ["aktionen"]):
     pruef("keine Knopf-Aenderung: %r" % (a,), not ob.betrifft_knoepfe(a))
+# Seit 0.3.2 (Pruefbericht 0.3.1): Fund 5 Format- und Richtungszeichen, Fund 6 aendern() ohne Seiteneffekt,
+# Fund 7 Rueckgaengig und Grundeinstellung ohne PC-Rechte behalten die Knoepfe
+wirft("Fund 5: U+202E abgelehnt", lambda: ob._text("Licht‮", 20, "Knopf"))
+wirft("Fund 5: U+200B abgelehnt", lambda: ob._text("Lic​ht", 20, "Knopf"))
+pruef("Fund 5: U+0085 (Zeilenende) wird wie Leerraum entfernt", ob._text("Licht\u0085", 20, "Knopf") == "Licht")
+wirft("Fund 5: U+009B (Steuerzeichen C1) abgelehnt", lambda: ob._text("Licht\u009b", 20, "Knopf"))
+wirft("Fund 5: Knopf mit Richtungszeichen abgelehnt", lambda: ob.aendern(
+    ob.pruefen({}), {"knopf_dazu": {"text": "Wetter‮", "frage": "x", "symbol": "wetter"}}))
+pruef("Fund 5: Umlaute und Symbole bleiben erlaubt", ob._text("Grüße ☀", 20, "Knopf") == "Grüße ☀")
+a = {"knopf_dazu": {"text": "Test", "frage": "Wie spät ist es?", "symbol": "wetter"}}
+ob.aendern(ob.pruefen({}), a)
+pruef("Fund 6: Objekt des Aufrufers unveraendert", "knopf_dazu" in a and ob.betrifft_knoepfe(a))
+d7 = tempfile.mkdtemp()
+try:
+    sp7 = ob.Speicher(d7)
+    s1 = ob.aendern(sp7.laden(), {"knopf_dazu": {"text": "Geheim", "frage": "mach was", "symbol": "wetter"}})
+    sp7.speichern(s1, "pc")
+    sp7.speichern(ob.aendern(sp7.laden(), {"knopf_weg": "Geheim", "farbe": "blau"}), "pc")
+    r = sp7.rueckgaengig(knoepfe_behalten=True)
+    pruef("Fund 7: Rueckgaengig ohne PC-Rechte holt geloeschten Knopf nicht zurueck",
+          all(k["text"] != "Geheim" for k in r["aktionen"]))
+    pruef("Fund 7: ... die Farbe aber schon", r["farbe"] == s1["farbe"] and r["farbe"] != "blau")
+    sp7.speichern(ob.aendern(sp7.laden(), {"knopf_dazu": {"text": "Zwei", "frage": "y", "symbol": "wetter"}}), "pc")
+    sp7.speichern(ob.aendern(sp7.laden(), {"knopf_weg": "Zwei"}), "pc")
+    pruef("Fund 7: mit PC-Rechten holt Rueckgaengig den Knopf zurueck",
+          any(k["text"] == "Zwei" for k in sp7.rueckgaengig()["aktionen"]))
+    g = sp7.grundeinstellung(knoepfe_behalten=True)
+    pruef("Fund 7: Grundeinstellung ohne PC-Rechte behaelt die jetzigen Knoepfe",
+          g["aktionen"] == sp7.laden()["aktionen"])
+finally:
+    shutil.rmtree(d7, ignore_errors=True)
 print("%d ok, %d Fehler" % (ok, fehler))
 sys.exit(1 if fehler else 0)

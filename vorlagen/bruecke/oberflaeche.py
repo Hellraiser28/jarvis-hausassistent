@@ -12,6 +12,7 @@ import json
 import os
 import re
 import time
+import unicodedata
 
 FARBEN = ("rot", "cyan", "blau", "gruen", "eigene")
 FARB_NAMEN = {"rot": "Rot-Gold", "cyan": "Cyan", "blau": "Blau", "gruen": "Grün", "eigene": "eigene Farben"}
@@ -99,8 +100,10 @@ def _text(wert, grenze, was):
     if not isinstance(wert, str):
         raise Ungueltig(_t("%s muss Text sein.", "%s must be text.") % was)
     wert = " ".join(wert.split())                         # keine Zeilenumbrueche, keine Steuerzeichen-Spielereien
-    if any(ord(z) < 32 for z in wert):
-        raise Ungueltig(_t("%s enthält Steuerzeichen.", "%s contains control characters.") % was)
+    # Seit 0.3.2 (Pruefbericht 0.3.1, Fund 5) auch Format- und Richtungszeichen (Kategorie Cf, z. B. U+202E, U+200B):
+    # Mit ihnen liesse sich eine Beschriftung tarnen, die einen ganz anderen Auftrag ausloest.
+    if any(ord(z) < 32 or unicodedata.category(z) in ("Cc", "Cf") for z in wert):
+        raise Ungueltig(_t("%s enthält Steuer- oder Formatzeichen.", "%s contains control or format characters.") % was)
     if len(wert) > grenze:
         raise Ungueltig(_t("%s ist zu lang (höchstens %d Zeichen).", "%s is too long (at most %d characters).") % (was, grenze))
     return wert
@@ -227,6 +230,8 @@ def aendern(aktuell, aenderung):
     bereiche_an / bereiche_aus (Listen), knopf_dazu ({text, frage, symbol}), knopf_weg (Text des Knopfs)."""
     if not isinstance(aenderung, dict) or not aenderung:
         raise Ungueltig(_t("Keine Änderung angegeben.", "No change given."))
+    aenderung = dict(aenderung)   # seit 0.3.2 (Fund 6): das Objekt des Aufrufers bleibt unveraendert, betrifft_knoepfe()
+                                  # erkennt die Knopf-Aenderung also auch noch nach diesem Aufruf
     neu = copy.deepcopy(aktuell)
     schritte = {k: aenderung.pop(k) for k in ("bereiche_an", "bereiche_aus", "knopf_dazu", "knopf_weg") if k in aenderung}
     neu.update(aenderung)
@@ -327,15 +332,27 @@ class Speicher:
             _schreiben(self.grund, alt)
         return True
 
-    def rueckgaengig(self):
+    def _knoepfe_von_jetzt(self, ziel):
+        """Knoepfe aus dem aktuellen Stand ins Ziel uebernehmen (fuer Quellen ohne PC-Rechte, seit 0.3.2, Fund 7)."""
+        jetzt = self.laden()
+        return pruefen(dict(ziel, aktionen=jetzt["aktionen"], app_aktionen=jetzt["app_aktionen"]))
+
+    def rueckgaengig(self, knoepfe_behalten=False):
+        """Letzte Fassung zurueck. knoepfe_behalten=True fuer Quellen ohne PC-Rechte: Aussehen und Bereiche gehen
+        zurueck, die Knoepfe bleiben wie jetzt (sonst kaeme ein bewusst geloeschter Knopf samt Auftrag zurueck)."""
         verlauf = self._lesen(self.verlauf, [])
         if not verlauf:
             raise Ungueltig(_t("Es gibt keine frühere Fassung.", "There is no earlier version."))
         letzte = verlauf.pop()
-        _schreiben(self.datei, pruefen(letzte["vorher"]))
+        ziel = pruefen(letzte["vorher"])
+        if knoepfe_behalten:
+            ziel = self._knoepfe_von_jetzt(ziel)
+        _schreiben(self.datei, ziel)
         _schreiben(self.verlauf, verlauf)
         return self.laden()
 
-    def grundeinstellung(self):
+    def grundeinstellung(self, knoepfe_behalten=False):
+        """Stand nach der Einrichtung (zum Speichern durch den Aufrufer); knoepfe_behalten wie bei rueckgaengig()."""
         roh = self._lesen(self.grund, None)
-        return pruefen(roh) if roh is not None else pruefen({})
+        ziel = pruefen(roh) if roh is not None else pruefen({})
+        return self._knoepfe_von_jetzt(ziel) if knoepfe_behalten else ziel

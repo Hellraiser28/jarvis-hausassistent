@@ -39,7 +39,9 @@ Alle Bilder zeigen erfundene Beispieldaten.
   jederzeit dazwischenreden. Für alles, was Wissen oder Werkzeuge braucht, fragt es Claude, das Hausgehirn mit
   seinen Werkzeugen (Kalender, Haus, Listen, Nachrichten, PC).
 - **Ein Assistent, viele Wege:** „Hey Jarvis“ am PC (Windows und Linux) mit eigenem Fenster, eine Android-App, eine
-  Web-App fürs iPhone, Home Assistant, Durchsagen auf Lautsprechern, Push-Nachrichten an die Familie.
+  Web-App fürs iPhone, Home Assistant, Durchsagen auf Lautsprechern, Push-Nachrichten an die Familie. Fotos,
+  PDFs, Dokumente und Sprachnachrichten gibst du ihm per Büroklammer, am Handy auch direkt als Foto, oder ziehst sie
+  ins PC-Fenster.
 - **Dein Jarvis, nicht meiner.** Das Setup fragt nach dir, nach der Persönlichkeit, nach dem, was er können soll,
   und nach deiner Oberfläche: Farben, Bereiche, Begrüßung, eigene Knöpfe. Claude baut nur, was du willst.
 - **Er baut sein Aussehen auf Zuruf um:** „Jarvis, mach dich grün“, „Zeig mal, wie Blau aussieht“, „Blende das
@@ -194,6 +196,8 @@ möchte, ist willkommen (siehe [CONTRIBUTING.md](CONTRIBUTING.md)).
 - Die Stimme über `edge-tts` schickt den Antworttext an den Vorlesedienst von Microsoft Edge. Die Reserve-Stimme
   Piper bleibt lokal.
 - Echtzeit (falls gewählt) schickt Ton, Anweisung und Antworten an Google.
+- Dateien, die du anhängst: Bilder, PDF und Text gehen mit der Frage an Claude. Ton schreibt der Jarvis-Rechner
+  selbst ab, an Claude geht nur die Abschrift.
 - Sprechen: Am PC erkennt der Jarvis-Rechner die Sprache selbst. Die Android-App nutzt die Spracherkennung des
   Handys (je nach Gerät meist Google), am iPhone diktiert die Tastatur (Apple).
 - Websuche, Wetter, Nachrichten und die übrigen Fähigkeiten fragen die jeweiligen Dienste ab.
@@ -204,7 +208,7 @@ möchte, ist willkommen (siehe [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Sicherheit
 
-Wie Jarvis aufgebaut ist, wo die Grenzen liegen und wie du eine Lücke meldest: [SECURITY.md](SECURITY.md).
+Was Jarvis nie tut: [NEVER.md](NEVER.md). Wie Jarvis aufgebaut ist, wo die Grenzen liegen und wie du eine Lücke meldest: [SECURITY.md](SECURITY.md).
 
 ## Inhalt
 

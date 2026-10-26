@@ -930,6 +930,21 @@ FunctionEnd
 
 Section "Jarvis"
   Call OrdnerNachher
+  ; Seit 0.3.2 (Pruefbericht 0.3.1, Fund 10): Rechte setzen, bevor Dateien, Kopplungscode und Token hineinkommen.
+  ; Ausserhalb des Profils erbt ein neuer Ordner sonst z. B. von C:\ "Authentifizierte Benutzer: Aendern", und ein anderes
+  ; Konto koennte einrichten.ps1 oder jarvis_pc.py austauschen, bevor sie laufen. Scheitert das dort: abbrechen.
+  CreateDirectory "$INSTDIR"
+  ExpandEnvStrings $1 "%USERDOMAIN%\%USERNAME%"
+  nsExec::ExecToLog '"$SYSDIR\icacls.exe" "$INSTDIR" /inheritance:r /grant:r "$1:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" /Q'
+  Pop $0
+  ${If} $0 != "0"
+    StrLen $2 "$LOCALAPPDATA\"
+    StrCpy $3 "$INSTDIR\" $2
+    ${If} $3 != "$LOCALAPPDATA\"
+      MessageBox MB_ICONSTOP "$(T_ORDNER_RECHTE)"
+      Abort
+    ${EndIf}
+  ${EndIf}
   SetOutPath "$INSTDIR\einrichtung"
   ; Marke: diesen Ordner hat das Setup angelegt, nur dann loescht die Deinstallation ihn ganz
   FileOpen $0 "$INSTDIR\.jarvis-client" w

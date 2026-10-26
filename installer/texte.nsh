@@ -28,6 +28,8 @@ LangString T_LAEUFT_UNTER ${LANG_ENGLISH} "The work happens in a separate window
 LangString T_ORDNER_RESERVIERT ${LANG_GERMAN} "$INSTDIR ist für einen neuen Jarvis reserviert (Projektordner mit Gedächtnis). Bitte einen anderen Ordner wählen."
 LangString T_ORDNER_RESERVIERT ${LANG_ENGLISH} "$INSTDIR is reserved for a new Jarvis (project folder with its memory). Please choose another folder."
 LangString T_ORDNER_FREMD ${LANG_GERMAN} "In $INSTDIR liegen schon Dateien, die nicht von diesem Setup stammen. Bitte einen leeren oder neuen Ordner wählen, damit die Deinstallation später nichts Fremdes löscht."
+LangString T_ORDNER_RECHTE ${LANG_GERMAN} "Für $INSTDIR ließen sich keine eigenen Ordnerrechte setzen. Außerhalb deines Benutzerprofils könnten andere Konten dann Jarvis-Dateien austauschen oder das Token lesen. Bitte einen Ordner unter $LOCALAPPDATA wählen."
+LangString T_ORDNER_RECHTE ${LANG_ENGLISH} "Couldn't set dedicated folder permissions for $INSTDIR. Outside your user profile, other accounts could then swap Jarvis files or read the token. Please choose a folder under $LOCALAPPDATA."
 LangString T_ORDNER_FREMD ${LANG_ENGLISH} "$INSTDIR already contains files that don't come from this setup. Please choose an empty or new folder so uninstalling never deletes anything else."
 LangString T_ORDNER_UNGEKOPPELT ${LANG_GERMAN} "In $INSTDIR ist dieser PC noch nicht gekoppelt. Bitte mit „Zurück“ den Kopplungscode eintragen."
 LangString T_ORDNER_UNGEKOPPELT ${LANG_ENGLISH} "This PC isn't paired in $INSTDIR yet. Please go “Back” and enter the pairing code."

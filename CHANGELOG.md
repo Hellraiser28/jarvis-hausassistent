@@ -1,5 +1,50 @@
 # Änderungen
 
+## 0.3.2 – 2026-10-26
+
+Sicherheit nach einer unabhängigen Prüfung von 0.3.1, dazu „Was Jarvis nie tut“. *English: security fixes after an
+independent review of 0.3.1, plus NEVER.en.md ("What Jarvis never does").*
+
+- **NEVER.md / NEVER.en.md:** was Jarvis nie tut, und wo die Voreinstellung „nie“ ist und sich ändern lässt. Jeder
+  Punkt ist im Code oder als feste Regel der Bauanleitung erzwungen. Die Bauanleitung fragt die Voreinstellungen in
+  Runde 7 ab (Kaufen, Türen, Kameras, Gedächtnis, Gefahr-Abschaltung, Haushalt), hat die Regeln im Abschnitt
+  Sicherheit und prüft sie bei der Abnahme mit eigenen Proben. README verlinkt beide Fassungen.
+- **PC-Client 16 und 17:** Gesprochenes am PC kommt als eigene Quelle `pc-sprache`. Per Sprache und per Echtzeit gibt es am
+  PC standardmäßig keine PC-Werkzeuge mehr (Schalter `PC_PER_SPRACHE`, `PC_IN_ECHTZEIT`), weil sonst auch Ton aus den
+  eigenen Lautsprechern oder ein von Gemini umformulierter fremder Text den PC steuern konnte. Brückenbeweis und
+  Update-Signatur werden über Bytes verglichen (Umlaute in einer Antwort warfen vorher einen Fehler).
+- **PC-Fenster:** Die Fensterfunktionen (Fragen, Echtzeit, Zahnrad, Updates) arbeiten nur noch für die eigene
+  HUD-Seite. Landet das Fenster auf einer fremden Seite, etwa durch einen hineingezogenen Link, lädt es das HUD neu.
+  Die Durchreiche schickt eine Content-Security-Policy (Skripte nur per Hash, Verbindungen nur zu sich selbst und
+  Gemini Live). Der Brückenbeweis gilt 60 Sekunden statt 10 Minuten, ein Laptop beweist also nach jedem Umziehen
+  neu. Das Symbol kommt nicht mehr ohne Token aus dem Netz. Test: `test_fenster_schutz.py`.
+- **Schlagzeilen:** Fragen zu einer Schlagzeile laufen überall (PC, App, Web-App, unterwegs) unter der Quelle
+  `meldung`, dort lösen Werkzeuge nichts aus. Der Titel geht als JSON-Zeichenkette mit.
+- **Haupt-PC:** Die Brücke erkennt ihn am Token statt am Gerätenamen.
+- **Knöpfe nur nach einem Ja:** Will Jarvis einen Knopf anlegen oder ändern, liest er Beschriftung und Auftrag vor
+  und setzt ihn erst nach einem klaren Ja. Das HUD zeigt den Auftrag hinter einem Knopf beim Überfahren.
+- **Dateien im Gespräch:** Bilder, PDF, Texte, Word/OpenDocument/PowerPoint und Tonaufnahmen (abgeschrieben vom Ohr)
+  in App, Web-App und PC-Fenster (dort auch per Ziehen und Ablegen). Am Handy auch „Foto aufnehmen“ (App und
+  Web-App am iPhone). Neu: `anhang.py` mit 36 Tests, App 4.3.
+- **Fenster und Bildschirmgrößen (Client 17):** Das PC-Fenster öffnet sich maximiert, auch nach einem Start im
+  Hintergrund. Das HUD zeigt in Kalender, Welt, Haus, Verbindungen und Gespräch nur ganze Einträge, statt sie
+  unten anzuschneiden; bei wenig Fensterhöhe (etwa ein Laptop mit 125 % Skalierung) rückt es enger zusammen.
+- **Neu in dieser Version:** App und PC-Fenster zeigen nach einem Update einmal, was neu ist (nicht nach einer
+  Neuinstallation). Wer per Update kommt, muss dafür nicht auf GitHub schauen.
+- **Kopplung mit Beweis:** Setup, Linux-Installer und App schicken den Kopplungscode erst, wenn die Brücke bewiesen
+  hat, dass sie ihn kennt (`/v1/koppeln/beweis`, PBKDF2 mit 200000 Runden). Vorher konnte ein fremdes Gerät unter
+  der Adresse den Code abgreifen und selbst ein Token ausgeben. Ältere Brücken werden dabei abgelehnt: erst die
+  Brücke aktualisieren, dann Geräte koppeln.
+- **Update-Signatur mit Ed25519:** über Version und Prüfsumme zusammen, mit eigenem Schlüssel der Brücke statt
+  eines HMAC aus dem Token; GitHub-Updates (`pc-<Nummer>`) brauchen die Signatur des Projekts. `ed25519.py` nach
+  RFC 8032 mit den Testvektoren der RFC geprüft, ebenso die Prüfkopie im Client.
+- **Windows-Setup:** Die Ordnerrechte werden gesetzt, bevor Dateien und Kopplungscode hineinkommen. Scheitert das
+  außerhalb des Benutzerprofils, bricht das Setup ab.
+- **Prüfmodul der Oberfläche:** Format- und Richtungszeichen in Texten abgelehnt (damit ließ sich eine
+  Knopf-Beschriftung tarnen), `aendern()` ändert das übergebene Objekt nicht mehr, „Rückgängig“ und „Grundeinstellung“
+  behalten für Quellen ohne PC-Rechte die Knöpfe. 77 Tests.
+- **Linux-Installer:** Brückenbeweis über Bytes.
+
 ## 0.3.1 – 2026-10-26
 
 Spracherkennung, Anrufen, kleinere Korrekturen. *English: better speech recognition (Kroko), a new "phone calls"

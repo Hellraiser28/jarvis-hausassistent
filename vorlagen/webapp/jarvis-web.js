@@ -13,7 +13,7 @@
    - Proben: Adresse mit ?test=1 schickt Fragen unter der Quelle test-webapp (Werkzeuge mit Wirkung nur trocken). */
 (function () {
   "use strict";
-  const WEB_VERSION = "4.2";
+  const WEB_VERSION = "4.3";
   // Texte kommen aus dem Woerterbuch der Oberflaeche (tx, seit 4.2); die Schicht laeuft vor ihr, fragt also erst spaeter
   const T = (k, ...w) => (typeof window.tx === "function" ? window.tx(k, ...w) : k);
   const L = (k, v) => {
@@ -66,7 +66,7 @@
     }
   }
 
-  async function frage(text, quelle) {
+  async function frage(text, quelle, anhang) {
     const nr = ++laeuft, anfrage = zufall(), t0 = Date.now();
     let fertig = false;
     rueck("onStatus", "denkt");
@@ -78,7 +78,7 @@
       }
     })();
     try {
-      const a = await ruf("POST", "/v1/frage", { text, quelle: quelle || QUELLE, geraet: geraetName(), anfrage });
+      const a = await ruf("POST", "/v1/frage", { text, quelle: quelle || QUELLE, geraet: geraetName(), anfrage, anhang });
       fertig = true;
       rueck("onWerkzeug", "");
       if (nr !== laeuft) return;
@@ -87,7 +87,8 @@
       if (W.stimmeAn() && antwort) sprechen(antwort, nr); else rueck("onStatus", "bereit");
     } catch (e) {
       fertig = true;
-      rueck("onFehler", T(e.code === 401 ? "web_401" : e.code === 429 ? "web_429" : "web_weg", e.message));
+      rueck("onFehler", e.code === 413 ? T("anhang_gross", 15)
+        : T(e.code === 401 ? "web_401" : e.code === 429 ? "web_429" : "web_weg", e.message));
     }
   }
 
@@ -96,7 +97,13 @@
     stimmeAn: () => L("jarvis-stimme") !== "0",
     stimme: (an) => { L("jarvis-stimme", an ? "1" : "0"); },
     frage: (t) => { frage(String(t)); },
-    frageMeldung: (titel) => frage(T("web_schlagzeile", String(titel).slice(0, 300)), QUELLE === "app" ? "meldung" : QUELLE),
+    // seit 0.3.2: Datei im Gespraech (app.html bereitet sie vor: Bild verkleinert, Ton als WAV)
+    frageMitAnhang: (t, anhang) => {
+      try { frage(String(t || ""), undefined, JSON.parse(anhang)); }
+      catch (e) { rueck("onFehler", T("anhang_fehler", e.message)); }
+    },
+    // seit 0.3.2 (Pruefbericht 0.3.1, Fund 11): immer Quelle meldung, Titel als JSON-Zeichenkette
+    frageMeldung: (titel) => frage(T("web_schlagzeile", JSON.stringify(String(titel).slice(0, 300))), "meldung"),
     hoeren: () => {
       rueck("onStatus", "bereit");
       rueck("onHinweis", T("web_diktat"));
