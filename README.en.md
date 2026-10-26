@@ -41,7 +41,8 @@ All images show made-up sample data.
 - **One assistant, many ways in:** "Hey Jarvis" on your PC (Windows and Linux) with its own window, an Android
   app, a web app for the iPhone, Home Assistant, announcements on speakers, push messages to the family. Hand
   it photos, PDFs, documents and voice messages with the paperclip, take a photo right away on the phone, or drag them
-  into the PC window.
+  into the PC window. You get files back: PDFs from text, dictation or photos, edited and new images, converted
+  files. You choose the services for that in the setup.
 - **Your Jarvis, not mine.** The setup asks about you, the personality, what it should do and your interface
   (colors, panels, greeting, your own buttons). Claude only builds what you want.
 - **Changes its appearance on request:** "Jarvis, turn green", "show me blue", "hide the ticker", "undo that". On the
@@ -190,6 +191,8 @@ test, you're welcome (see [CONTRIBUTING.en.md](CONTRIBUTING.en.md)).
 - Real-time mode (if chosen) sends audio, instructions and answers to Google.
 - Files you attach: images, PDF and text go to Claude with the question. The Jarvis host transcribes audio
   itself, only the transcript goes to Claude.
+- Editing and creating images (if chosen): the image and the request go to the chosen provider (Cloudflare,
+  OpenAI or Google). PDFs are made on the Jarvis host, conversion runs through your own Transmute.
 - Speaking: on the PC, the Jarvis host recognizes speech itself. The Android app uses the phone's speech
   recognition (usually Google, depending on the device); on the iPhone the keyboard dictates (Apple).
 - Web search, weather, news and the other skills query their respective services.

@@ -1,5 +1,36 @@
 # Änderungen
 
+## 0.3.3 – 2026-10-26
+
+Jarvis gibt Dateien zurück: PDFs, Bilder, umgewandelte Dateien. Welche Dienste er dafür nutzt, fragt das Setup.
+*English: Jarvis returns files: PDFs, images, converted files. The setup asks which services to use.*
+
+- **PDF erstellen:** aus getipptem, gesprochenem oder fotografiertem Text, auf Wunsch mit den Fotos. Läuft auf dem
+  Jarvis-Rechner ohne Zusatzpakete (`pdf.py`, A4, Überschriften, Aufzählungen, Seitenzahlen, Umlaute). Test:
+  `test_pdf.py`.
+- **Bilder verändern und erzeugen:** über Cloudflare Workers AI (gratis, Tageskontingent, FLUX.2 klein 4B und 9B),
+  OpenAI (kostenpflichtig, `gpt-image-2.5-flare`, genau `gpt-image-2.5-sunburst`) oder Gemini (nur mit bezahltem
+  Kontingent). Ein Zähler hält das Cloudflare-Kontingent ein und weicht vom genauen auf das schnelle Modell aus,
+  wenn es knapp wird. Test: `test_bilddienst.py`, ohne Netz und ohne echte Schlüssel.
+- **Dateien umwandeln:** über Transmute (selbst betrieben), etwa Bild nach JPG/PNG/WebP/PDF, PDF nach Word oder
+  durchsuchbarem PDF/A, Office nach PDF, Audio und Video.
+- **Original mitschicken:** Die Geräte bereiten Anhänge für Claude auf (Bild verkleinert, Ton 16 kHz mono). Zum
+  Umwandeln geht jetzt zusätzlich das Original mit, bis 50 MB: Aus einer FLAC wird eine MP3 in voller Qualität,
+  Fotos bleiben in voller Auflösung. Die Android-App streamt das Original direkt aus der Datei, PC-Client 19 und
+  Web-App legen es bei. Qualitätsstufen low, medium, high (Audio 96/192/320 kbit/s), eine unbekannte Stufe meldet
+  Jarvis. Test: `test_konvertieren.py`.
+- **Dateien im Gespräch:** Ergebnisse kommen als Karte mit Vorschau und Öffnen, Teilen, Speichern in App 4.4 und
+  Web-App, im PC-Client 18 mit Öffnen und „Speichern unter …“. Programmdateien öffnet der PC nie direkt. Abholen nur
+  mit Token, mit Sandbox-Kopfzeilen; Dateien bleiben 7 Tage, dann räumt die Brücke sie weg. Test: `test_ausgabe.py`,
+  `test_dateien_pc.py`.
+- **Setup-Seite „Dateien und Bilder“:** Bildanbieter und Umwandler wählen, ohne Schlüssel; die legt Claude in der
+  Einrichtung als Datei an. Zugänge stehen in der `.env` oder als Pfad auf eine Schlüsseldatei (`NAME_DATEI`).
+- **Mitgeliefert:** Setup und Linux-Paket legen jetzt alle fertigen Brücken-Module samt Tests nach `einrichtung/`.
+  `anhang.py` und `ed25519.py` nannte die Bauanleitung seit 0.3.2 „fertig im Release“, ausgeliefert wurden sie aber
+  nicht.
+- **NEVER.md:** Jarvis fälscht keine Menschen (keine Bilder, die echte Personen bloßstellen, sexualisieren oder ihnen
+  etwas unterschieben); dazu, wohin Bilder zum Bearbeiten gehen.
+
 ## 0.3.2 – 2026-10-26
 
 Sicherheit nach einer unabhängigen Prüfung von 0.3.1, dazu „Was Jarvis nie tut“. *English: security fixes after an

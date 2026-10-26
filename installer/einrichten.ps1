@@ -333,7 +333,9 @@ function Neu($A) {
   # Erneuter Lauf: Vorlagen, die Claude erweitert haben kann, nicht ueberschreiben; die neue Fassung liegt dann als
   # <name>.neu daneben (seit 25.10.2026)
   foreach ($f in 'hud.html', 'oberflaeche.py', 'verhalten.py', 'test_oberflaeche.py', 'test_verhalten.py', 'app.html',
-                 'jarvis-web.js', 'webapp_bauen.py', 'jarvis.png') {
+                 'jarvis-web.js', 'webapp_bauen.py', 'jarvis.png',
+                 'anhang.py', 'ed25519.py', 'ausgabe.py', 'pdf.py', 'bilddienst.py', 'konvertieren.py', 'zusatzdienste.py',
+                 'test_anhang.py', 'test_ed25519.py', 'test_pdf.py', 'test_ausgabe.py', 'test_bilddienst.py', 'test_konvertieren.py') {
     $Dort = Join-Path $Projekt "einrichtung\$f"
     $Neu = Join-Path $Mitgeliefert $f
     if ((Test-Path -LiteralPath $Dort) -and (Pruefsumme $Dort) -ne (Pruefsumme $Neu)) {
@@ -362,6 +364,7 @@ function Neu($A) {
     autostart       = JaNein $A['autostart']
     desktop_symbol  = JaNein $A['desktop_symbol']
     pc_steuerung    = JaNein $A['pc_steuerung']
+    zusatzdienste   = [ordered]@{ bilder = $A['zusatz_bilder']; umwandeln = $A['zusatz_umwandeln'] }
     oberflaeche     = [ordered]@{
       design     = $A['oberflaeche_design']
       untertitel = $A['oberflaeche_untertitel']

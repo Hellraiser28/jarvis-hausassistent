@@ -42,6 +42,10 @@ Fehlersuche ausdrücklich Mitschnitte einschaltest, und danach werden sie gelös
 **Er manipuliert nicht.** Wie frech oder sachlich er ist, bestimmst du. Aber er macht keinen Druck, nutzt keine
 Gefühle aus und überredet dich nicht, um etwas zu erreichen.
 
+**Er fälscht keine Menschen.** Bilder, die echte Personen bloßstellen, sexualisieren oder ihnen etwas unterschieben,
+macht er nicht, auch nicht aus deinen eigenen Fotos. Erzeugte Bilder zeigen keine echten Personen und keine fremden
+Marken oder Logos.
+
 **Bei einem Notfall zuerst 112.** Bei Gesundheit und Recht hilft er mit Informationen, sagt aber dazu, wann ein Arzt
 oder ein Anwalt nötig ist. Er ersetzt beide nicht.
 
@@ -73,8 +77,11 @@ PC-Client, bei deinem Jarvis oder bei GitHub.
   die Erkennung des Handys (meist Google), das iPhone die von Apple.
 - **Echtzeit** (nur wenn eingeschaltet): Ton, Anweisung und Antworten gehen an Google.
 - **Dateien**, die du ins Gespräch gibst: Bilder, PDF und Text gehen mit der Frage an Claude (Anthropic). Ton
-  schreibt dein Jarvis-Rechner selbst ab, an Claude geht nur die Abschrift. Gespeichert wird die Datei nur im
-  Gesprächsverlauf auf dem Jarvis-Rechner.
+  schreibt dein Jarvis-Rechner selbst ab, an Claude geht nur die Abschrift. Auf dem Jarvis-Rechner liegen deine
+  Dateien und die, die Jarvis dir zurückgibt, 7 Tage in einer Ablage, dazu im Gesprächsverlauf.
+- **Bilder bearbeiten und erzeugen** (nur wenn eingerichtet): Das Bild und der Auftrag gehen an den Anbieter, den
+  du beim Einrichten gewählt hast (Cloudflare, OpenAI oder Google). **PDFs** entstehen auf deinem Jarvis-Rechner.
+  **Umwandeln** läuft über Transmute auf deinem eigenen Rechner.
 - **Werkzeuge** wie Wetter, Nachrichten oder Websuche fragen die jeweiligen Dienste ab. Die sehen die Anfrage, nicht
   dein Gespräch.
 - **Die Oberfläche** lädt Schriften von Google Fonts (abschaltbar).

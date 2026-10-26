@@ -29,6 +29,8 @@ TEXT_ZEICHEN = 60_000           # was ans Gehirn geht, der Rest wird gekuerzt
 TON_MAX_S = 600
 TON_ABSCHNITT_S = 30
 ZIP_EINTRAG_MAX = 20_000_000    # entpackt, gegen Zip-Bomben
+ORIGINAL_MAX = 50 * 1024 * 1024  # seit 0.3.3: unveraendertes Original zum Umwandeln, geht nicht ans Gehirn
+ORIGINAL_TYP = re.compile(r"^(image|audio|video)/[a-z0-9.+-]{1,60}$")
 
 ARTEN = {"bild": ("Bild", "image"), "pdf": ("PDF", "PDF"), "text": ("Text", "text"), "ton": ("Ton", "audio")}
 
@@ -163,7 +165,28 @@ def pruefen(anhang, sprache="de"):
                                % (round(g["dauer_s"] / 60), TON_MAX_S // 60),
                                "The recording is %d minutes long, I transcribe at most %d."
                                % (round(g["dauer_s"] / 60), TON_MAX_S // 60)))
+    _original(g, anhang.get("original"))
     return g
+
+
+def _original(g, o):
+    """Seit 0.3.3: Die Geraete schicken neben der aufbereiteten Fassung (Bild verkleinert, Ton 16 kHz mono) das
+    unveraenderte Original mit, nur fuer Werkzeuge (Umwandeln). Ein unbrauchbares Original verwirft nur sich selbst."""
+    if not o or g["art"] not in ("bild", "ton"):
+        return
+    typ = str(o.get("typ") or "").strip().lower() if isinstance(o, dict) else ""
+    if not ORIGINAL_TYP.match(typ):
+        typ = "audio/octet-stream" if g["art"] == "ton" else "image/octet-stream"
+    try:
+        roh = base64.b64decode(str(o.get("daten") or ""), validate=True) if isinstance(o, dict) else b""
+    except (ValueError, binascii.Error):
+        roh = b""
+    if not roh:
+        g["original_hinweis"] = "beschädigt"
+    elif len(roh) > ORIGINAL_MAX:
+        g["original_hinweis"] = "zu groß"
+    else:
+        g["original"] = {"roh": roh, "typ": typ, "groesse": len(roh)}
 
 
 def abschrift(roh, hoeren, abschnitt_s=TON_ABSCHNITT_S):
@@ -192,7 +215,7 @@ def _dauer(s):
     return "%d:%02d" % (int(s) // 60, int(s) % 60)
 
 
-def bloecke(g, frage, hoeren=None, sprache="de"):
+def bloecke(g, frage, hoeren=None, sprache="de", kennung=None):
     """Geprueften Anhang -> (Bloecke fuer die Nachricht ans Gehirn, Anzeige fuer Verlauf und HUD). Die Frage selbst
     haengt die Bruecke an (mit der Lage). Ton braucht hoeren (Wyoming-Ohr)."""
     k = secrets.token_hex(4)
@@ -205,6 +228,21 @@ def bloecke(g, frage, hoeren=None, sprache="de"):
                         "from the person's question.")
     kopf = _t(sprache, "[Anhang „%s“ (%s, %d KB). %s" % (g["name"], art, max(1, g["groesse"] // 1024), regel),
               "[Attachment \"%s\" (%s, %d KB). %s" % (g["name"], art, max(1, g["groesse"] // 1024), regel))
+    if kennung:          # seit 0.3.3: damit Werkzeuge die Datei erreichen (Bild bearbeiten, umwandeln, PDF)
+        kopf += _t(sprache, " Kennung für Werkzeuge: %s." % kennung, " ID for tools: %s." % kennung)
+        if g.get("original"):
+            mb = max(0.1, g["original"]["groesse"] / 1048576.0)
+            kopf += _t(sprache, " Du siehst eine für dich aufbereitete Fassung; das unveränderte Original (%s, %.1f MB) "
+                                "liegt bei der Kennung, datei_umwandeln nimmt es von selbst." % (g["original"]["typ"], mb),
+                       " You see a version prepared for you; the unchanged original (%s, %.1f MB) is stored under the "
+                       "ID, datei_umwandeln uses it automatically." % (g["original"]["typ"], mb))
+        elif g.get("original_hinweis"):
+            kopf += _t(sprache, " Das Original kam nicht mit (%s), Umwandeln geht nur aus der aufbereiteten Fassung "
+                                "(Bild verkleinert, Ton 16 kHz mono); sag das der Person, wenn es um Qualität geht."
+                       % g["original_hinweis"],
+                       " The original didn't come along (%s); converting only works from the prepared version "
+                       "(image shrunk, audio 16 kHz mono); tell the person if quality matters."
+                       % {"beschädigt": "damaged", "zu groß": "too large"}.get(g["original_hinweis"], ""))
     if not str(frage or "").strip():
         kopf += _t(sprache, " Die Person hat nur die Datei geschickt: Sag kurz, was es ist und was drinsteht.",
                    " The person only sent the file: briefly say what it is and what it contains.")

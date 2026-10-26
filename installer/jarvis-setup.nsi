@@ -141,6 +141,11 @@ Var OGezeigt
 ; Seite "Jarvis aufs Handy" (seit 25.10.2026): QR-Code auf die App im neuesten GitHub-Release
 Var hQr
 Var hQrBild
+; Seite "Dateien und Bilder" (seit 0.3.3): Bildanbieter und Umwandler, Schluessel erst in der Einrichtung
+Var ZBild
+Var hZBild
+Var ZUmw
+Var hZUmw
 
 ; ------------------------------------------------------------------ Seiten
 !define MUI_ICON "dateien\jarvis.ico"
@@ -166,6 +171,7 @@ Page custom SeiteVerbinden SeiteVerbindenEnde
 Page custom SeiteUeberDich SeiteUeberDichEnde
 Page custom SeiteFaehigkeiten SeiteFaehigkeitenEnde
 Page custom SeiteVorhaben SeiteVorhabenEnde
+Page custom SeiteZusatz SeiteZusatzEnde
 Page custom SeiteGeraete SeiteGeraeteEnde
 Page custom SeiteApp SeiteAppEnde
 Page custom SeiteOberflaeche SeiteOberflaecheEnde
@@ -243,6 +249,8 @@ Function .onInit
   StrCpy $Autostart 1
   StrCpy $DesktopSym 1
   StrCpy $Design "$(T_DESIGN1)"
+  StrCpy $ZBild "$(T_ZB1)"
+  StrCpy $ZUmw "$(T_ZU2)"
   StrCpy $Untertitel ""
   StrCpy $OGezeigt 0
 FunctionEnd
@@ -591,6 +599,42 @@ Function SeiteFaehigkeitenEnde
   StrCpy $PcSteuerung $F9
 FunctionEnd
 
+; ------------------------------------------------------------------ Seite: Dateien und Bilder (seit 0.3.3)
+Function SeiteZusatz
+  ${If} $Art != "neu"
+    Abort
+  ${EndIf}
+  !insertmacro MUI_HEADER_TEXT "$(T_ZD_KOPF)" "$(T_ZD_UNTER)"
+  nsDialogs::Create 1018
+  Pop $Dlg
+  ${NSD_CreateLabel} 0 0 100% 30u "$(T_ZD_TEXT)"
+  Pop $0
+  ${NSD_CreateLabel} 0 34u 100% 10u "$(T_ZD_BILD)"
+  Pop $0
+  ${NSD_CreateDropList} 0 45u 100% 70u ""
+  Pop $hZBild
+  ${NSD_CB_AddString} $hZBild "$(T_ZB1)"
+  ${NSD_CB_AddString} $hZBild "$(T_ZB2)"
+  ${NSD_CB_AddString} $hZBild "$(T_ZB3)"
+  ${NSD_CB_AddString} $hZBild "$(T_ZB4)"
+  !insertmacro Auswahl $hZBild $ZBild
+  ${NSD_CreateLabel} 0 66u 100% 10u "$(T_ZD_UMW)"
+  Pop $0
+  ${NSD_CreateDropList} 0 77u 100% 50u ""
+  Pop $hZUmw
+  ${NSD_CB_AddString} $hZUmw "$(T_ZU1)"
+  ${NSD_CB_AddString} $hZUmw "$(T_ZU2)"
+  !insertmacro Auswahl $hZUmw $ZUmw
+  ${NSD_CreateLabel} 0 100u 100% 34u "$(T_ZD_HINWEIS)"
+  Pop $0
+  nsDialogs::Show
+FunctionEnd
+
+Function SeiteZusatzEnde
+  ${NSD_GetText} $hZBild $ZBild
+  ${NSD_GetText} $hZUmw $ZUmw
+FunctionEnd
+
 ; ------------------------------------------------------------------ Seite: Vorhaben
 Function SeiteVorhaben
   ${If} $Art != "neu"
@@ -924,6 +968,21 @@ Function AntwortenSchreiben
     WriteINIStr $9 "jarvis" "oberflaeche_untertitel" $Untertitel
     WriteINIStr $9 "jarvis" "oberflaeche_bereiche" $Bereiche
     WriteINIStr $9 "jarvis" "oberflaeche_wuensche" $Wuensche
+    ; angezeigt je Sprache, gespeichert wird der Dienstname
+    ${If} $ZBild == "$(T_ZB1)"
+      WriteINIStr $9 "jarvis" "zusatz_bilder" "cloudflare"
+    ${ElseIf} $ZBild == "$(T_ZB2)"
+      WriteINIStr $9 "jarvis" "zusatz_bilder" "openai"
+    ${ElseIf} $ZBild == "$(T_ZB3)"
+      WriteINIStr $9 "jarvis" "zusatz_bilder" "gemini"
+    ${Else}
+      WriteINIStr $9 "jarvis" "zusatz_bilder" "aus"
+    ${EndIf}
+    ${If} $ZUmw == "$(T_ZU1)"
+      WriteINIStr $9 "jarvis" "zusatz_umwandeln" "transmute"
+    ${Else}
+      WriteINIStr $9 "jarvis" "zusatz_umwandeln" "aus"
+    ${EndIf}
   ${EndIf}
   FlushINI $9
 FunctionEnd
@@ -965,6 +1024,19 @@ Section "Jarvis"
   File "dateien\jarvis.png"
   File "dateien\test_oberflaeche.py"
   File "dateien\test_verhalten.py"
+  File "dateien\anhang.py"
+  File "dateien\ed25519.py"
+  File "dateien\ausgabe.py"
+  File "dateien\pdf.py"
+  File "dateien\bilddienst.py"
+  File "dateien\konvertieren.py"
+  File "dateien\zusatzdienste.py"
+  File "dateien\test_anhang.py"
+  File "dateien\test_ed25519.py"
+  File "dateien\test_pdf.py"
+  File "dateien\test_ausgabe.py"
+  File "dateien\test_bilddienst.py"
+  File "dateien\test_konvertieren.py"
   File "dateien\pakete.txt"
   File "dateien\weckwort.txt"
   Call AntwortenSchreiben

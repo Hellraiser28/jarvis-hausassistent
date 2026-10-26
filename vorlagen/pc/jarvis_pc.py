@@ -50,7 +50,7 @@ import urllib.parse
 import urllib.request
 import wave
 
-VERSION = 17
+VERSION = 19
 WINDOWS = sys.platform == "win32"
 
 # Vor den schweren Importen: auch ein Absturz beim Laden landet so in der Datei
@@ -105,6 +105,22 @@ SPRACHE = E.get("sprache") if E.get("sprache") in ("de", "en") else "de"
 # Neu in dieser Version (seit 16): Wer per Update kommt statt ueber GitHub, sieht so trotzdem,
 # was neu ist. Einmal im Fenster nach einem Update, nicht nach einer Neuinstallation (BESTAND: dieser PC lief schon).
 NEUIGKEITEN = {
+    19: {"titel": "Jarvis 0.3.3 · Original",
+         "de": ["Beim Umwandeln nimmt Jarvis jetzt das Original deiner Datei (bis 50 MB): Aus einer FLAC wird eine MP3 "
+                "in voller Qualität, Fotos bleiben in voller Auflösung.",
+                "Wenn es auf Qualität ankommt, sag es einfach dazu, etwa „als MP3 in hoher Qualität“ (320 kbit/s)."],
+         "en": ["When converting, Jarvis now uses the original of your file (up to 50 MB): a FLAC becomes an MP3 in full "
+                "quality, photos keep their full resolution.",
+                "If quality matters, just say so, for example \"as an MP3 in high quality\" (320 kbit/s)."]},
+    18: {"titel": "Jarvis 0.3.3",
+         "de": ["Jarvis gibt Dateien zurück: PDFs, bearbeitete Bilder und umgewandelte Dateien stehen im Gespräch, "
+                "zum Öffnen oder Speichern.",
+                "Sag zum Beispiel „Mach mir daraus ein PDF“, „Mach den Himmel blau“ oder „Wandle das in Word um“. Was "
+                "davon geht, hängt von den Diensten ab, die bei der Einrichtung gewählt wurden; PDFs gehen immer."],
+         "en": ["Jarvis hands files back: PDFs, edited pictures and converted files show up in the conversation, ready "
+                "to open or save.",
+                "Say for example \"Make a PDF of this\", \"Make the sky blue\" or \"Convert this to Word\". What "
+                "works depends on the services chosen during setup; PDFs always work."]},
     17: {"titel": "Jarvis 0.3.2 · Fenster",
          "de": ["Das Jarvis-Fenster öffnet sich maximiert.",
                 "Auf Laptops und kleineren Bildschirmen zeigt das HUD nur noch ganze Einträge, nichts rutscht mehr "
@@ -329,6 +345,92 @@ def bruecke_holen(pfad, zeit=30):
     req = urllib.request.Request(BRUECKE + pfad, headers=kopf())
     with urllib.request.urlopen(req, timeout=zeit) as r:
         return r.read()
+
+
+# ------------------------------------------------------------------ Dateien von Jarvis (Version 18, 0.3.3)
+# Die Bruecke liefert PDFs, bearbeitete Bilder und Umwandlungen unter /v1/datei/<a + 24 hex> nur mit Token. Oeffnen
+# legt die Datei in einen eigenen Ordner unter TEMP und startet das zugeordnete Programm (ausfuehrbare Endungen nie,
+# die gehen nur ueber Speichern); Speichern fragt mit dem Dialog des Systems nach dem Ort.
+DATEI_KENNUNG = re.compile(r"^a[0-9a-f]{24}$")
+DATEI_ORDNER = os.path.join(os.environ.get("TEMP") or os.environ.get("TMPDIR") or "/tmp", "Jarvis-Dateien")
+NICHT_STARTEN = re.compile(r"\.(exe|bat|cmd|com|ps1|psm1|vbs|vbe|js|jse|wsf|wsh|msi|msp|lnk|scr|hta|cpl|jar|reg|url|pif|"
+                           r"inf|sh|appimage|desktop|run|py|pyw)$", re.I)
+
+
+def _datei_name(name):
+    n = re.sub(r'[\\/:*?"<>|\x00-\x1f]+', "_", str(name or "")).strip(" .") or "datei"
+    return n[-120:]
+
+
+def datei_holen(kennung):
+    if not DATEI_KENNUNG.match(str(kennung or "")):
+        raise ValueError(tx("ungültige Kennung", "invalid ID"))
+    return bruecke_holen("/v1/datei/" + kennung, 120)
+
+
+def datei_vorschau(kennung):
+    """Bild als data:-Adresse fuer die Vorschau im Gespraech (bis 4 MB), sonst leer."""
+    try:
+        roh = datei_holen(kennung)
+    except Exception as e:
+        log.info("Datei-Vorschau: %s", e)
+        return ""
+    typ = ("image/jpeg" if roh[:3] == b"\xff\xd8\xff" else "image/png" if roh[:8] == b"\x89PNG\r\n\x1a\n" else
+           "image/webp" if roh[:4] == b"RIFF" and roh[8:12] == b"WEBP" else "image/gif" if roh[:4] == b"GIF8" else "")
+    if not typ or len(roh) > 4 * 1024 * 1024:
+        return ""
+    return "data:%s;base64,%s" % (typ, base64.b64encode(roh).decode())
+
+
+def datei_oeffnen(kennung, name):
+    name = _datei_name(name)
+    if NICHT_STARTEN.search(name):
+        return {"fehler": tx("Diese Art Datei öffne ich nicht direkt, bitte über Speichern.",
+                             "I don't open this kind of file directly, please use Save.")}
+    try:
+        roh = datei_holen(kennung)
+        ordner = os.path.join(DATEI_ORDNER, kennung)
+        os.makedirs(ordner, exist_ok=True)
+        pfad = os.path.join(ordner, name)
+        with open(pfad, "wb") as f:
+            f.write(roh)
+        if WINDOWS:
+            os.startfile(pfad)
+        else:
+            subprocess.Popen(["xdg-open", pfad], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"ok": True}
+    except Exception as e:
+        return {"fehler": "%s: %s" % (type(e).__name__, e)}
+
+
+def datei_speichern(kennung, name):
+    try:
+        art = webview.FileDialog.SAVE if hasattr(webview, "FileDialog") else webview.SAVE_DIALOG
+        ziel = fenster.create_file_dialog(art, save_filename=_datei_name(name))
+        if isinstance(ziel, (list, tuple)):
+            ziel = ziel[0] if ziel else None
+        if not ziel:
+            return {"ok": False}
+        roh = datei_holen(kennung)
+        with open(ziel, "wb") as f:
+            f.write(roh)
+        return {"gespeichert": os.path.basename(ziel)}
+    except Exception as e:
+        return {"fehler": "%s: %s" % (type(e).__name__, e)}
+
+
+def aufraeumen_dateien():
+    """Geoeffnete Dateien von Jarvis nach 7 Tagen aus TEMP entfernen."""
+    grenze = time.time() - 7 * 86400
+    try:
+        for k in os.listdir(DATEI_ORDNER):
+            o = os.path.join(DATEI_ORDNER, k)
+            if DATEI_KENNUNG.match(k) and os.path.getmtime(o) < grenze:
+                for n in os.listdir(o):
+                    os.remove(os.path.join(o, n))
+                os.rmdir(o)
+    except OSError:
+        pass
 
 
 def antworten(text, quelle="pc", anhang=None):
@@ -1237,6 +1339,9 @@ class Api:
             return False
         a = {"name": str(anhang.get("name") or "Datei")[:120], "typ": str(anhang.get("typ") or "")[:80],
              "daten": anhang["daten"]}
+        o = anhang.get("original")          # seit 19 (0.3.3): unveraendertes Original bis 50 MB, nur fuer Werkzeuge
+        if isinstance(o, dict) and isinstance(o.get("daten"), str) and len(o["daten"]) <= 68 * 1024 * 1024:
+            a["original"] = {"typ": str(o.get("typ") or "")[:80], "daten": o["daten"]}
         frage = str(text or "")[:2000]
 
         def los():
@@ -1344,6 +1449,22 @@ class Api:
             log.warning("Einstellungen an die Brücke: %s", type(e).__name__)
             return {"fehler": tx("Jarvis-Rechner nicht erreichbar (%s).", "Jarvis host not reachable (%s).") % type(e).__name__}
 
+    def datei_vorschau(self, kennung):
+        """Seit Version 18 (0.3.3): Bild von Jarvis als data:-Adresse fuer die Vorschau im Gespraech."""
+        if not aus_dem_fenster("datei_vorschau"):
+            return ABGELEHNT
+        return datei_vorschau(kennung)
+
+    def datei_oeffnen(self, kennung, name):
+        if not aus_dem_fenster("datei_oeffnen"):
+            return ABGELEHNT
+        return datei_oeffnen(kennung, name)
+
+    def datei_speichern(self, kennung, name):
+        if not aus_dem_fenster("datei_speichern"):
+            return ABGELEHNT
+        return datei_speichern(kennung, name)
+
     def neuigkeiten(self):
         """Fuer das HUD (seit Version 16): einmal nach einem Update zeigen, danach gilt es als gesehen."""
         if not aus_dem_fenster("neuigkeiten"):
@@ -1387,6 +1508,7 @@ def kopflos(grund):
 
 
 def start_hintergrund():
+    threading.Thread(target=aufraeumen_dateien, daemon=True).start()     # seit Version 18
     if WINDOWS and FENSTER["zustand"] == "min":
         threading.Thread(target=maximiert_wiederherstellen, daemon=True).start()
     try:

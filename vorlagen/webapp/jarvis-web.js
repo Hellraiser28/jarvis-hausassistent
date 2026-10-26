@@ -24,6 +24,7 @@
     return null;
   };
   const QUELLE = /[?&]test=1(&|$)/.test(location.search) ? "test-webapp" : "app";
+  const dateien = {};               // seit 0.3.3: Kennung -> {url, name, typ, blob} der Dateien von Jarvis
   const tok = () => L("jarvis-token");
   const zufall = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, "0")).join("");
   async function ruf(methode, pfad, body, alsBlob) {
@@ -84,6 +85,7 @@
       if (nr !== laeuft) return;
       const antwort = String(a.antwort || "");
       rueck("onAntwort", antwort, (Date.now() - t0) / 1000, null, false);   // Text immer, die Stimme kommt dazu
+      if (Array.isArray(a.dateien) && a.dateien.length) rueck("onDateien", a.dateien);   // seit 0.3.3
       if (W.stimmeAn() && antwort) sprechen(antwort, nr); else rueck("onStatus", "bereit");
     } catch (e) {
       fertig = true;
@@ -98,6 +100,7 @@
     stimme: (an) => { L("jarvis-stimme", an ? "1" : "0"); },
     frage: (t) => { frage(String(t)); },
     // seit 0.3.2: Datei im Gespraech (app.html bereitet sie vor: Bild verkleinert, Ton als WAV)
+    originalAlsDaten: true,             // seit 0.3.3: app.html legt das Original (bis 50 MB) als Base64 bei
     frageMitAnhang: (t, anhang) => {
       try { frage(String(t || ""), undefined, JSON.parse(anhang)); }
       catch (e) { rueck("onFehler", T("anhang_fehler", e.message)); }
@@ -161,6 +164,33 @@
       return ios && !eigenesFenster ? "koppel_web_ios" : "koppel_web";
     },
     updateLaden: () => {},
+    // seit 0.3.3: Dateien von Jarvis, mit Token als Blob geholt (nie ein Link mit Token). Oeffnen, Teilen und Speichern
+    // laufen danach direkt im Klick, sonst blockt der Browser sie.
+    dateiLaden: async (k, name, typ) => {
+      try {
+        const b = await ruf("GET", "/v1/datei/" + k, undefined, true);
+        const url = URL.createObjectURL(b);
+        dateien[k] = { url, name: String(name || "datei"), typ: String(typ || b.type || ""), blob: b };
+        rueck("onDateiBereit", k, String(typ || "").startsWith("image/") ? url : "", true);
+      } catch (e) {
+        rueck("onDateiBereit", k, "", false, e.code === 404 ? T("datei_fehlt") : T("web_fehler", e.message));
+      }
+    },
+    dateiOeffnen: (k) => { const d = dateien[k]; if (d) window.open(d.url, "_blank", "noopener"); },
+    dateiSpeichern: (k) => {
+      const d = dateien[k];
+      if (!d) return;
+      const a = document.createElement("a");
+      a.href = d.url; a.download = d.name;
+      document.body.appendChild(a); a.click(); a.remove();
+    },
+    dateiTeilen: (k) => {
+      const d = dateien[k];
+      if (!d) return;
+      const f = new File([d.blob], d.name, { type: d.typ });
+      if (navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f], title: d.name }).catch(() => {});
+      else W.dateiSpeichern(k);          // Rechner ohne Teilen-Menue: herunterladen
+    },
   };
   window.Jarvis = W;
   if (L("text-immer") === null) L("text-immer", "1");   // Web-App: Antworten immer auch als Text

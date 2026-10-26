@@ -19,6 +19,10 @@ cp "$V/bruecke/oberflaeche.py" "$V/bruecke/verhalten.py" "$V/webapp/jarvis-web.j
   "$DIST/jarvis-linux/"
 cp "$R/app/android/assets/app.html" "$DIST/jarvis-linux/app.html"
 cp "$V/bruecke/test_oberflaeche.py" "$V/bruecke/test_verhalten.py" "$DIST/jarvis-linux/"
+# Fertige Bruecken-Module mit ihren Tests (seit 0.3.3)
+for f in anhang.py ed25519.py ausgabe.py pdf.py bilddienst.py konvertieren.py zusatzdienste.py test_anhang.py test_ed25519.py test_pdf.py test_ausgabe.py test_bilddienst.py test_konvertieren.py; do
+  cp "$V/bruecke/$f" "$DIST/jarvis-linux/"
+done
 cp "$R/EINRICHTUNG.md" "$R/EINRICHTUNG.en.md" "$DIST/jarvis-linux/"
 cp "$R/LICENSE" "$DIST/jarvis-linux/LICENSE"
 chmod 644 "$DIST/jarvis-linux/"*.py "$DIST/jarvis-linux/"*.js "$DIST/jarvis-linux/"*.txt "$DIST/jarvis-linux/"*.png "$DIST/jarvis-linux/"*.html \

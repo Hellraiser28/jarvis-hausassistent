@@ -464,7 +464,8 @@ neu() {
   local f
   # Erneuter Lauf: Vorlagen, die Claude erweitert haben kann, nicht überschreiben; die neue Fassung kommt als .neu daneben
   for f in jarvis_pc.py jarvis.png hud.html oberflaeche.py verhalten.py test_oberflaeche.py test_verhalten.py app.html \
-           jarvis-web.js webapp_bauen.py; do
+           jarvis-web.js webapp_bauen.py anhang.py ed25519.py ausgabe.py pdf.py bilddienst.py konvertieren.py zusatzdienste.py \
+           test_anhang.py test_ed25519.py test_pdf.py test_ausgabe.py test_bilddienst.py test_konvertieren.py; do
     if [ -f "$projekt/einrichtung/$f" ] && ! cmp -s "$HIER/$f" "$projekt/einrichtung/$f" && [ "$f" != jarvis_pc.py ]; then
       install -m 644 "$HIER/$f" "$projekt/einrichtung/$f.neu"
       hinweis "$(t "einrichtung/$f behalten (vielleicht angepasst), die neue Vorlage liegt als $f.neu daneben." "kept einrichtung/$f (maybe customized), the new template is next to it as $f.neu.")"

@@ -65,7 +65,7 @@ schreiben("index.html", seite)
 hashes = " ".join("'sha256-%s'" % base64.b64encode(hashlib.sha256(s.encode("utf-8")).digest()).decode()
                   for s in re.findall(r"<script>(.*?)</script>", seite, re.S))
 schreiben("csp.txt", ("default-src 'none'; script-src %s; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-                      "font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data:; "
+                      "font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data: blob:; "
                       "media-src 'self' blob: data:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; "
                       "form-action 'none'\n") % hashes)
 schreiben("manifest.json", json.dumps({

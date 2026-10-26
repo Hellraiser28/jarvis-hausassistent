@@ -41,7 +41,8 @@ Alle Bilder zeigen erfundene Beispieldaten.
 - **Ein Assistent, viele Wege:** „Hey Jarvis“ am PC (Windows und Linux) mit eigenem Fenster, eine Android-App, eine
   Web-App fürs iPhone, Home Assistant, Durchsagen auf Lautsprechern, Push-Nachrichten an die Familie. Fotos,
   PDFs, Dokumente und Sprachnachrichten gibst du ihm per Büroklammer, am Handy auch direkt als Foto, oder ziehst sie
-  ins PC-Fenster.
+  ins PC-Fenster. Zurück bekommst du Dateien: PDFs aus Text, Diktat oder Fotos, veränderte und neue Bilder,
+  umgewandelte Dateien. Welche Dienste er dafür nutzt, wählst du im Setup.
 - **Dein Jarvis, nicht meiner.** Das Setup fragt nach dir, nach der Persönlichkeit, nach dem, was er können soll,
   und nach deiner Oberfläche: Farben, Bereiche, Begrüßung, eigene Knöpfe. Claude baut nur, was du willst.
 - **Er baut sein Aussehen auf Zuruf um:** „Jarvis, mach dich grün“, „Zeig mal, wie Blau aussieht“, „Blende das
@@ -198,6 +199,8 @@ möchte, ist willkommen (siehe [CONTRIBUTING.md](CONTRIBUTING.md)).
 - Echtzeit (falls gewählt) schickt Ton, Anweisung und Antworten an Google.
 - Dateien, die du anhängst: Bilder, PDF und Text gehen mit der Frage an Claude. Ton schreibt der Jarvis-Rechner
   selbst ab, an Claude geht nur die Abschrift.
+- Bilder bearbeiten und erzeugen (falls gewählt): Bild und Auftrag gehen an den gewählten Anbieter (Cloudflare,
+  OpenAI oder Google). PDFs entstehen auf dem Jarvis-Rechner, Umwandeln läuft über dein eigenes Transmute.
 - Sprechen: Am PC erkennt der Jarvis-Rechner die Sprache selbst. Die Android-App nutzt die Spracherkennung des
   Handys (je nach Gerät meist Google), am iPhone diktiert die Tastatur (Apple).
 - Websuche, Wetter, Nachrichten und die übrigen Fähigkeiten fragen die jeweiligen Dienste ab.

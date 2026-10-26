@@ -42,6 +42,9 @@ them on for troubleshooting, and they are deleted afterwards.
 **It doesn't manipulate.** How cheeky or matter-of-fact it is, you decide. But it never pressures you, never plays on
 your feelings and never talks you into something to get its way.
 
+**It doesn't fake people.** It makes no images that expose, sexualize or misrepresent real people, not even from
+your own photos. Created images show no real people and no third-party brands or logos.
+
 **In an emergency, the emergency number first.** With health and legal questions it helps with information but says
 when you need a doctor or a lawyer. It doesn't replace either.
 
@@ -73,8 +76,11 @@ at your Jarvis or at GitHub.
   Android app uses the phone's recognition (usually Google), the iPhone uses Apple's.
 - **Real-time mode** (only if switched on): audio, instructions and answers go to Google.
 - **Files** you add to a conversation: images, PDF and text go to Claude (Anthropic) with the question. Your
-  Jarvis host transcribes audio itself, only the transcript goes to Claude. The file is only stored in the
-  conversation history on the Jarvis host.
+  Jarvis host transcribes audio itself, only the transcript goes to Claude. On the Jarvis host your files and the
+  ones Jarvis returns to you stay in a storage folder for 7 days, plus in the conversation history.
+- **Editing and creating images** (only if set up): the image and the request go to the provider you chose
+  during setup (Cloudflare, OpenAI or Google). **PDFs** are made on your Jarvis host. **Conversion** runs through
+  Transmute on your own machine.
 - **Tools** such as weather, news or web search query the respective services. They see the request, not your
   conversation.
 - **The interface** loads fonts from Google Fonts (can be switched off).

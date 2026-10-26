@@ -13,10 +13,13 @@ import android.media.AudioRecord;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
+import android.database.Cursor;
 import android.os.Build;
+import android.util.Base64;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -93,6 +96,7 @@ public class MainActivity extends Activity {
             // bleibt "?"
         }
         ui = new Handler(Looper.getMainLooper());
+        dateiAblageAufraeumen();
         einst = getSharedPreferences("jarvis", MODE_PRIVATE);
         try {
             vorgaben = new JSONObject(new String(lesen(getAssets().open("vorgaben.json")), StandardCharsets.UTF_8));
@@ -394,6 +398,73 @@ public class MainActivity extends Activity {
             if (neu == null) throw e;
             return anfrage(neu, methode, pfad, body, typ, lesezeit, true);
         }
+    }
+
+    /** Seit 4.4 (0.3.3): POST mit einer Datei aus der Auswahl, als Base64 in den JSON-Koerper gestreamt (vorne, Datei,
+     *  hinten). Feste Laenge, Puffer von 48 KB: Auch 50 MB liegen nie als Ganzes im Speicher. */
+    byte[] httpStrom(String pfad, byte[] vorne, Uri datei, long laenge, byte[] hinten, int lesezeit) throws IOException {
+        String b = basis != null ? basis : pruefeVerbindung();
+        if (b == null) throw new IOException("offline");
+        try {
+            return anfrageStrom(b, pfad, vorne, datei, laenge, hinten, lesezeit);
+        } catch (HttpFehler e) {
+            throw e;
+        } catch (IOException e) {
+            String neu = pruefeVerbindung();
+            if (neu == null) throw e;
+            return anfrageStrom(neu, pfad, vorne, datei, laenge, hinten, lesezeit);
+        }
+    }
+
+    byte[] anfrageStrom(String adresse, String pfad, byte[] vorne, Uri datei, long laenge, byte[] hinten, int lesezeit)
+            throws IOException {
+        HttpURLConnection c = (HttpURLConnection) new URL(adresse + pfad).openConnection();
+        c.setRequestMethod("POST");
+        c.setConnectTimeout(adresse.equals(lan()) ? 2500 : 8000);
+        c.setReadTimeout(lesezeit);
+        if (token() != null) c.setRequestProperty("Authorization", "Bearer " + token());
+        c.setDoOutput(true);
+        c.setRequestProperty("Content-Type", "application/json");
+        c.setFixedLengthStreamingMode(vorne.length + 4 * ((laenge + 2) / 3) + hinten.length);
+        OutputStream o = c.getOutputStream();
+        o.write(vorne);
+        InputStream in = getContentResolver().openInputStream(datei);
+        if (in == null) throw new IOException("Datei nicht lesbar");
+        long gelesen = 0;
+        try {
+            byte[] puffer = new byte[3 * 16384];          // Vielfaches von 3: Base64 je Stueck ohne Fuellzeichen
+            while (true) {
+                int f = 0;
+                while (f < puffer.length) {
+                    int r = in.read(puffer, f, puffer.length - f);
+                    if (r < 0) break;
+                    f += r;
+                }
+                if (f == 0) break;
+                gelesen += f;
+                if (gelesen > laenge) throw new IOException("Datei hat sich beim Lesen geändert");
+                o.write(Base64.encode(puffer, 0, f, Base64.NO_WRAP));
+                if (f < puffer.length) break;
+            }
+        } finally {
+            in.close();
+        }
+        if (gelesen != laenge) throw new IOException("Datei hat sich beim Lesen geändert");
+        o.write(hinten);
+        o.close();
+        int code = c.getResponseCode();
+        byte[] daten = lesen(code < 400 ? c.getInputStream() : c.getErrorStream());
+        if (code >= 400) throw new HttpFehler(code);
+        return daten;
+    }
+
+    /** Groesse einer gewaehlten Datei laut Anbieter, -1 wenn unbekannt. */
+    long dateiGroesse(Uri u) {
+        try (Cursor c = getContentResolver().query(u, new String[]{OpenableColumns.SIZE}, null, null, null)) {
+            if (c != null && c.moveToFirst() && !c.isNull(0)) return c.getLong(0);
+        } catch (Exception ignored) {
+        }
+        return -1;
     }
 
     // ------------------------------------------------------------ Update (seit 3.7)
@@ -708,19 +779,136 @@ public class MainActivity extends Activity {
 
     static final int DATEI_AUSWAHL = 7;
     static final int KAMERA = 8;
+    static final int SPEICHERN = 9;
+
+    // ------------------------------------------------------------ Dateien von Jarvis (seit 4.4, 0.3.3)
+    // Die Bruecke liefert sie unter /v1/datei/<a + 24 hex> nur mit Token. Die App legt sie in ihren Cache
+    // (ausgabe/<Kennung>/<Name>) und gibt sie ueber KameraAblage an Oeffnen und Teilen weiter (nur Lesen, nur fuer den
+    // einen Aufruf); Speichern laeuft ueber den System-Dialog (ACTION_CREATE_DOCUMENT), ohne Speicher-Berechtigung.
+    final java.util.HashMap<String, String[]> dateien = new java.util.HashMap<String, String[]>();   // Kennung -> {Name, Typ}
+    String speichernKennung;
+
+    File dateiOrdner(String kennung) {
+        return new File(new File(getCacheDir(), "ausgabe"), kennung);
+    }
+
+    static String sichererName(String n) {
+        String s = (n == null ? "" : n).replaceAll("[\\\\/:*?\"<>|\\x00-\\x1f]+", "_").trim();
+        if (s.isEmpty() || s.startsWith(".")) s = "datei" + s;
+        return s.length() > 120 ? s.substring(s.length() - 120) : s;
+    }
+
+    void dateiHolen(final String kennung, final String name, final String typ) {
+        if (kennung == null || !kennung.matches("a[0-9a-f]{24}")) {
+            js("onDateiBereit(" + q(kennung) + ",'',false)");
+            return;
+        }
+        imHintergrund(new Runnable() { public void run() {
+            try {
+                byte[] roh = http("GET", "/v1/datei/" + kennung, null, null, 120000);
+                File ordner = dateiOrdner(kennung);
+                ordner.mkdirs();
+                File f = new File(ordner, sichererName(name));
+                FileOutputStream o = new FileOutputStream(f);
+                o.write(roh);
+                o.close();
+                synchronized (dateien) {
+                    dateien.put(kennung, new String[]{f.getName(), typ == null ? "" : typ});
+                }
+                String vorschau = "";
+                if (typ != null && typ.matches("image/(jpeg|png|webp|gif)") && roh.length < 4 * 1024 * 1024)
+                    vorschau = "data:" + typ + ";base64," + android.util.Base64.encodeToString(roh, android.util.Base64.NO_WRAP);
+                js("onDateiBereit(" + q(kennung) + "," + q(vorschau) + ",true)");
+            } catch (HttpFehler e) {
+                js("onDateiBereit(" + q(kennung) + ",'',false," + q(e.code == 404 ? tx("Die Datei ist nicht mehr da.",
+                        "The file is no longer available.") : fehlertext(e)) + ")");
+            } catch (Exception e) {
+                js("onDateiBereit(" + q(kennung) + ",'',false," + q(fehlertext(e)) + ")");
+            }
+        }});
+    }
+
+    void dateiAktion(String kennung, String art) {
+        String[] d;
+        synchronized (dateien) {
+            d = dateien.get(kennung);
+        }
+        if (d == null) return;
+        Uri u = KameraAblage.ausgabeAdresse(getPackageName(), kennung, d[0]);
+        String typ = d[1].isEmpty() ? "application/octet-stream" : d[1];
+        try {
+            if ("oeffnen".equals(art)) {
+                Intent i = new Intent(Intent.ACTION_VIEW).setDataAndType(u, typ).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                i.setClipData(android.content.ClipData.newRawUri("", u));
+                startActivity(i);
+            } else if ("teilen".equals(art)) {
+                Intent i = new Intent(Intent.ACTION_SEND).setType(typ).putExtra(Intent.EXTRA_STREAM, u)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                i.setClipData(android.content.ClipData.newRawUri("", u));
+                startActivity(Intent.createChooser(i, null));
+            } else if ("speichern".equals(art)) {
+                speichernKennung = kennung;
+                startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                        .setType(typ).putExtra(Intent.EXTRA_TITLE, d[0]), SPEICHERN);
+            }
+        } catch (Exception e) {
+            js("window.onHinweis && window.onHinweis(" + q(tx("Dafür ist auf dem Handy keine App da.",
+                    "There is no app for that on this phone.")) + ")");
+        }
+    }
+
+    void dateiAblageAufraeumen() {          // aelter als 7 Tage weg (wie auf dem Jarvis-Rechner)
+        File[] alle = new File(getCacheDir(), "ausgabe").listFiles();
+        if (alle == null) return;
+        long grenze = System.currentTimeMillis() - 7L * 86400000L;
+        for (File o : alle) {
+            if (o.lastModified() >= grenze) continue;
+            File[] inhalt = o.listFiles();
+            if (inhalt != null) for (File f : inhalt) f.delete();
+            o.delete();
+        }
+    }
     ValueCallback<Uri[]> dateiRueckruf;      // offene Dateiauswahl der WebView (seit 4.3)
+    volatile Uri letzteDatei;                // seit 4.4 (0.3.3): zuletzt gewaehlte Datei, fuer das Original
+    static final long ORIGINAL_MAX = 50L * 1024 * 1024;
 
     @Override
     protected void onActivityResult(int code, int ergebnis, Intent daten) {
+        if (code == SPEICHERN) {
+            String k = speichernKennung;
+            speichernKennung = null;
+            String[] d;
+            synchronized (dateien) {
+                d = k == null ? null : dateien.get(k);
+            }
+            if (ergebnis == RESULT_OK && daten != null && daten.getData() != null && d != null) {
+                try {
+                    InputStream ein = new java.io.FileInputStream(new File(dateiOrdner(k), d[0]));
+                    OutputStream aus = getContentResolver().openOutputStream(daten.getData());
+                    byte[] puffer = new byte[65536];
+                    int n;
+                    while ((n = ein.read(puffer)) > 0) aus.write(puffer, 0, n);
+                    ein.close();
+                    aus.close();
+                    js("window.onHinweis && window.onHinweis(" + q(tx("Gespeichert.", "Saved.")) + ")");
+                } catch (Exception e) {
+                    js("window.onHinweis && window.onHinweis(" + q(fehlertext(e)) + ")");
+                }
+            }
+            return;
+        }
         if (code == KAMERA && dateiRueckruf != null) {
             File f = new File(getCacheDir(), KameraAblage.DATEI);
-            dateiRueckruf.onReceiveValue(ergebnis == RESULT_OK && f.length() > 0
-                    ? new Uri[]{KameraAblage.adresse(getPackageName())} : null);
+            Uri[] foto = ergebnis == RESULT_OK && f.length() > 0 ? new Uri[]{KameraAblage.adresse(getPackageName())} : null;
+            letzteDatei = foto != null ? foto[0] : null;
+            dateiRueckruf.onReceiveValue(foto);
             dateiRueckruf = null;
             return;
         }
         if (code == DATEI_AUSWAHL && dateiRueckruf != null) {
-            dateiRueckruf.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(ergebnis, daten));
+            Uri[] gewaehlt = WebChromeClient.FileChooserParams.parseResult(ergebnis, daten);
+            letzteDatei = gewaehlt != null && gewaehlt.length > 0 ? gewaehlt[0] : null;
+            dateiRueckruf.onReceiveValue(gewaehlt);
             dateiRueckruf = null;
             return;
         }
@@ -737,6 +925,12 @@ public class MainActivity extends Activity {
 
     // Seit 4.3 (0.3.2) mit Datei: anhang = {name, typ, daten (Base64)}, von app.html vorbereitet, von der Bruecke geprueft
     void frage(final String text, final String quelle, final JSONObject anhang) {
+        frage(text, quelle, anhang, null, 0, null);
+    }
+
+    // Seit 4.4 (0.3.3): dazu das unveraenderte Original (Uri), gestreamt; die Bruecke gibt es nur den Werkzeugen
+    void frage(final String text, final String quelle, final JSONObject anhang, final Uri original, final long laenge,
+               final String originalTyp) {
         imHintergrund(new Runnable() { public void run() {
             js("onStatus('denkt')");
             final String kennung = neueKennung();
@@ -746,10 +940,19 @@ public class MainActivity extends Activity {
             }});
             zw.start();
             try {
-                JSONObject a = new JSONObject(new String(http("POST", "/v1/frage",
-                        json(new JSONObject().put("text", text).put("quelle", quelle).put("geraet", "Handy").put("anfrage", kennung)
-                                .put("anhang", anhang)),
-                        "application/json", 245000), StandardCharsets.UTF_8));
+                JSONObject kopf = new JSONObject().put("text", text).put("quelle", quelle).put("geraet", "Handy")
+                        .put("anfrage", kennung);
+                byte[] roh;
+                if (original != null && anhang != null) {
+                    String k = kopf.toString(), an = anhang.toString();
+                    byte[] vorne = (k.substring(0, k.length() - 1) + ",\"anhang\":" + an.substring(0, an.length() - 1)
+                            + ",\"original\":{\"typ\":" + JSONObject.quote(originalTyp == null ? "" : originalTyp)
+                            + ",\"daten\":\"").getBytes(StandardCharsets.UTF_8);
+                    roh = httpStrom("/v1/frage", vorne, original, laenge, "\"}}}".getBytes(StandardCharsets.UTF_8), 245000);
+                } else {
+                    roh = http("POST", "/v1/frage", json(kopf.put("anhang", anhang)), "application/json", 245000);
+                }
+                JSONObject a = new JSONObject(new String(roh, StandardCharsets.UTF_8));
                 fertig[0] = true;
                 try {
                     zw.join(15000);          // laufenden Zwischensatz ausreden lassen
@@ -760,6 +963,8 @@ public class MainActivity extends Activity {
                 boolean stimme = einst.getBoolean("stimme", true);
                 ArrayList<String> s = saetze(antwort);
                 js("onAntwort(" + q(antwort) + "," + a.optDouble("dauer_s", 0) + "," + new JSONArray(s).toString() + "," + stimme + ")");
+                JSONArray dateien = a.optJSONArray("dateien");       // seit 4.4 (0.3.3): Dateien von Jarvis
+                if (dateien != null && dateien.length() > 0) js("window.onDateien && window.onDateien(" + dateien.toString() + ")");
                 if (stimme && !s.isEmpty()) sprichSaetze(s);
                 else js("onStatus('bereit')");
             } catch (Exception e) {
@@ -1047,6 +1252,27 @@ public class MainActivity extends Activity {
     // ------------------------------------------------------------ Schnittstelle fuer app.html
 
     class Bruecke {
+        /** Seit 4.4 (0.3.3): Datei von Jarvis vorab holen (mit Token), Vorschau fuer Bilder an onDateiBereit. */
+        @JavascriptInterface
+        public void dateiLaden(String kennung, String name, String typ) {
+            dateiHolen(kennung, name, typ);
+        }
+
+        @JavascriptInterface
+        public void dateiOeffnen(final String kennung) {
+            ui.post(new Runnable() { public void run() { dateiAktion(kennung, "oeffnen"); }});
+        }
+
+        @JavascriptInterface
+        public void dateiTeilen(final String kennung) {
+            ui.post(new Runnable() { public void run() { dateiAktion(kennung, "teilen"); }});
+        }
+
+        @JavascriptInterface
+        public void dateiSpeichern(final String kennung) {
+            ui.post(new Runnable() { public void run() { dateiAktion(kennung, "speichern"); }});
+        }
+
         @JavascriptInterface
         public boolean gekoppelt() {
             return token() != null;
@@ -1149,6 +1375,23 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void frage(String text) {
             MainActivity.this.frage(text);
+        }
+
+        /** Seit 4.4 (0.3.3): wie frageMitAnhang, dazu das Original der zuletzt gewaehlten Datei. Java liest es selbst
+         *  aus der Auswahl, statt es als riesige Zeichenkette durch die WebView zu reichen. Passt die Datei nicht
+         *  (andere Groesse, zu gross, nicht lesbar), geht nur die aufbereitete Fassung, wie bisher. */
+        @JavascriptInterface
+        public void frageMitAnhangOriginal(String text, String anhang, double groesse, String typ) {
+            try {
+                JSONObject a = new JSONObject(anhang);
+                Uri u = letzteDatei;
+                long n = u == null ? -1 : dateiGroesse(u);
+                String t = text == null ? "" : text;
+                if (n > 0 && n <= ORIGINAL_MAX && n == (long) groesse) MainActivity.this.frage(t, "app", a, u, n, typ);
+                else MainActivity.this.frage(t, "app", a);
+            } catch (Exception e) {
+                js("onFehler(" + q(fehlertext(e)) + ")");
+            }
         }
 
         /** Seit 4.3 (0.3.2): Frage mit Datei (Text darf leer sein). */

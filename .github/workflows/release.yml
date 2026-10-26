@@ -38,9 +38,14 @@ jobs:
           python3 -B vorlagen/bruecke/test_verhalten.py
           python3 -B vorlagen/bruecke/test_anhang.py
           python3 -B vorlagen/bruecke/test_ed25519.py
+          python3 -B vorlagen/bruecke/test_pdf.py
+          python3 -B vorlagen/bruecke/test_ausgabe.py
+          python3 -B vorlagen/bruecke/test_bilddienst.py
+          python3 -B vorlagen/bruecke/test_konvertieren.py
           python3 -B vorlagen/pc/test_echtzeit_befehl.py
           python3 -B vorlagen/pc/test_fenster_schutz.py
           python3 -B vorlagen/pc/test_neuigkeiten.py
+          python3 -B vorlagen/pc/test_dateien_pc.py
 
       - name: Setup.exe bauen
         run: sh installer/bauen.sh "$VERSION"

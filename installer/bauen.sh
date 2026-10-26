@@ -30,6 +30,10 @@ cp "$RELEASE/vorlagen/bruecke/verhalten.py" "$RELEASE/vorlagen/webapp/jarvis-web
 cp "$RELEASE/app/android/assets/app.html" "$HIER/dateien/app.html"
 # Symbol fuer die Web-App und die Einheitentests der beiden Pruefmodule (laufen neben den Modulen)
 cp "$CLIENT/jarvis.png" "$RELEASE/vorlagen/bruecke/test_oberflaeche.py" "$RELEASE/vorlagen/bruecke/test_verhalten.py" "$HIER/dateien/"
+# Fertige Bruecken-Module mit ihren Tests (seit 0.3.3): Anhaenge, Update-Signatur, Dateien zurueck, PDF, Bilder, Umwandeln
+for f in anhang.py ed25519.py ausgabe.py pdf.py bilddienst.py konvertieren.py zusatzdienste.py test_anhang.py test_ed25519.py test_pdf.py test_ausgabe.py test_bilddienst.py test_konvertieren.py; do
+  cp "$RELEASE/vorlagen/bruecke/$f" "$HIER/dateien/"
+done
 # Lizenz fuer die Lizenzseite: Markdown-Zeichen weg, Windows-Zeilenenden
 sed -e 's/^#\{1,\} //' -e 's/\*\*\*//g' -e 's/\*\*//g' -e 's/\[\([^]]*\)\](#[^)]*)/\1/g' -e 's/^<\(http[^>]*\)>$/\1/' \
   -e 's/$/\r/' "$RELEASE/LICENSE" > "$HIER/dateien/LICENSE.txt"

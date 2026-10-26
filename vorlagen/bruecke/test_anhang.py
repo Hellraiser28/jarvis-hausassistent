@@ -145,5 +145,38 @@ try:
 except an.Abgelehnt:
     pruef("Ton ohne Ohr abgelehnt", True)
 
+# Seit 0.3.3: Original neben der aufbereiteten Fassung, nur fuer Werkzeuge
+flac = b"fLaC" + b"\x00" * 2000
+
+
+def mit_original(roh, o_roh, typ="audio/flac", art_daten=None):
+    d = a(roh, "lied.flac")
+    d["original"] = {"typ": typ, "daten": art_daten if art_daten is not None else base64.b64encode(o_roh).decode()}
+    return d
+
+
+g = an.pruefen(mit_original(wav(1), flac))
+pruef("Original: Bytes und Typ", g.get("original", {}).get("roh") == flac and g["original"]["typ"] == "audio/flac")
+pruef("Original: aufbereitete Fassung bleibt fuers Gehirn", g["typ"] == "audio/wav" and g["roh"] != flac)
+bl, _ = an.bloecke(g, "Mach eine MP3", hoeren=ohr, kennung="b" + "1" * 24)
+pruef("Original: im Kopf erwaehnt (mit Kennung)", "unveränderte Original (audio/flac" in bl[0]["text"])
+g = an.pruefen(mit_original(wav(1), flac, typ="text/html"))
+pruef("Original: fremder Typ wird zu audio/octet-stream", g["original"]["typ"] == "audio/octet-stream")
+g = an.pruefen(mit_original(wav(1), flac, art_daten="kein base64!"))
+pruef("Original beschaedigt: Anhang bleibt, Hinweis", "original" not in g and g.get("original_hinweis") == "beschädigt")
+bl, _ = an.bloecke(g, "x", hoeren=ohr, kennung="b" + "1" * 24)
+pruef("Original beschaedigt: Hinweis im Kopf", "Das Original kam nicht mit" in bl[0]["text"])
+alt_max = an.ORIGINAL_MAX
+an.ORIGINAL_MAX = 1000
+g = an.pruefen(mit_original(wav(1), flac))
+an.ORIGINAL_MAX = alt_max
+pruef("Original zu gross: nur Hinweis", "original" not in g and g.get("original_hinweis") == "zu groß")
+d = a(b"Einkaufsliste: Milch", "liste.txt")
+d["original"] = {"typ": "audio/flac", "daten": base64.b64encode(flac).decode()}
+pruef("Original nur bei Bild und Ton", "original" not in an.pruefen(d))
+g = an.pruefen(mit_original(png(), b"\x89PNG-gross", typ="image/png"))
+pruef("Original bei Bildern", g["original"]["typ"] == "image/png" and g["art"] == "bild")
+pruef("ohne Original wie bisher", "original" not in an.pruefen(a(wav(1))) and "original_hinweis" not in an.pruefen(a(wav(1))))
+
 print("%d ok, %d Fehler" % (ok, fehler))
 sys.exit(1 if fehler else 0)
