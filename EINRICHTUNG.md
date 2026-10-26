@@ -169,6 +169,7 @@ du gleich zu Beginn beantragen, damit die Freigabe bis zum Bau da ist.
 | Kalender | Welcher Dienst (Google, Microsoft 365/Outlook, iCloud, CalDAV/Nextcloud, ICS-Link)? Nur lesen oder auch eintragen? |
 | Einkaufsliste und Aufgaben | Wo (Bring!, Todoist, Microsoft To Do, Home Assistant, Vikunja oder eine eigene Liste in Jarvis)? |
 | Smart Home | Home Assistant vorhanden (Adresse, Token als Datei)? Je Gerät: frei, nur mit Rückfrage, nie. Welche Hausgeräte sollen „fertig“ melden (Home Connect, Miele, Steckdose mit Leistungsmessung), und gibt es dafür schon Automationen? Handys mit der Home-Assistant-App für „Wo ist mein Handy?“ |
+| Anrufen (optional) | Jarvis per Telefon über eine eigene Rufnummer (Baustein „Anrufen“). Braucht Home Assistant OS (für das Add-on HA-SIP) und eine Telefonanlage mit IP-Telefonen (z. B. FRITZ!Box) samt freier Rufnummer. Welche Nummern dürfen anrufen? Über das Telefon hat Jarvis nur die Rechte der HA-Sprachkette |
 | Musik und Lautsprecher | Spotify, Music Assistant, Sonos, Durchsagen auf Echos (über Home Assistant)? Welche Räume gehören zu „überall“, welche nie (Schlaf- und Kinderzimmer)? |
 | Nachrichten | Welche Seiten? Die Person nennt ihre Quellen, du findest die Feeds. Gib keine Quellen vor. |
 | Sport | Verein und Liga (Fußball in Deutschland: OpenLigaDB; Mannschaften je Liga und Saison abfragen, die Teamnummern mischen Herren, Frauen und Jugend) |
@@ -358,8 +359,17 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
       Ein einziges Modul, das beim Laden scheitert, legt den ganzen Server lahm, und das Gehirn meldet nur „keine
       Verbindung“.
     - **Nach jeder Änderung am Werkzeug-Server alle Werkzeug-Proben wiederholen.**
-- **Ohr:** Whisper. Auf einem Server mit Docker `rhasspy/wyoming-whisper` (Port 10300), unter Windows ohne Docker
-  `faster-whisper` in Python, Modell „base“, `int8`.
+- **Ohr:** Auf einem Server mit Docker das Image `rhasspy/wyoming-whisper` (Port 10300), seit 0.3.1 mit **Kroko**:
+  `--stt-library sherpa --sherpa-streaming --language de` (bzw. `en`). Das Image lädt das passende Modell selbst
+  (`sherpa-onnx-streaming-zipformer-<sprache>-kroko-2025-08-06`, Lizenz der Kroko-Community-Modelle CC-BY-SA). Kroko
+  erkennt mit, während gesprochen wird.
+    - Gemessen (Oktober 2026, schwacher NAS-Prozessor): Deutsch auf echten Telefon-Mitschnitten 5 von 5 Sätzen, Whisper
+      „base“ 3 von 5; 1,3 bis 1,7 s je Satz statt 3 bis 4,6 s. Englisch, nur mit zwei Kunststimmen gemessen: 23 von 24
+      bei 0,9 s im Mittel (Parakeet v2 23 von 24 bei 2,2 s, Whisper „base“ 19 von 24).
+    - Kroko kennt den Namen „Jarvis“ nicht (schreibt „Javis“). Befehle, die den Namen enthalten können, tolerant
+      prüfen, wie der Echtzeit-Befehl im PC-Client.
+    - Unter Windows ohne Docker `faster-whisper` in Python, Modell „base“, `int8`; Kroko ist dort ungeprüft.
+    - Vor einem Wechsel des Erkenners mit echten Aufnahmen der Person messen. Kunststimmen bestehen fast jeden Test.
 - **Stimme:** ein kleiner Wyoming-TTS-Dienst (Port 10200). Microsoft-Neural-Stimmen über `edge-tts` (online), eine
   lokale Piper-Stimme als Reserve.
     - satzweise und gestreamt, höchstens drei Sätze gleichzeitig anfragen
@@ -402,7 +412,8 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
       hinein.** Ihre Einstellungen (Name, Zeile unter dem Logo, Person, Farbe, Bereiche, Begrüßungen, Startzeilen,
       Schnellaktionen) kommen von der Brücke mit dem Zustand: `zustand.json` bzw. `/v1/zustand` enthalten
       `oberflaeche` und `oberflaeche_stand` (ein Prüfwert, der sich bei jeder Änderung ändert). Die Seite wendet
-      Änderungen innerhalb einer Sekunde an, ohne Neuladen.
+      Änderungen innerhalb einer Sekunde an, ohne Neuladen. Seit 0.3.1 gehört `sprache` (`de` oder `en`, die Sprache
+      der Einrichtung) mit in den Zustand.
     - Die Daten liefert die Brücke fertig aufbereitet als Dateien neben der Seite: `system.json`
       (`{messer: [[wert, max, "CPU", "%", warn_ab], …], zeilen: [[name, wert, klasse]], last}`), `haus.json`
       (`{strom_w, zeilen}`) und `kalender.json` (`{liste: [{neu, kopf, zeit, text, art}]}`). Die Brücke schreibt sie
@@ -520,7 +531,9 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
     - `/v1/client` liefert `sprache` (`de` oder `en`); der PC-Client zeigt danach seine Meldungen und spricht die
       Begrüßung in dieser Sprache, die Spracherkennung nimmt sie ebenfalls.
     - App und Web-App folgen der Sprache des Geräts und lassen sich im Zahnrad umstellen (Diese App → Sprache). Das
-      HUD folgt dem Browser bzw. Windows; für einen Wandbildschirm `?sprache=en` an die Adresse hängen.
+      HUD folgt seit 0.3.1 der Sprache der Einrichtung: `sprache` im Zustand der Brücke, im PC-Fenster gibt der
+      Client `?sprache=` mit. Ein Zusatz `?sprache=de` oder `?sprache=en` an der Adresse geht vor (z. B. für einen
+      Wandbildschirm in der anderen Sprache).
     - Persona, Werkzeugbeschreibungen und Antworten schreibst du in der gewählten Sprache. Bezeichner (Endpunkte,
       Schlüssel, Werkzeugnamen) bleiben, wie sie sind, damit App, HUD und Setup sie verstehen.
 - **Zwischenstand:** Läuft ein Werkzeug länger, zeigt der Client, was gerade läuft, und spricht einen kurzen
@@ -581,6 +594,31 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
 - **Bildschirm erklären** (mit PC-Steuerung): Windows-MCP hat das Werkzeug `Screenshot` (Bild mit Fenstern und
   Mauszeiger). Regel in der Persona: nur auf Nachfrage, nie von sich aus, den Inhalt nicht merken; bei kopiertem
   Text die Zwischenablage. Eigener Zwischensatz („Ich schau mir deinen Bildschirm an.“).
+- **Anrufen** (seit 0.3.1, mit Home Assistant OS und einer Telefonanlage mit IP-Telefonen, z. B. FRITZ!Box): Die
+  Person ruft eine eigene Rufnummer an und spricht mit Jarvis über die Sprachkette von Home Assistant. Ein Weckwort
+  braucht es dort nicht, nach dem Abnehmen und nach jeder Antwort hört er zu.
+    - Weg: IP-Telefon in der Telefonanlage (eigene Rufnummer klingelt nur dort) → Add-on **HA-SIP**
+      (`arnonym/ha-plugins`, Modus `listen`, nimmt selbst nichts ab) → Webhook → Automation prüft die Nummer → HA-SIP
+      nimmt an, wählt die Integration **Voice over IP** an und verbindet beide Gespräche; eine zweite Automation legt
+      das zweite Gespräch auf, wenn der Anrufer auflegt. Die VoIP-Integration allein meldet sich an keiner
+      Telefonanlage an. Das Add-on ist Code von außen: Die Person installiert es selbst.
+    - Rechte: Über das Telefon hat Jarvis nur die Rechte der HA-Sprachkette, also keine PC-Werkzeuge, keine
+      Freigaben, keine Knöpfe. Vorher die für Assist freigegebenen Entitäten durchsehen und Babyfon, Kameras und
+      Schlösser herausnehmen: Lokale Befehle der Sprachkette laufen an Jarvis' Regeln vorbei.
+    - Nur die Nummern annehmen, die die Person nennt. Die Bedingung vergleicht nur Ziffern und macht aus der
+      Landesvorwahl (`+49`, `0049`) eine `0`. Testen mit `+49…`, `0049…`, einer fremden, einer leeren und einer
+      unterdrückten Nummer.
+    - Fallen aus dem ersten Aufbau: HA-SIP belegt Port 5060, die VoIP-Integration bekommt einen anderen (z. B. 5070).
+      HA-SIP speichert nur das vollständige Schema (`sip_2` und `sip_3` als abgeschaltete Platzhalter). **Mit
+      `local_only: true` verwirft Home Assistant die Webhooks von HA-SIP ohne jede Meldung** (HA-SIP ruft über den
+      Supervisor, ohne Absender-IP, und bekommt trotzdem 200); deshalb `local_only: false` mit langen Zufallskennungen,
+      die nur in HA und in den Add-on-Optionen stehen. HA hebt nur 5 Abläufe je Automation auf, HA-SIP schickt aber
+      jedes Ereignis an den Eingangs-Webhook: `stored_traces` hochsetzen. Das pjsip-Protokoll auf Stufe 3, sonst
+      rollen die Webhook-Zeilen binnen Minuten aus dem Protokoll.
+    - Die Spracherkennung muss Telefonton verkraften (siehe Ohr). Prüfen, was verstanden wurde: Debug-Läufe der
+      Sprachkette (`assist_pipeline/pipeline_debug`).
+    - Abnahme: Ein Anruf von der eigenen Nummer wird angenommen und beantwortet, Auflegen beendet beide Gespräche, und
+      ein echter Webhook mit fremder Nummer endet an der Nummernbedingung.
 
 ### Tempo (gemessen, von Anfang an so bauen)
 

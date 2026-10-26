@@ -171,6 +171,14 @@ von unterwegs und PC-Steuerung gibt es in der Web-App nicht: Sie kommt per HTTP,
 Heimnetz (Hintergrund in [SECURITY.md](SECURITY.md)). Die Web-App ist mit Chromium im iPhone-Format getestet, noch
 nicht auf einem echten iPhone.
 
+### Mac
+
+Einen eigenen Mac-Client gibt es noch nicht. Technisch ginge er, wir können ihn aber mangels Mac nicht testen und
+veröffentlichen nichts Ungetestetes. Bis dahin läuft die **Web-App** auch am Mac: im Heimnetz in Safari (oder Chrome)
+`http://<Jarvis-Rechner>:<Port>/app` öffnen, im Tab koppeln und über die Diktierfunktion von macOS ins Eingabefeld
+sprechen. Weckwort, Echtzeit-Modus und PC-Steuerung fehlen dort, wie auf dem iPhone. Wer einen Mac hat und testen
+möchte, ist willkommen (siehe [CONTRIBUTING.md](CONTRIBUTING.md)).
+
 ### Von Hand (jedes System)
 
 1. Claude Code installieren: <https://code.claude.com/docs/en/setup>
@@ -217,7 +225,7 @@ Wie Jarvis aufgebaut ist, wo die Grenzen liegen und wie du eine Lücke meldest: 
 Linux oder macOS mit Docker:
 
 ```sh
-installer/bauen.sh 0.3.0     # -> installer/dist/Jarvis-Setup.exe
+installer/bauen.sh 0.3.1     # -> installer/dist/Jarvis-Setup.exe
 ```
 
 `bauen.sh` baut beim ersten Lauf ein kleines Bild mit `makensis` (Debian, Paket `nsis`). Warnungen gelten als Fehler.

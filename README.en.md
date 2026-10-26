@@ -164,6 +164,14 @@ outside and PC control are not available in the web app: it is served over HTTP,
 home network (background in [SECURITY.en.md](SECURITY.en.md)). Tested with Chromium at iPhone size, not yet on a
 real iPhone.
 
+### Mac
+
+There is no native Mac client yet. It would be technically possible, but we have no Mac to test it on and don't
+release anything untested. Until then, the **web app** works on a Mac too: on your home network, open
+`http://<Jarvis host>:<port>/app` in Safari (or Chrome), pair in the tab, and speak into the input field with macOS
+dictation. Wake word, real-time mode and PC control are missing there, as on the iPhone. If you have a Mac and want to
+test, you're welcome (see [CONTRIBUTING.en.md](CONTRIBUTING.en.md)).
+
 ### By hand (any OS)
 
 1. Install Claude Code: <https://code.claude.com/docs/en/setup>
@@ -208,7 +216,7 @@ How Jarvis is built, its limits and how to report a vulnerability: [SECURITY.en.
 Linux or macOS with Docker:
 
 ```sh
-installer/bauen.sh 0.3.0     # -> installer/dist/Jarvis-Setup.exe
+installer/bauen.sh 0.3.1     # -> installer/dist/Jarvis-Setup.exe
 ```
 
 On its first run, `bauen.sh` builds a small image with `makensis` (Debian, package `nsis`). Warnings count as errors.

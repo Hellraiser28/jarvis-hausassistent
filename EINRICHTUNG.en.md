@@ -177,6 +177,7 @@ right at the start, so that the approval is there by build time.
 | Calendar | Which service (Google, Microsoft 365/Outlook, iCloud, CalDAV/Nextcloud, ICS link)? Read only, or also add entries? |
 | Shopping list and tasks | Where (Bring!, Todoist, Microsoft To Do, Home Assistant, Vikunja or a list of its own inside Jarvis)? |
 | Smart home | Home Assistant available (address, token as a file)? Per device: free, only after asking, never. Which appliances should report “done” (Home Connect, Miele, a plug with power metering), and are there automations for that already? Phones with the Home Assistant app for “Where is my phone?” |
+| Phone calls (optional) | Jarvis by phone on a number of its own (building block "Phone calls"). Needs Home Assistant OS (for the HA-SIP add-on) and a phone system with IP phones (e.g. a FRITZ!Box) with a free number. Which numbers may call? By phone, Jarvis only has the rights of the HA voice pipeline |
 | Music and speakers | Spotify, Music Assistant, Sonos, announcements on Echos (via Home Assistant)? Which rooms belong to “everywhere”, which never (bedrooms, children's rooms)? |
 | News | Which sites? The person names their sources, you find the feeds. Don't impose any sources. |
 | Sports | Club and league (football (soccer) in Germany: OpenLigaDB; query the teams per league and season, the team numbers mix men's, women's and youth teams) |
@@ -369,8 +370,18 @@ build time. The person can still change things. After the yes, you save the answ
       A single module that fails on load takes down the whole server, and the brain only reports "no
       connection".
     - **After every change to the tool server, repeat all tool tests.**
-- **Ear:** Whisper. On a server with Docker `rhasspy/wyoming-whisper` (port 10300), on Windows without Docker
-  `faster-whisper` in Python, model "base", `int8`.
+- **Ear:** On a server with Docker, the image `rhasspy/wyoming-whisper` (port 10300), since 0.3.1 with **Kroko**:
+  `--stt-library sherpa --sherpa-streaming --language en` (or `de`). The image downloads the matching model itself
+  (`sherpa-onnx-streaming-zipformer-<language>-kroko-2025-08-06`; the Kroko community models are CC-BY-SA). Kroko
+  transcribes while the person is still speaking.
+    - Measured (October 2026, a weak NAS processor): English, with two synthetic voices only, 23 of 24 sentences at
+      0.9 s on average (Parakeet v2 23 of 24 at 2.2 s, Whisper "base" 19 of 24). German on real phone recordings 5 of
+      5 sentences, Whisper "base" 3 of 5; 1.3 to 1.7 s per sentence instead of 3 to 4.6 s.
+    - Kroko doesn't know the name "Jarvis" (it writes "Javis"). Check commands that may contain the name tolerantly,
+      like the real-time command in the PC client.
+    - On Windows without Docker, `faster-whisper` in Python, model "base", `int8`; Kroko is untested there.
+    - Before switching recognizers, measure with real recordings of the person. Synthetic voices pass almost any
+      test.
 - **Voice:** a small Wyoming TTS service (port 10200). Microsoft neural voices via `edge-tts` (online), a
   local Piper voice as fallback.
     - sentence by sentence and streamed, request at most three sentences at a time
@@ -413,7 +424,8 @@ build time. The person can still change things. After the yes, you save the answ
       into it.** Its settings (name, line under the logo, person, color, panels, greetings, start lines,
       quick actions) come from the bridge with the state: `zustand.json` or `/v1/zustand` contain
       `oberflaeche` and `oberflaeche_stand` (a check value that changes with every change). The page applies
-      changes within a second, without reloading.
+      changes within a second, without reloading. Since 0.3.1 the state also carries `sprache` (`de` or `en`, the
+      language chosen during setup).
     - The bridge supplies the data ready-made as files next to the page: `system.json`
       (`{messer: [[wert, max, "CPU", "%", warn_ab], …], zeilen: [[name, wert, klasse]], last}`), `haus.json`
       (`{strom_w, zeilen}`) and `kalender.json` (`{liste: [{neu, kopf, zeit, text, art}]}`). The bridge writes them
@@ -530,8 +542,10 @@ build time. The person can still change things. After the yes, you save the answ
       Without the call everything stays German.
     - `/v1/client` returns `sprache` (`de` or `en`); the PC client then shows its messages and speaks its greeting in
       that language, and speech recognition uses it too.
-    - The app and web app follow the device language and can be switched in the gear menu (This app → Language). The
-      HUD follows the browser or Windows; for a wall display, append `?sprache=en` to the address.
+    - The app and web app follow the device language and can be switched in the gear menu (This app → Language).
+      Since 0.3.1 the HUD follows the setup language: `sprache` in the bridge's state, and in the PC window the client
+      passes `?sprache=`. Appending `?sprache=de` or `?sprache=en` to the address takes precedence (e.g. for a wall
+      display in the other language).
     - Write the persona, tool descriptions and answers in the chosen language. Identifiers (endpoints, keys, tool
       names) stay as they are, so the app, HUD and setup understand them.
 - **Progress status:** if a tool takes longer, the client shows what is currently running and speaks a short
@@ -592,6 +606,30 @@ build time. The person can still change things. After the yes, you save the answ
 - **Explain the screen** (with PC control): Windows-MCP has the tool `Screenshot` (image with windows and mouse
   pointer). Rule in the persona: only on request, never on its own, don't remember the content; for copied text the
   clipboard. Its own interim sentence (“Let me look at your screen.”).
+- **Phone calls** (since 0.3.1, with Home Assistant OS and a phone system with IP phones, e.g. a FRITZ!Box): The
+  person calls a number of their own and talks to Jarvis through Home Assistant's voice pipeline. No wake word is
+  needed there; after picking up and after every answer, it listens.
+    - Path: IP phone in the phone system (the number rings only there) → add-on **HA-SIP** (`arnonym/ha-plugins`,
+      mode `listen`, never picks up by itself) → webhook → automation checks the number → HA-SIP answers, dials the
+      **Voice over IP** integration and bridges both calls; a second automation hangs up the second call when the
+      caller hangs up. The VoIP integration alone does not register with any phone system. The add-on is third-party
+      code: the person installs it themselves.
+    - Rights: by phone, Jarvis only has the rights of the HA voice pipeline, so no PC tools, no approvals, no
+      buttons. Review the entities exposed to Assist first and remove baby monitors, cameras and locks: the
+      pipeline's local commands bypass Jarvis' rules.
+    - Only accept the numbers the person names. The condition compares digits only and turns the country code
+      (`+49`, `0049`, or the person's own) into a `0`. Test with `+…`, `00…`, a foreign, an empty and a withheld
+      number.
+    - Traps from the first build: HA-SIP takes port 5060, the VoIP integration gets another one (e.g. 5070). HA-SIP
+      only saves the complete schema (`sip_2` and `sip_3` as disabled placeholders). **With `local_only: true`, Home
+      Assistant silently drops HA-SIP's webhooks** (HA-SIP calls through the Supervisor without a sender IP and still
+      gets a 200); so use `local_only: false` with long random webhook IDs that exist only in HA and the add-on
+      options. HA keeps only 5 traces per automation, but HA-SIP sends every event to the incoming webhook: raise
+      `stored_traces`. Set the pjsip log level to 3, otherwise the webhook lines scroll out of the log within minutes.
+    - Speech recognition has to cope with telephone audio (see Ear). Check what was understood in the pipeline's
+      debug runs (`assist_pipeline/pipeline_debug`).
+    - Acceptance: a call from the person's own number is answered, hanging up ends both calls, and a real webhook
+      with a foreign number stops at the number condition.
 
 ### Speed (measured, build it this way from the start)
 

@@ -49,7 +49,7 @@ import urllib.parse
 import urllib.request
 import wave
 
-VERSION = 14
+VERSION = 15
 WINDOWS = sys.platform == "win32"
 
 # Vor den schweren Importen: auch ein Absturz beim Laden landet so in der Datei
@@ -856,12 +856,18 @@ def fenster_vor():
 # Gemini Live laeuft im HUD (Chromium: Echo-Unterdrueckung, Reinreden ueber Lautsprecher). Der Client liefert dafuer
 # Einmal-Schluessel, Hausgehirn (Quelle echtzeit-pc, PC-Werkzeuge nur am Haupt-PC) und Mitschrift ueber die Bruecke.
 
-ECHTZEIT_BEFEHL = re.compile(r"(jarvis\W+)?(bitte\W+)?((starte?|mach|aktiviere|schalte?)\W+)?((den|in den)\W+)?"
-                             r"echt\s?zeit(-?modus)?(\W+(an|ein|starten|bitte))?\W*")
+# Seit Version 15: vor dem Befehl ein beliebiges Wort (der Name, auch verhoert: Kroko schreibt "Javis"), nur keine
+# Verneinung; dazu Englisch ("real time", "start real time"), das Version 14 trotz englischer Oberflaeche nicht kannte.
+_KEIN_NAME = r"(?!(?:nicht|kein|keine|keinen|ohne|stopp?|beende|aus|no|not|stop|end)\b)"
+ECHTZEIT_BEFEHL = re.compile(
+    r"(hey\W+)?(" + _KEIN_NAME + r"[^\W\d_]{2,15}\W+)?(bitte\W+|please\W+)?"
+    r"(((starte?|mach|aktiviere|schalte?)\W+)?((den|in den)\W+)?echt\s?zeit(-?modus)?(\W+(an|ein|starten|bitte))?"
+    r"|((start|turn on|enable)\W+)?(the\W+)?real\W?time(\W+mode)?(\W+(on|please))?)\W*")
 
 
 def echtzeit_befehl(text):
-    """Nur der kurze Befehl ("Echtzeit", "Starte Echtzeit", "Echtzeitmodus an"), keine Frage, die das Wort enthaelt."""
+    """Nur der kurze Befehl ("Echtzeit", "Starte Echtzeit", "Echtzeitmodus an", "Start real time"), keine Frage, die
+    das Wort enthaelt."""
     return bool(ECHTZEIT_BEFEHL.fullmatch(text.strip().lower()))
 
 
@@ -1150,7 +1156,8 @@ if __name__ == "__main__":
         os.environ.get("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", "") + " --autoplay-policy=no-user-gesture-required").strip()
     # Fensterhintergrund bis das HUD geladen ist: rot wie das HUD im PC-Fenster (seit Version 8)
     # js_api (Fragen mit PC-Werkzeugen, Zahnrad) nur fuer die eigene Durchreiche unter 127.0.0.1 (seit Version 14)
-    fenster = webview.create_window("J.A.R.V.I.S.", "%s?pc=1&t=%d" % (adresse, time.time()),
+    # seit Version 15 mit der Sprache der Einrichtung: sonst richtet sich das HUD nach der Windows-Sprache
+    fenster = webview.create_window("J.A.R.V.I.S.", "%s?pc=1&sprache=%s&t=%d" % (adresse, SPRACHE, time.time()),
                                     js_api=Api() if adresse.startswith("http://127.0.0.1:") else None,
                                     width=1400, height=880, background_color="#070206", minimized=minimiert)
     fenster_beobachten(fenster, minimiert)

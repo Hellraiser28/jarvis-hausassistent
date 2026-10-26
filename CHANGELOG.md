@@ -1,5 +1,27 @@
 # Änderungen
 
+## 0.3.1 – 2026-10-26
+
+Spracherkennung, Anrufen, kleinere Korrekturen. *English: better speech recognition (Kroko), a new "phone calls"
+building block, PC client 15 understands "real time", and the HUD follows the setup language.*
+
+- **Ohr:** Für Deutsch baut die Anleitung jetzt Kroko (deutsches Streaming-Modell über sherpa-onnx, im selben Image
+  `rhasspy/wyoming-whisper`) statt Whisper „base“. Gemessen auf echten Telefon-Mitschnitten: 5 von 5 Sätzen richtig
+  statt 3 von 5, 1,3 bis 1,7 s je Satz statt 3 bis 4,6 s; bei 20 Kurzbefehlen 18 statt 15 richtig. Kroko erkennt mit,
+  während gesprochen wird. Für Englisch dasselbe mit dem englischen Kroko-Modell: mit zwei Kunststimmen 23 von 24
+  Sätzen bei 0,9 s im Mittel (Parakeet v2 23 von 24 bei 2,2 s, Whisper „base“ 19 von 24). Unter Windows ohne Docker
+  bleibt es bei faster-whisper „base“.
+- **Baustein „Anrufen“:** Jarvis über eine eigene Rufnummer, mit Home Assistant OS, dem Add-on HA-SIP und der
+  Integration „Voice over IP“. Mit allen Fallen aus dem ersten Aufbau, darunter: `local_only: true` verwirft die
+  Webhooks von HA-SIP ohne Meldung.
+- **PC-Client 15:** Der Echtzeit-Befehl nimmt ein beliebiges Wort davor (den Namen, auch verhört wie „Javis“), nur
+  keine Verneinung, und versteht jetzt auch Englisch („start real time“), das Version 14 trotz englischer Oberfläche
+  nicht kannte. Neuer Test `vorlagen/pc/test_echtzeit_befehl.py` (36 Fälle, auch im Workflow).
+- **HUD:** folgt der Sprache der Einrichtung (`sprache` im Zustand der Brücke; im PC-Fenster gibt der Client sie
+  mit) statt der Browsersprache. `?sprache=` an der Adresse geht weiter vor.
+- **Mac:** Das README nennt die Web-App als Weg für den Mac. Ein eigener Mac-Client folgt erst, wenn ihn jemand auf
+  einem echten Mac testen kann.
+
 ## 0.3.0 – 2026-10-25
 
 Deutsch und Englisch. *English: the setup, app 4.2, web app, HUD, PC client 14, Linux installer and all documents
