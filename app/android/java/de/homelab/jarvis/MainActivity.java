@@ -362,6 +362,11 @@ public class MainActivity extends Activity {
                     String soll = beweis(tok, nonce);
                     echt = MessageDigest.isEqual(soll.getBytes(StandardCharsets.UTF_8),
                             a.optString("beweis", "").getBytes(StandardCharsets.UTF_8));
+                    // Seit 4.6 (28.10.2026): Fernzugang von der bewiesenen Bruecke nachlernen. Die Release-App bringt
+                    // keine Adressen mit, und Bruecken vor dem 28.10. schickten ihn nicht einmal beim Koppeln; ein
+                    // Handy blieb so unterwegs ohne Verbindung. Nur https, nur nach gueltigem Beweis.
+                    String f = echt ? normAdresse(a.optString("fernzugang", "")) : null;
+                    if (f != null && f.startsWith("https://") && !f.equals(netz())) einst.edit().putString("netz", f).apply();
                 }
                 if (echt) {
                     neu = heim;
@@ -954,6 +959,8 @@ public class MainActivity extends Activity {
         super.onActivityResult(code, ergebnis, daten);
     }
 
+    volatile boolean jaKnopf = false;    // seit 4.6: die naechste Frage kommt vom Ja-Knopf ("Meinst du ...?")
+
     void frage(final String text) {
         frage(text, "app");
     }
@@ -981,6 +988,10 @@ public class MainActivity extends Activity {
             try {
                 JSONObject kopf = new JSONObject().put("text", text).put("quelle", quelle).put("geraet", "Handy")
                         .put("anfrage", kennung);
+                if (jaKnopf) {               // seit 4.6: diese Frage kam vom Ja-Knopf
+                    jaKnopf = false;
+                    kopf.put("ja_knopf", true);
+                }
                 byte[] roh;
                 if (original != null && anhang != null) {
                     String k = kopf.toString(), an = anhang.toString();
@@ -1004,6 +1015,8 @@ public class MainActivity extends Activity {
                 js("onAntwort(" + q(antwort) + "," + a.optDouble("dauer_s", 0) + "," + new JSONArray(s).toString() + "," + stimme + ")");
                 JSONArray dateien = a.optJSONArray("dateien");       // seit 4.4 (0.3.3): Dateien von Jarvis
                 if (dateien != null && dateien.length() > 0) js("window.onDateien && window.onDateien(" + dateien.toString() + ")");
+                String vorschlag = a.optString("vorschlag", "");       // seit 4.6 (0.4): "Meinst du ...?" mit Ja-Knopf
+                if (!vorschlag.isEmpty()) js("window.onVorschlag && window.onVorschlag(" + q(vorschlag) + ")");
                 if (stimme && !s.isEmpty()) sprichSaetze(s);
                 else js("onStatus('bereit')");
             } catch (Exception e) {
@@ -1416,6 +1429,14 @@ public class MainActivity extends Activity {
             MainActivity.this.frage(text);
         }
 
+        /** Seit 4.6 (Jarvis 0.4): Ja-Knopf unter "Meinst du ...?". Wie frage, die Bruecke zaehlt es als angenommenen
+         *  Vorschlag (Verhoerer-Statistik). */
+        @JavascriptInterface
+        public void frageJa(String text) {
+            jaKnopf = true;
+            MainActivity.this.frage(text);
+        }
+
         /** Seit 4.4 (0.3.3): wie frageMitAnhang, dazu das Original der zuletzt gewaehlten Datei. Java liest es selbst
          *  aus der Auswahl, statt es als riesige Zeichenkette durch die WebView zu reichen. Passt die Datei nicht
          *  (andere Groesse, zu gross, nicht lesbar), geht nur die aufbereitete Fassung, wie bisher. */
@@ -1528,6 +1549,23 @@ public class MainActivity extends Activity {
                             : fehlertext(e)) + "})");
                 } catch (Exception e) {
                     js("onEinstellungen({\"fehler\": " + q(fehlertext(e)) + "})");
+                }
+            }});
+        }
+
+        /** Szenen-Menue (4.6, Jarvis 0.4): liste, starten, loeschen, umbenennen, schritt_weg an /v1/szenen, Ergebnis an
+         *  onSzenen. Starten fuehrt die Bruecke ohne Gehirn aus; mit Wartezeiten in der Szene bis zu gut zwei Minuten. */
+        @JavascriptInterface
+        public void szenen(final String auftrag) {
+            imHintergrund(new Runnable() { public void run() {
+                try {
+                    JSONObject a = new JSONObject(auftrag == null || auftrag.isEmpty() ? "{}" : auftrag);
+                    js("onSzenen(" + jsonSicher(http("POST", "/v1/szenen", json(a), "application/json", 170000)) + ")");
+                } catch (HttpFehler e) {
+                    js("onSzenen({\"fehler\": " + q(e.code == 404 ? tx("Dein Jarvis kennt Szenen noch nicht (Brücke zu alt).", "Your Jarvis doesn't know scenes yet (bridge too old).")
+                            : fehlertext(e)) + "})");
+                } catch (Exception e) {
+                    js("onSzenen({\"fehler\": " + q(fehlertext(e)) + "})");
                 }
             }});
         }

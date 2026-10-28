@@ -49,6 +49,12 @@ All images show made-up sample data.
   PC, the wall display and in the app, without reloading. Updates never overwrite your settings.
 - **Grows with you:** say what you are planning, e.g. "keep an eye on my finances". Claude looks for suitable tools,
   checks maintenance, permissions and data flow, and proposes them. Nothing is installed without your OK.
+- **For the whole family** (since 0.4): every phone can belong to a person, with their own memory, history and
+  permissions. What someone tells Jarvis stays with that person. If you want, he learns from the conversations at
+  night, never passwords, health or mail contents.
+- **Takes everyday work off your hands** (since 0.4): scenes ("Good night" switches several things at once), the
+  mailbox (read, tidy up, tell you when something arrives, never delete), photograph letters and file them with their
+  deadlines in Paperless, report updates for your homelab and install them when you say so.
 - **German and self-hosted:** made for German households, with connections to services you may already run
   (Home Assistant, Nextcloud, Vikunja, Paperless, Mealie and more). Claude checks every integration before building
   it.
@@ -214,7 +220,7 @@ What Jarvis never does: [NEVER.en.md](NEVER.en.md). How Jarvis is built, its lim
 | `app/` | sources of the Android app and its build script (with its own signing key) |
 | `vorlagen/pc/` | the PC client for Windows and Linux (wake word, Jarvis window, voice) and its packages with checksums |
 | `vorlagen/hud/` | the interface, the same for everyone. Its settings come from the bridge |
-| `vorlagen/bruecke/` | `oberflaeche.py` and `verhalten.py`: check every change to appearance and behavior, with unit tests |
+| `vorlagen/bruecke/` | ready-made building blocks of the bridge with unit tests: appearance and behavior (`oberflaeche.py`, `verhalten.py`), files (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), update signature (`ed25519.py`), since 0.4 people, memory, scenes, mailbox and letters (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`) |
 | `vorlagen/webapp/` | web app for iPhone and browser: layer `jarvis-web.js` and build script (interface from `app/`) |
 | `pakete_aufloesen.sh` | re-pins the client's packages (Windows and Linux, Python 3.12, with checksums) |
 

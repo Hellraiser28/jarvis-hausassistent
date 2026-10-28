@@ -34,7 +34,8 @@ people's location and private appointments with their consent. Parents may ask f
 appointments, never for their conversations with Jarvis.
 
 **It never deletes for good without your yes.** Permanently deleting files, e-mails, appointments or documents only
-happens after an explicit confirmation. It forgets things from its own memory on request.
+happens after an explicit confirmation. It forgets things from its own memory on request. It doesn't delete
+e-mails at all (since 0.4), at most it moves them.
 
 **It doesn't store your voice.** Audio is transcribed and discarded. Recordings only exist if you explicitly switch
 them on for troubleshooting, and they are deleted afterwards.
@@ -54,6 +55,13 @@ no adult content, and it only operates the devices that are allowed for that chi
 **No conversation content in the log.** The bridge's log contains source, duration, tool and lengths, not what was
 said.
 
+**It doesn't remember secrets on its own.** Passwords and credentials, health, and contents of e-mails and messages
+never go into its memory on its own, not even when learning at night. Your code word never ends up in the conversation
+history, even if you say it in the middle of a sentence.
+
+**It doesn't install risky updates unasked.** Core services, services with a database and the core of Home Assistant
+are only updated when you name them yourself. Operating system and firmware it only reports.
+
 **It doesn't phone home.** There's no telemetry and no advertising. Only the app and the PC client look for updates,
 at your Jarvis or at GitHub.
 
@@ -65,6 +73,7 @@ at your Jarvis or at GitHub.
 | Unlocking doors, disarming alarms | never (locking and arming are fine) | only after a yes from your app, never by speaker or phone |
 | Cameras and baby monitors | blocked | allow, device by device |
 | Memory | remembers useful things by itself, everything viewable and deletable ("What do you know about me?", "Forget …") | only on "Remember …" |
+| Learning at night (since 0.4) | off | on: lasting things from the day's conversations, never passwords, health or mail contents |
 | Tone | as chosen during setup | cheeky or matter-of-fact; the floor above always applies |
 
 ## Where your data goes
@@ -83,6 +92,9 @@ at your Jarvis or at GitHub.
   Transmute on your own machine.
 - **Tools** such as weather, news or web search query the respective services. They see the request, not your
   conversation.
+- **Learning at night** (only if switched on): the day's conversations go to Claude once more at night.
+- **E-mails and letters** (only if set up): they stay in your mailbox and in your Paperless. What Jarvis reads from
+  them goes to Claude with the question.
 - **The interface** loads fonts from Google Fonts (can be switched off).
 
 If you find a place where Jarvis doesn't keep to this page, please report it as a security issue

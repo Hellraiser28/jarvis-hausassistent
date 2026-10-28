@@ -47,6 +47,11 @@ important ones:
   token via the bridge; the local pass-through sits under a random path per start. Everything the pages
   display is escaped.
 - **Test mode:** tests with the source `test…` run tools with an effect only as a dry run.
+- **People, mailbox, updates** (since 0.4): permissions per person are tied to the device token and checked on every
+  tool call; consent counts per source and person. The mailbox only reads (the read status stays) and cannot delete.
+  Core services and the Home Assistant core are installed only when the person's own message names them. The code
+  word is also detected in the middle of a sentence and blacked out in the history. Errors in mapping a device to a
+  person mean "no permissions", never "main person". Mail servers only with certificate checks.
 - **Files only for the device that asked** (since 0.3.4): attachments and results belong to the device and the
   request. No other paired device can download them, see them in the history or slip them to a tool. Only file
   types from an allowlist are opened directly, on Windows with the mark of the web; everything else can only be

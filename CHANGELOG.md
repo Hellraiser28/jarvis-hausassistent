@@ -1,5 +1,54 @@
 # Änderungen
 
+## 0.4.0 – 2026-10-28
+
+Für die ganze Familie und für den Papierkram. *English: for the whole family and for paperwork: people with their own
+memory and permissions, learning at night, scenes, a mailbox assistant, letters and deadlines, an update center, a
+yes button for mishearings, and the password detected in the middle of a sentence. App 4.6.1.*
+
+- **Personen:** Jedes Handy kann einer Person gehören, mit eigenem Gedächtnis, Verlauf, eigenen Erinnerungen und
+  Rechten (Hauptperson oder Familie). Die Rechte prüft der Werkzeug-Server bei der Liste und bei jedem Aufruf,
+  Zustimmungen gelten je Quelle und Person. Neues Modul `personen.py`.
+- **Gedächtnis je Person:** ein Bereich „Haus“ für alle und ein eigener je Person, auf Zuruf als TXT-Liste zum
+  Bearbeiten und Zurückschicken; übernommen wird erst nach einem Ja. Neues Modul `gedaechtnis.py`, mit Umzug aus dem
+  alten `gedaechtnis.md`.
+- **Mitlernen:** Auf Wunsch übernimmt Jarvis nachts Dauerhaftes aus den Gesprächen, nie Kennwörter, Gesundheit oder
+  Mailinhalte (Sperrliste `TABU_LERNEN`, deutsch und englisch).
+- **Szenen:** mehrere Aktionen mit einem Satz oder einem Knopf in der App, gespeichert erst nach einem Ja, ausgeführt
+  über dieselben Werkzeuge samt Sperrliste und Testmodus. Neues Modul `szenen.py`, Endpunkt `/v1/szenen`.
+- **Postfach:** IMAP nur lesend (der Gelesen-Status bleibt), verschieben ja, löschen nie, „sag Bescheid, wenn …“.
+  Neues Modul `postfach.py`.
+- **Briefe und Fristen:** fotografierte Briefe nach Paperless-ngx (2.x und 3.x) ins Konto der Person, Fristen mit
+  Erinnerung drei Tage vorher. Neues Modul `briefe.py`.
+- **Update-Zentrale** (Baustein der Bauanleitung): Container über die vorhandene Verwaltung, Home Assistant samt Core
+  mit Sicherung, Betriebssystem und Firmware nur melden. Kern-Dienste nur, wenn die Person sie selbst nennt.
+- **Ja-Knopf:** Bei einem vermutlichen Verhörer fragt Jarvis „Meinst du …?“, App und Web-App zeigen einen Knopf dazu.
+- **Kennwort im Satz:** Das Codewort wird auch mitten im Satz erkannt. Ohne offene Freigabe wird die Nachricht
+  verworfen, der Verlauf schwärzt es zusätzlich.
+- **App 4.6.1:** Menü „Szenen“, Ja-Knopf, Fernzugang aus `/v1/gesund`; ein Anhang geht auch beim Sprechen und beim
+  Ja-Knopf mit. Web-App-Schicht mit denselben Funktionen.
+- **Zweisprachig:** Gedächtnis-Liste und Szenen im App-Menü erscheinen in der Sprache der Einrichtung; eine
+  zurückgeschickte Liste darf deutsche oder englische Abschnitte haben. Meldungen von Postfach und Briefen gehen ans
+  Gehirn, das in der Sprache der Person antwortet.
+- **Nach einer unabhängigen Prüfung vor dem Release:** IMAP prüft das Zertifikat des Mailservers (vorher nahm
+  `imaplib` jeden Server an); eine unbekannte Person am Gerät oder eine kaputte `personen.json` heißt „keine
+  Rechte“ statt „Hauptperson“; Szenen ändern nur die Person, die sie angelegt hat, und die Hauptperson, Löschen
+  trifft nur den genauen Namen, und keine Szene übernimmt den Namen einer anderen; der Ja-Knopf zählt nie als
+  Zustimmung; in den Spam-Ordner nur auf Nennung; „Vergessen“ braucht einen genauen Begriff;
+  das Gedächtnis löscht nichts still, wenn es voll ist, und überschreibt beim Übernehmen nichts, was sich
+  inzwischen geändert hat; offene Fristen fallen nie weg; Sperren auch unter Windows; Mitlernen nur aus den
+  Nachrichten der Person und nur in ihren Bereich; keine Paperless-Werkzeuge ohne eigenes Token. Neuer Test
+  `test_funde_040.py` (50).
+- **Bauanleitung:** neue Bausteine mit Proben in Phase 3, dazu der Umstieg von 0.3.x unter „Später ändern“.
+- Tests ohne Netz: `test_gedaechtnis.py` (53), `test_szenen.py` (27), `test_postfach.py` (27), `test_briefe.py`
+  (25), `test_sprache_040.py` (31).
+- **Fernzugang für die App von GitHub:** Die App lernt die https-Adresse des Fernzugangs aus der Kopplung, die
+  Vorlage nannte das Feld `fernzugang` aber nur „auf Wunsch“. Ohne das Feld blieb die App unterwegs ohne Verbindung
+  (Zahnrad → Verbindung: Fernzugang „–“). Jetzt Pflicht, sobald es einen Fernzugang gibt, in `/v1/koppeln` und in
+  `/v1/gesund` mit gültigem Beweis; ab App 4.6 lernt eine schon gekoppelte App die Adresse daraus nach. Neuer
+  Prüfpunkt im Testplan (Mobilfunk, WLAN aus). *English: the app now gets the remote access address from pairing and
+  from `/v1/gesund` with a valid proof; the field is required whenever remote access exists.*
+
 ## 0.3.4 – 2026-10-26
 
 Sicherheit nach einer unabhängigen Prüfung von 0.3.3 und nach GitHub-CodeQL. *English: security fixes after an

@@ -50,6 +50,12 @@ Alle Bilder zeigen erfundene Beispieldaten.
   überschreiben deine Einstellungen nicht.
 - **Wächst mit:** Du sagst, was du vorhast, etwa „Finanzen im Blick behalten“. Claude sucht passende Werkzeuge,
   prüft sie auf Pflege, Rechte und Datenfluss und schlägt sie dir vor. Installiert wird nur, was du bestätigst.
+- **Für die ganze Familie** (seit 0.4): Jedes Handy kann einer Person gehören, mit eigenem Gedächtnis, eigenem
+  Verlauf und eigenen Rechten. Was jemand Jarvis erzählt, bleibt bei dieser Person. Auf Wunsch lernt er nachts aus
+  den Gesprächen mit, nie Kennwörter, Gesundheit oder Mailinhalte.
+- **Nimmt Alltagsarbeit ab** (seit 0.4): Szenen („Gute Nacht“ schaltet mehrere Dinge auf einmal), das Postfach
+  (lesen, aufräumen, Bescheid sagen, nie löschen), Briefe abfotografieren und mit ihren Fristen in Paperless
+  ablegen, Updates fürs Homelab melden und auf Zuruf einspielen.
 - **Deutsch und selbst gehostet:** gemacht für deutsche Haushalte, mit Anbindung an Dienste, die du vielleicht
   schon betreibst (Home Assistant, Nextcloud, Vikunja, Paperless, Mealie und mehr). Claude prüft jede Anbindung,
   bevor es sie baut.
@@ -223,7 +229,7 @@ Was Jarvis nie tut: [NEVER.md](NEVER.md). Wie Jarvis aufgebaut ist, wo die Grenz
 | `app/` | Quellen der Android-App und ihr Bauskript (mit eigenem Signaturschlüssel) |
 | `vorlagen/pc/` | der PC-Client für Windows und Linux (Weckwort, Jarvis-Fenster, Stimme) und seine Pakete mit Prüfsummen |
 | `vorlagen/hud/` | die Oberfläche, für alle gleich. Ihre Einstellungen kommen von der Brücke |
-| `vorlagen/bruecke/` | `oberflaeche.py` und `verhalten.py`: prüfen jede Änderung an Aussehen und Verhalten, mit Einheitentests |
+| `vorlagen/bruecke/` | fertige Bausteine der Brücke mit Einheitentests: Aussehen und Verhalten (`oberflaeche.py`, `verhalten.py`), Dateien (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), Update-Signatur (`ed25519.py`), seit 0.4 Personen, Gedächtnis, Szenen, Postfach und Briefe (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`) |
 | `vorlagen/webapp/` | Web-App für iPhone und Browser: Schicht `jarvis-web.js` und Bauskript (Oberfläche aus `app/`) |
 | `pakete_aufloesen.sh` | legt die Pakete des Clients neu fest (Windows und Linux, Python 3.12, mit Prüfsummen) |
 

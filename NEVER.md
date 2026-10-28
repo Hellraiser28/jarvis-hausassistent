@@ -34,7 +34,8 @@ Termine anderer gibt er nur mit deren Zustimmung heraus. Eltern dürfen Ort und 
 deren Gespräche mit Jarvis.
 
 **Er löscht nie endgültig ohne dein Ja.** Dateien, Mails, Termine oder Dokumente unwiderruflich zu löschen geht nur
-nach ausdrücklicher Bestätigung. Sein eigenes Gedächtnis vergisst er auf Wunsch.
+nach ausdrücklicher Bestätigung. Sein eigenes Gedächtnis vergisst er auf Wunsch. Mails löscht er gar nicht (seit
+0.4), er verschiebt sie höchstens.
 
 **Er speichert deine Stimme nicht.** Der Ton wird erkannt und verworfen. Aufnahmen entstehen nur, wenn du zur
 Fehlersuche ausdrücklich Mitschnitte einschaltest, und danach werden sie gelöscht.
@@ -55,6 +56,13 @@ keine Inhalte für Erwachsene, und er bedient nur die Geräte, die für das Kind
 **Keine Gesprächsinhalte im Protokoll.** Das Protokoll der Brücke enthält Quelle, Dauer, Werkzeug und Längen, nicht,
 was gesagt wurde.
 
+**Er merkt sich keine Geheimnisse von selbst.** Kennwörter und Zugangsdaten, Gesundheit und Inhalte aus Mails und
+Nachrichten übernimmt er nie von sich aus ins Gedächtnis, auch nicht beim nächtlichen Mitlernen. Dein Codewort steht
+nie im Gesprächsverlauf, auch wenn du es mitten in einem Satz sagst.
+
+**Er spielt keine heiklen Updates ungefragt ein.** Kern-Dienste, Dienste mit Datenbank und den Kern von Home
+Assistant aktualisiert er nur, wenn du sie selbst nennst. Betriebssystem und Firmware meldet er nur.
+
 **Er meldet nichts nach Hause.** Es gibt keine Telemetrie und keine Werbung. Nach Updates fragen nur App und
 PC-Client, bei deinem Jarvis oder bei GitHub.
 
@@ -66,6 +74,7 @@ PC-Client, bei deinem Jarvis oder bei GitHub.
 | Türschlösser öffnen, Alarm entschärfen | nie (abschließen und scharfschalten geht) | nur nach Ja aus deiner App, nie per Lautsprecher oder Telefon |
 | Kameras und Babyfon | gesperrt | freigeben, Gerät für Gerät |
 | Gedächtnis | merkt sich Nützliches von selbst, alles einsehbar und löschbar („Was weißt du über mich?“, „Vergiss …“) | nur auf „Merk dir …“ |
+| Nächtliches Mitlernen (seit 0.4) | aus | an: Dauerhaftes aus den Gesprächen des Tages, nie Kennwörter, Gesundheit oder Mailinhalte |
 | Ton | wie beim Einrichten gewählt | frech oder sachlich; die Untergrenze oben gilt immer |
 
 ## Wohin deine Daten gehen
@@ -84,6 +93,9 @@ PC-Client, bei deinem Jarvis oder bei GitHub.
   **Umwandeln** läuft über Transmute auf deinem eigenen Rechner.
 - **Werkzeuge** wie Wetter, Nachrichten oder Websuche fragen die jeweiligen Dienste ab. Die sehen die Anfrage, nicht
   dein Gespräch.
+- **Mitlernen** (nur wenn eingeschaltet): Die Gespräche des Tages gehen nachts noch einmal an Claude.
+- **Mails und Briefe** (nur wenn eingerichtet): Sie bleiben in deinem Postfach und in deinem Paperless. Was Jarvis
+  daraus liest, geht mit der Frage an Claude.
 - **Die Oberfläche** lädt Schriften von Google Fonts (abschaltbar).
 
 Findest du eine Stelle, an der Jarvis sich nicht an diese Seite hält, melde sie bitte als Sicherheitslücke

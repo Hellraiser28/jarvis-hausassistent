@@ -45,6 +45,11 @@ Die Regeln stehen ausführlich in `EINRICHTUNG.md` (Phase 2, „Sicherheit“). 
   Token über die Brücke, die lokale Durchreiche liegt unter einem zufälligen Pfad je Start. Alles, was die Seiten
   anzeigen, wird maskiert.
 - **Testmodus:** Proben mit der Quelle `test…` führen Werkzeuge mit Wirkung nur trocken aus.
+- **Personen, Postfach, Updates** (seit 0.4): Rechte je Person hängen am Geräte-Token und werden bei jedem
+  Werkzeugaufruf geprüft, Zustimmungen gelten je Quelle und Person. Das Postfach liest nur (der Gelesen-Status bleibt)
+  und kann nicht löschen. Kern-Dienste und den Kern von Home Assistant spielt Jarvis nur ein, wenn die eigene
+  Nachricht der Person sie nennt. Das Codewort wird auch mitten im Satz erkannt und im Verlauf geschwärzt. Fehler bei
+  der Zuordnung heißen „keine Rechte“, nie „Hauptperson“. Mailserver nur mit Prüfung des Zertifikats.
 - **Dateien nur für das Gerät, das gefragt hat** (seit 0.3.4): Anhänge und Ergebnisse gehören dem Gerät und der
   Anfrage. Kein anderes gekoppeltes Gerät kann sie abholen, im Verlauf sehen oder einem Werkzeug unterschieben.
   Direkt geöffnet werden nur Dateiarten aus einer Erlaubnisliste, unter Windows mit Herkunftsmarke; alles andere

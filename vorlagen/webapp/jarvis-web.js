@@ -13,7 +13,7 @@
    - Proben: Adresse mit ?test=1 schickt Fragen unter der Quelle test-webapp (Werkzeuge mit Wirkung nur trocken). */
 (function () {
   "use strict";
-  const WEB_VERSION = "4.3";
+  const WEB_VERSION = "4.6";
   // Texte kommen aus dem Woerterbuch der Oberflaeche (tx, seit 4.2); die Schicht laeuft vor ihr, fragt also erst spaeter
   const T = (k, ...w) => (typeof window.tx === "function" ? window.tx(k, ...w) : k);
   const L = (k, v) => {
@@ -68,7 +68,7 @@
     }
   }
 
-  async function frage(text, quelle, anhang) {
+  async function frage(text, quelle, anhang, ja) {
     const nr = ++laeuft, anfrage = zufall(), t0 = Date.now();
     let fertig = false;
     rueck("onStatus", "denkt");
@@ -80,13 +80,15 @@
       }
     })();
     try {
-      const a = await ruf("POST", "/v1/frage", { text, quelle: quelle || QUELLE, geraet: geraetName(), anfrage, anhang });
+      const a = await ruf("POST", "/v1/frage", { text, quelle: quelle || QUELLE, geraet: geraetName(), anfrage, anhang,
+        ja_knopf: ja || undefined });
       fertig = true;
       rueck("onWerkzeug", "");
       if (nr !== laeuft) return;
       const antwort = String(a.antwort || "");
       rueck("onAntwort", antwort, (Date.now() - t0) / 1000, null, false);   // Text immer, die Stimme kommt dazu
       if (Array.isArray(a.dateien) && a.dateien.length) rueck("onDateien", a.dateien);   // seit 0.3.3
+      if (a.vorschlag) rueck("onVorschlag", a.vorschlag);                                 // seit 4.6 (0.4)
       if (W.stimmeAn() && antwort) sprechen(antwort, nr); else rueck("onStatus", "bereit");
     } catch (e) {
       fertig = true;
@@ -100,6 +102,7 @@
     stimmeAn: () => L("jarvis-stimme") !== "0",
     stimme: (an) => { L("jarvis-stimme", an ? "1" : "0"); },
     frage: (t) => { frage(String(t)); },
+    frageJa: (t) => { frage(String(t), undefined, undefined, true); },
     // seit 0.3.2: Datei im Gespraech (app.html bereitet sie vor: Bild verkleinert, Ton als WAV)
     originalAlsDaten: true,             // seit 0.3.3: app.html legt das Original (bis 50 MB) als Base64 bei
     frageMitAnhang: (t, anhang) => {
@@ -120,6 +123,10 @@
     },
     lage: async () => { try { rueck("onLage", await ruf("GET", "/v1/lage")); } catch (e) { /* egal */ } },
     faehigkeiten: async () => { try { rueck("onFaehigkeiten", await ruf("GET", "/v1/faehigkeiten")); } catch (e) { /* egal */ } },
+    szenen: async (auftrag) => {        // seit 4.6 (Jarvis 0.4)
+      try { rueck("onSzenen", await ruf("POST", "/v1/szenen", JSON.parse(auftrag || "{}"))); }
+      catch (e) { rueck("onSzenen", { fehler: e.code === 404 ? T("web_szenen_alt") : T("web_fehler", e.message) }); }
+    },
     einstellungen: async (auftrag) => {
       try { rueck("onEinstellungen", await ruf("POST", "/v1/einstellungen", JSON.parse(auftrag || "{}"))); }
       catch (e) { rueck("onEinstellungen", { fehler: e.code === 404 ? T("web_zahnrad_alt") : T("web_fehler", e.message) }); }
