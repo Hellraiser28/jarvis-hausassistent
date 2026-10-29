@@ -284,6 +284,9 @@ ask about what is missing or unclear:
       panels, cool blue, no ticker. It shows the answer as subtitles with the current word highlighted, "To read
       back" (2 to 4 points) and "Honestly" (what isn't working right now). In `oberflaeche.json` this is
       `design: kern`; all other answers give `design: klassisch` with their color.
+    - Since 0.5.1 the Observatory has a third tab **"Status"** (next to "HUD" and "Skills", button in the header):
+      appointments, this computer, containers, backups, the PC and Jarvis itself at a glance, so the start page stays
+      tidy. Which cards exist depends on the sources (building block "Status tab").
     - The person can switch at any time, by voice ("Jarvis, show the observatory") or in the gear menu. The panels
       of the main page (point 2) apply to the classic design and are kept when switching. `design` follows the same
       source rules as the color.
@@ -374,7 +377,8 @@ build time. The person can still change things. After the yes, you save the answ
           tool for pairing codes stores the PBKDF2 key when creating a code (200000 rounds, 16-byte salt), never the
           code itself. Without an active code 403.
         - `/v1/koppeln {code, name, webapp}` → `{token, geraet, update_schluessel}`, `/v1/geraet` (main token only), `/v1/pc`
-          (main token or a device paired as a PC). With `webapp: true`, a device for the home network only is created:
+          (main token or a device paired as a PC), since 0.5.1 `POST /v1/pc/werte` (same rule, building block
+          "Status tab"). With `webapp: true`, a device for the home network only is created:
           no remote access, no PC tools, never as a PC, not even with a PC pairing code.
         - `/v1/client` with the addresses for the PC client (`dateien`, `hud`, `ohr_port`, `stimme_port`, `sprache`,
           `stimme`, `aussprache` if set), plus `/v1/client/version` (`{version, sha256, mac}`, `mac` = HMAC-SHA256 with the hash of the
@@ -463,7 +467,8 @@ build time. The person can still change things. After the yes, you save the answ
       (`{messer: [[wert, max, "CPU", "%", warn_ab], …], zeilen: [[name, wert, klasse]], last}`), `haus.json`
       (`{strom_w, zeilen}`) and `kalender.json` (`{liste: [{neu, kopf, zeit, text, art}]}`). The bridge writes them
       every few seconds from this installation's sources, only when something changes. The page computes nothing
-      house-specific.
+      house-specific. Since 0.5.1 `system.json` can also carry `volumes`, `container`, `sicherung` and `pc`
+      (building block "Status tab").
     - Wishes from round 6a that need a box of their own, you build following the pattern of the existing boxes:
       own panel with `id`, own key in `bereiche` (in the HUD and in `oberflaeche.py`), data from another
       JSON file of the bridge. That is a code change for all of this person's installations, so only with
@@ -485,7 +490,9 @@ build time. The person can still change things. After the yes, you save the answ
       (4.6 and later) learns the address without pairing again.
     - `/v1/zustand` with `oberflaeche` (color, buttons from `app_aktionen` or otherwise `aktionen`, greetings,
       start lines, `werte_namen`). `/v1/lage` with `wetter`, `strom`, `termine` and `schlagzeilen`, optionally `nas`
-      (`cpu`, `ram`, `temp`) and `haus.zeilen` (`[[Name, Wert]]`). The app hides cards without data.
+      (`cpu`, `ram`, `temp`) and `haus.zeilen` (`[[Name, Wert]]`). The app hides cards without data. From app 4.9
+      also `system` (the same content as `system.json`), `pc_online` and `pc_steuerung`: the "Status" tab shows
+      containers, backups, the PC and volumes from them.
     - `/v1/frage`, `/v1/zwischen/<anfrage>`, `/v1/sprich`, `/v1/hoer` and `/v1/faehigkeiten`, for real-time mode
       `/v1/echtzeit`.
     - **Pairing by QR code** via a small page of the bridge, only on the home network or VPN, with a one-time code, valid
@@ -983,6 +990,30 @@ build time. The person can still change things. After the yes, you save the answ
     - Display in the `kern` design: the HUD shows a capsule with the count and the list with reasons plus a "ready"
       bar. The app shows the same in the conversation and in the "status" tab, and marks the limited tools per area
       in the skills. Amber stands only for limitations, never as decoration.
+- **"Status" tab** (since 0.5.1, visible in the `kern` design; in the classic design the main page already shows this
+  data): ready-made in the release as `lage.py` with `test_lage.py`, standard library only. The page reads
+  `kalender.json` and `system.json`; a card without data is left out. **Only use sources that really exist here,
+  invent nothing.**
+    - **This computer:** `messer` as before, plus `volumes` = `lage.volumes([(display name, path), …])` for the
+      drives the person wants to see (at most 6). A line `["Laufzeit", …]` or `["Uptime", …]` in `zeilen` shows as
+      uptime.
+    - **Containers:** if Docker runs on the bridge's computer, `lage.docker_lage(befehl)` at most once a minute,
+      `befehl` the way the bridge reaches Docker (e.g. with `sudo`). Otherwise your own numbers via
+      `lage.container_eintrag()`. Unhealthy, restarting and dead containers are problems; stopped ones are shown
+      neutrally (often intended, e.g. one-off jobs).
+    - **Backup:** only with a source that can be queried (status file or the backup software's command line), one
+      `lage.sicherung_eintrag(name, ok, alter_h)` per job. Older than 48 hours shows like a failure.
+    - **PC:** PC client 21 and newer sends `POST /v1/pc/werte` every 30 seconds with `{cpu, ram, ram_gib, platten:
+      [["C:", percent, GiB]], gpu: {name, last, temp, speicher}}` (Windows, the graphics card only with
+      `nvidia-smi`). Accept only with the main token or from a device paired as a PC (otherwise 403), pass the content
+      through `lage.pc_werte_pruefen()` (error: 400), keep it in memory only. `system.json` gets
+      `pc = lage.pc_eintrag(werte, zeit, pc_online)`: only while the PC is connected and at most 180 seconds old. A
+      bridge without this path answers 404, and the client stops sending.
+    - **Jarvis:** state and `ehrlich` as in the previous building block.
+    - `/v1/lage` gets `system` (the same content as `system.json`), `pc_online` and `pc_steuerung` for app 4.9 and
+      newer.
+    - `system.json` holds only names and numbers (containers, backup jobs, drive letters), no paths and no content.
+      Like the other files it can be read without a token.
 
 ### Speed (measured, build it this way from the start)
 
@@ -1245,6 +1276,12 @@ stays valid; `design` is missing there and then means `klassisch`). The bridge g
 (building block for it), the self-test writes `einzeln` as described there, and the tool server reports real
 failures with `isError`. The two rules on consent go into the real-time instructions. Then update the app to 4.8.2 or
 newer and rebuild the web app. The new design is an offer: switch by voice or in the gear menu.
+
+**Moving from 0.5.0 to 0.5.1:** `Read EINRICHTUNG.en.md, mode Change: move to 0.5.1`. Back up first. Then put
+`lage.py` with `test_lage.py` into `einrichtung/` and replace the HUD template. The bridge gets `POST /v1/pc/werte`
+and the new fields of `system.json` and `/v1/lage` (building block "Status tab"); agree with the person which
+drives, containers and backups appear. The PC client fetches version 21 through its update, the app 4.9 through its
+own, rebuild the web app.
 
 Start `claude` in the Jarvis folder and say: `Lies EINRICHTUNG.md, Modus Ändern: <Wunsch>` (in English:
 `Read EINRICHTUNG.en.md, mode Change: <wish>`). Then only the matching round applies, for the appearance that is

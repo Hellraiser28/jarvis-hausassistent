@@ -56,7 +56,8 @@ All images show made-up sample data.
   (colors, panels, greeting, your own buttons). Claude only builds what you want.
 - **Says honestly what isn't working** (since 0.5): in the new "Observatory" design a calm core replaces the
   reactor, the answer runs along as subtitles, facts stay as "To read back". If a service fails, Jarvis says so
-  first ("Honestly: …") and shows what is limited right now. The reactor design stays selectable.
+  first ("Honestly: …") and shows what is limited right now. The reactor design stays selectable. Since 0.5.1 the
+  Observatory has a "Status" tab with appointments, computer, containers, backups and PC.
 - **Changes its appearance on request:** "Jarvis, turn green", "show me blue", "hide the ticker", "undo that". On the
   PC, the wall display and in the app, without reloading. Updates never overwrite your settings.
 - **Grows with you:** say what you are planning, e.g. "keep an eye on my finances". Claude looks for suitable tools,

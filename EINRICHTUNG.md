@@ -276,6 +276,9 @@ aus `antworten.json` (Design, Untertitel, Bereiche, Wünsche) und frag nur nach,
       Kästen, kühles Blau, ohne Laufband. Es zeigt die Antwort als Untertitel mit mitlaufendem Wort, „Zum Nachlesen“
       (2 bis 4 Stichpunkte) und „Ehrlich gesagt“ (was gerade nicht geht). In `oberflaeche.json` ist das
       `design: kern`; alle anderen Antworten ergeben `design: klassisch` mit ihrer Farbe.
+    - Seit 0.5.1 hat das Observatorium einen dritten Reiter **„Lage“** (neben „HUD“ und „Fähigkeiten“, Knopf im
+      Kopf): Termine, dieser Rechner, Container, Sicherungen, der PC und Jarvis selbst auf einen Blick, damit die
+      Startseite aufgeräumt bleibt. Welche Karten es gibt, hängt an den Quellen (Baustein „Reiter Lage“).
     - Die Person kann jederzeit wechseln, per Zuruf („Jarvis, zeig das Observatorium“) oder im Zahnrad. Die
       Bereiche der Hauptseite (Punkt 2) gelten für das klassische Design und bleiben beim Wechsel erhalten. Für
       `design` gelten dieselben Quellenregeln wie für die Farbe.
@@ -364,7 +367,8 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
           Den PBKDF2-Schlüssel legt das Werkzeug für Kopplungscodes beim Erzeugen ab (200000 Runden, 16 Byte Salz),
           nie den Code selbst. Ohne aktiven Code 403.
         - `/v1/koppeln {code, name, webapp}` → `{token, geraet, update_schluessel}`, `/v1/geraet` (nur Haupt-Token), `/v1/pc`
-          (Haupt-Token oder ein als PC gekoppeltes Gerät). Mit `webapp: true` entsteht ein Gerät nur fürs Heimnetz:
+          (Haupt-Token oder ein als PC gekoppeltes Gerät), seit 0.5.1 `POST /v1/pc/werte` (dieselbe Regel, Baustein
+          „Reiter Lage“). Mit `webapp: true` entsteht ein Gerät nur fürs Heimnetz:
           kein Fernzugang, keine PC-Werkzeuge, nie als PC, auch nicht mit einem PC-Kopplungscode.
         - `/v1/client` mit den Adressen für den PC-Client (`dateien`, `hud`, `ohr_port`, `stimme_port`, `sprache`,
           `stimme`, `aussprache` falls gesetzt), dazu `/v1/client/version` (`{version, sha256, mac}`, `mac` = HMAC-SHA256 mit dem Hash des
@@ -452,7 +456,8 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
       (`{messer: [[wert, max, "CPU", "%", warn_ab], …], zeilen: [[name, wert, klasse]], last}`), `haus.json`
       (`{strom_w, zeilen}`) und `kalender.json` (`{liste: [{neu, kopf, zeit, text, art}]}`). Die Brücke schreibt sie
       alle paar Sekunden aus den Quellen dieser Installation, nur bei Änderung. Die Seite rechnet nichts
-      Hausspezifisches.
+      Hausspezifisches. Seit 0.5.1 kann `system.json` zusätzlich `volumes`, `container`, `sicherung` und `pc` tragen
+      (Baustein „Reiter Lage“).
     - Wünsche aus Runde 6a, die einen eigenen Kasten brauchen, baust du nach dem Muster der vorhandenen Kästen:
       eigener Bereich mit `id`, eigener Schlüssel in `bereiche` (im HUD und in `oberflaeche.py`), Daten aus einer
       weiteren JSON-Datei der Brücke. Das ist eine Änderung am Code für alle Installationen dieser Person, also mit
@@ -474,7 +479,9 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
       (ab 4.6) die Adresse nach, ohne neu zu koppeln.
     - `/v1/zustand` mit `oberflaeche` (Farbe, Knöpfe aus `app_aktionen` oder sonst `aktionen`, Begrüßungen,
       Startzeilen, `werte_namen`). `/v1/lage` mit `wetter`, `strom`, `termine` und `schlagzeilen`, auf Wunsch `nas`
-      (`cpu`, `ram`, `temp`) und `haus.zeilen` (`[[Name, Wert]]`). Karten ohne Daten blendet die App aus.
+      (`cpu`, `ram`, `temp`) und `haus.zeilen` (`[[Name, Wert]]`). Karten ohne Daten blendet die App aus. Ab App 4.9
+      außerdem `system` (derselbe Inhalt wie `system.json`), `pc_online` und `pc_steuerung`: daraus zeigt der Reiter
+      „Lage“ Container, Sicherung, PC und Volumes.
     - `/v1/frage`, `/v1/zwischen/<anfrage>`, `/v1/sprich`, `/v1/hoer` und `/v1/faehigkeiten`, für Echtzeit
       `/v1/echtzeit`.
     - **Kopplung per QR-Code** über eine kleine Seite der Brücke, nur im Heimnetz bzw. VPN, mit Einmal-Code, 15
@@ -977,6 +984,30 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
     - Anzeige im Design `kern`: Das HUD zeigt eine Kapsel mit der Zahl und die Liste mit Gründen samt Balken
       „bereit“. Die App zeigt dasselbe im Gespräch und im Reiter „Lage“ und markiert in den Fähigkeiten je Bereich die
       eingeschränkten Werkzeuge. Bernstein steht nur für Einschränkungen, nie als Schmuck.
+- **Reiter „Lage“** (seit 0.5.1, zu sehen im Design `kern`; im klassischen Design zeigt die Hauptseite diese Daten
+  schon): fertig im Release `lage.py` mit `test_lage.py`, nur Standardbibliothek. Die Seite liest `kalender.json`
+  und `system.json`, eine Karte ohne Daten bleibt weg. **Nur Quellen nehmen, die es hier wirklich gibt, nichts
+  erfinden.**
+    - **Dieser Rechner:** `messer` wie bisher, dazu `volumes` = `lage.volumes([(Anzeigename, Pfad), …])` für die
+      Laufwerke, die die Person sehen will (höchstens 6). Eine Zeile `["Laufzeit", …]` bzw. `["Uptime", …]` in
+      `zeilen` erscheint als Laufzeit.
+    - **Container:** läuft Docker auf dem Rechner der Brücke, `lage.docker_lage(befehl)` höchstens einmal je Minute,
+      `befehl` so, wie die Brücke Docker erreicht (z. B. mit `sudo`). Sonst eigene Zahlen über
+      `lage.container_eintrag()`. Ungesunde, neu startende und tote Container sind Probleme, gestoppte stehen neutral
+      da (oft gewollt, etwa Einmal-Jobs).
+    - **Sicherung:** nur mit einer abfragbaren Quelle (Statusdatei oder Kommandozeile der Sicherungssoftware), je
+      Aufgabe `lage.sicherung_eintrag(name, ok, alter_h)`. Älter als 48 Stunden erscheint wie ein Fehler.
+    - **PC:** Der PC-Client ab 21 schickt alle 30 Sekunden `POST /v1/pc/werte` mit `{cpu, ram, ram_gib, platten:
+      [["C:", Prozent, GiB]], gpu: {name, last, temp, speicher}}` (Windows, die Grafikkarte nur mit `nvidia-smi`).
+      Annehmen nur mit dem Haupt-Token oder von einem als PC gekoppelten Gerät (sonst 403), Inhalt durch
+      `lage.pc_werte_pruefen()` (Fehler: 400), nur im Speicher halten. In `system.json` kommt
+      `pc = lage.pc_eintrag(werte, zeit, pc_online)`: nur solange der PC verbunden ist und höchstens 180 Sekunden
+      alt. Eine Brücke ohne diesen Pfad antwortet 404, dann hört der Client auf zu senden.
+    - **Jarvis:** Zustand und `ehrlich` wie im Baustein davor.
+    - `/v1/lage` bekommt `system` (derselbe Inhalt wie `system.json`), `pc_online` und `pc_steuerung` für die App
+      ab 4.9.
+    - In `system.json` stehen nur Namen und Zahlen (Container, Sicherungsaufgaben, Laufwerksbuchstaben), keine
+      Pfade und keine Inhalte. Die Datei ist wie die anderen ohne Token lesbar.
 
 ### Tempo (gemessen, von Anfang an so bauen)
 
@@ -1240,6 +1271,12 @@ Nachlesen“ und „Ehrlich gesagt“ (Baustein dazu), der Selbsttest schreibt `
 Werkzeug-Server meldet echte Fehler mit `isError`. In die Echtzeit-Anweisung die beiden Regeln zu Zustimmungen. Danach
 die App über ihr Update auf 4.8.2 oder neuer und die Web-App neu bauen. Das neue Design ist ein Angebot: Umschalten
 per Zuruf oder im Zahnrad.
+
+**Umstieg von 0.5.0 auf 0.5.1:** `Lies EINRICHTUNG.md, Modus Ändern: auf 0.5.1 umsteigen`. Erst sichern. Dann
+`lage.py` mit `test_lage.py` nach `einrichtung/` legen und die HUD-Vorlage tauschen. In die Brücke kommen
+`POST /v1/pc/werte` und die neuen Felder von `system.json` und `/v1/lage` (Baustein „Reiter Lage“); welche Laufwerke,
+Container und Sicherungen erscheinen, mit der Person klären. Der PC-Client holt sich Version 21 über sein Update,
+die App 4.9 über ihres, die Web-App neu bauen.
 
 Im Jarvis-Ordner `claude` starten und sagen: `Lies EINRICHTUNG.md, Modus Ändern: <Wunsch>`. Dann gilt nur die
 passende Runde, für das Aussehen also Runde 6a. Danach `profil.json` und die Fähigkeiten-Übersicht nachziehen und die betroffene Stufe neu testen.

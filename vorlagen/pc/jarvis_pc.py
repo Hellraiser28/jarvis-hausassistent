@@ -41,6 +41,7 @@ import os
 import queue
 import re
 import secrets
+import shutil
 import socket
 import subprocess
 import sys
@@ -52,7 +53,7 @@ import urllib.parse
 import urllib.request
 import wave
 
-VERSION = 20
+VERSION = 21
 WINDOWS = sys.platform == "win32"
 
 # Vor den schweren Importen: auch ein Absturz beim Laden landet so in der Datei
@@ -107,6 +108,11 @@ SPRACHE = E.get("sprache") if E.get("sprache") in ("de", "en") else "de"
 # Neu in dieser Version (seit 16): Wer per Update kommt statt ueber GitHub, sieht so trotzdem,
 # was neu ist. Einmal im Fenster nach einem Update, nicht nach einer Neuinstallation (BESTAND: dieser PC lief schon).
 NEUIGKEITEN = {
+    21: {"titel": "Jarvis · Reiter „Lage“",
+         "de": ["Im Design Observatorium zeigt der Reiter „Lage“ jetzt auch diesen PC: Prozessor, Arbeitsspeicher, "
+                "Laufwerke und, wenn vorhanden, die NVIDIA-Grafikkarte. Der Client schickt die Werte alle 30 Sekunden."],
+         "en": ["In the observatory design, the \"Status\" tab now also shows this PC: processor, memory, drives and, if "
+                "present, the NVIDIA graphics card. The client sends the values every 30 seconds."]},
     20: {"titel": "Jarvis 0.3.4 · Sicherheit",
          "de": ["Dateien von Jarvis bekommt nur noch das Gerät, das danach gefragt hat.",
                 "Direkt öffnen lassen sich nur noch Bilder, PDFs, Ton, Video, Text und Office-Dateien; alles andere über "
@@ -875,6 +881,99 @@ def version_melden():
         log.info("Version melden: %s", e)
 
 
+# ------------------------------------------------------------------ Werte fuer den Reiter "Lage" (seit Version 21)
+# Alle 30 s an die Bruecke: CPU aus GetSystemTimes ueber das Intervall, RAM aus GlobalMemoryStatusEx, feste Laufwerke
+# (Belegung), dazu die NVIDIA-Karte ueber nvidia-smi, wenn es das gibt. Nur Windows, nur Standardbibliothek.
+class _FILETIME(ctypes.Structure):
+    _fields_ = [("lo", ctypes.c_uint32), ("hi", ctypes.c_uint32)]
+
+
+class _SPEICHERSTATUS(ctypes.Structure):
+    _fields_ = [("dwLength", ctypes.c_uint32), ("dwMemoryLoad", ctypes.c_uint32), ("ullTotalPhys", ctypes.c_uint64),
+                ("ullAvailPhys", ctypes.c_uint64), ("ullTotalPageFile", ctypes.c_uint64), ("ullAvailPageFile", ctypes.c_uint64),
+                ("ullTotalVirtual", ctypes.c_uint64), ("ullAvailVirtual", ctypes.c_uint64),
+                ("ullAvailExtendedVirtual", ctypes.c_uint64)]
+
+
+_NVIDIA = {"pfad": "", "geprueft": False}
+
+
+def _cpu_zeiten():
+    """(Leerlauf, gesamt) in 100-ns-Schritten; Kernel-Zeit enthaelt den Leerlauf."""
+    leer, kern, nutzer = _FILETIME(), _FILETIME(), _FILETIME()
+    if not ctypes.windll.kernel32.GetSystemTimes(ctypes.byref(leer), ctypes.byref(kern), ctypes.byref(nutzer)):
+        return None
+    w = lambda f: (f.hi << 32) | f.lo          # noqa: E731
+    return w(leer), w(kern) + w(nutzer)
+
+
+def _gpu():
+    if not _NVIDIA["geprueft"]:
+        _NVIDIA["geprueft"] = True
+        _NVIDIA["pfad"] = shutil.which("nvidia-smi") or ""
+    if not _NVIDIA["pfad"]:
+        return None
+    p = subprocess.run([_NVIDIA["pfad"], "--query-gpu=name,utilization.gpu,temperature.gpu,memory.used,memory.total",
+                        "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=5,
+                       creationflags=0x08000000 if WINDOWS else 0)          # CREATE_NO_WINDOW
+    teile = [t.strip() for t in (p.stdout.splitlines() or [""])[0].split(",")]
+    if p.returncode != 0 or len(teile) < 5:
+        return None
+    zahl = lambda t: float(t) if re.fullmatch(r"\d+(\.\d+)?", t) else None      # noqa: E731
+    belegt, gesamt = zahl(teile[3]), zahl(teile[4])
+    return {"name": teile[0][:48], "last": zahl(teile[1]), "temp": zahl(teile[2]),
+            "speicher": round(100 * belegt / gesamt, 1) if belegt is not None and gesamt else None}
+
+
+def pc_werte(vorher):
+    """(Werte, CPU-Zeiten jetzt); die CPU-Last gilt fuer das Intervall seit vorher."""
+    jetzt = _cpu_zeiten()
+    cpu = None
+    if vorher and jetzt and jetzt[1] > vorher[1]:
+        cpu = round(max(0.0, min(100.0, 100.0 * (1 - (jetzt[0] - vorher[0]) / (jetzt[1] - vorher[1])))), 1)
+    m = _SPEICHERSTATUS()
+    m.dwLength = ctypes.sizeof(_SPEICHERSTATUS)
+    ram = ram_gib = None
+    if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m)):
+        ram, ram_gib = int(m.dwMemoryLoad), round(m.ullTotalPhys / 2 ** 30, 1)
+    platten, maske = [], ctypes.windll.kernel32.GetLogicalDrives()
+    for i in range(26):
+        lw = "%s:\\" % chr(65 + i)
+        if maske & (1 << i) and ctypes.windll.kernel32.GetDriveTypeW(lw) == 3:            # DRIVE_FIXED
+            try:
+                u = shutil.disk_usage(lw)
+                if u.total:
+                    platten.append([lw[:2], round(100 * u.used / u.total), round(u.total / 2 ** 30)])
+            except OSError:
+                pass
+    try:
+        gpu = _gpu()
+    except (OSError, subprocess.SubprocessError, ValueError):
+        gpu = None
+    return {"cpu": cpu, "ram": ram, "ram_gib": ram_gib, "platten": platten[:8], "gpu": gpu}, jetzt
+
+
+def werte_melden():
+    """Seit Version 21: alle 30 s die Werte an die Bruecke. Kennt sie /v1/pc/werte nicht (aeltere Bruecke, 404), hoert
+    der Faden auf."""
+    if not WINDOWS:
+        return
+    vorher = _cpu_zeiten()
+    while True:
+        time.sleep(30)
+        try:
+            w, vorher = pc_werte(vorher)
+            bruecke("/v1/pc/werte", w, 10)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                log.info("PC-Werte: Bruecke kennt /v1/pc/werte nicht, Faden endet")
+                return
+            log.info("PC-Werte: %s", e)
+        except Exception as e:
+            log.info("PC-Werte: %s", e)
+            time.sleep(60)
+
+
 def waechter():
     """Alle 20 s: hängt Windows-MCP (Upstream-Fehler #465, bleibt sonst bis zum Neustart gesperrt) oder ist es weg,
     neu starten. Höchstens alle 3 Minuten, nur auf dem normalen Desktop. Alle 6 h nach Updates sehen."""
@@ -1579,6 +1678,7 @@ def start_hintergrund():
     threading.Thread(target=waechter, daemon=True).start()
     threading.Thread(target=verknuepfungen_abgleichen, daemon=True).start()
     threading.Thread(target=version_melden, daemon=True).start()
+    threading.Thread(target=werte_melden, daemon=True, name="werte").start()       # seit Version 21
     if "--begruessung" in sys.argv:
         gruss = (("Hello %s. " % AUSSPRACHE if AUSSPRACHE else "Hello. ") + "Jarvis now lives on your PC too. Just say Hey Jarvis." if EN else
                  ("Hallo %s. " % AUSSPRACHE if AUSSPRACHE else "Hallo. ") + "Jarvis ist jetzt auch auf deinem PC zu Hause. Sag einfach Hey Jarvis.")

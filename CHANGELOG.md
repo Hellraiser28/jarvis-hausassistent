@@ -1,5 +1,23 @@
 # Änderungen
 
+## 0.5.1 – 2026-10-29
+
+Reiter „Lage“. *English: a "Status" tab in the Observatory design with appointments, this computer, containers,
+backups, the PC and Jarvis itself. PC client 21, app 4.9.*
+
+- **Reiter „Lage“** im Design Observatorium (HUD und PC-Fenster, Knopf im Kopf): Karten für Termine, diesen Rechner
+  (CPU, RAM, Temperatur, Volumes, Laufzeit), Container, Sicherungen, den PC und Jarvis selbst. Karten ohne Daten
+  bleiben weg, die Startseite bleibt aufgeräumt.
+- **PC-Client 21** schickt alle 30 Sekunden Prozessor, Arbeitsspeicher, Laufwerke und, wenn vorhanden, die
+  NVIDIA-Grafikkarte an `POST /v1/pc/werte`, nur mit der Standardbibliothek. Eine ältere Brücke antwortet 404, dann
+  hört er auf.
+- **Neues Modul `lage.py`** mit `test_lage.py`: prüft die PC-Werte, zählt Container über Docker, misst Volumes und
+  baut Einträge für Sicherungen. Die Bauanleitung beschreibt die neuen Felder in `system.json` und `/v1/lage` samt
+  Umstieg von 0.5.0.
+- **App 4.9:** Der Reiter „Lage“ zeigt zusätzlich Container, Sicherung, PC und Volumes (Feld `system` in
+  `/v1/lage`); eine ältere Brücke ohne das Feld lässt die Karten weg.
+- Der Workflow prüft `test_lage.py` und `test_pc_werte.py` mit.
+
 ## 0.5.0 – 2026-10-29
 
 Design „Observatorium“. *English: the "Observatory" design: a calm neural core instead of the reactor, subtitles with
