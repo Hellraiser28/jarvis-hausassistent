@@ -89,6 +89,7 @@
       rueck("onAntwort", antwort, (Date.now() - t0) / 1000, null, false);   // Text immer, die Stimme kommt dazu
       if (Array.isArray(a.dateien) && a.dateien.length) rueck("onDateien", a.dateien);   // seit 0.3.3
       if (a.vorschlag) rueck("onVorschlag", a.vorschlag);                                 // seit 4.6 (0.4)
+      if (Array.isArray(a.nachlesen) && a.nachlesen.length) rueck("onNachlesen", a.nachlesen);   // seit 4.8 (0.5, Observatorium)
       if (W.stimmeAn() && antwort) sprechen(antwort, nr); else rueck("onStatus", "bereit");
     } catch (e) {
       fertig = true;

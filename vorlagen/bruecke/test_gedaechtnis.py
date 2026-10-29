@@ -56,7 +56,8 @@ pruef("Migration: nur einmal", gd.migrieren(D, {}, "alex") == 0)
 g = gd.laden(D)
 pruef("Migration: Bereiche", [e["bereich"] for e in g["eintraege"]] == ["alex", "haus", "haus"])
 pruef("Migration: Datum bleibt", g["eintraege"][0]["datum"] == "22.10.2026 19:05")
-pruef("Datei 600", oct(os.stat(os.path.join(D, gd.DATEI)).st_mode & 0o777) == "0o600")
+# Unix-Rechte nur ausserhalb von Windows pruefbar (dort gelten ACLs)
+pruef("Datei 600", os.name == "nt" or oct(os.stat(os.path.join(D, gd.DATEI)).st_mode & 0o777) == "0o600")
 
 # Sichtbarkeit
 nb = gd.neu(D, "Sam mag Tee\nmit Zeilenumbruch", "sam", "sam")

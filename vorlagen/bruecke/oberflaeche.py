@@ -27,6 +27,10 @@ APP_BEREICHE = ("werte", "wetter", "strom", "termine", "haus", "server", "radio"
                 "begruessung")
 NACHTMODUS = ("aus", "auto")        # auto: zwischen 22 und 6 Uhr gedimmt (Wandbildschirm, PC-Fenster)
 BEWEGUNG = ("voll", "ruhig")        # ruhig: Reaktor und Laufband langsamer, kein Flackern
+# Seit 0.5: Design "kern" ("Observatorium": neuronaler Kern im Sternenfeld, kuehles Blau) neben dem bisherigen.
+DESIGNS = ("klassisch", "kern")
+DESIGN_NAMEN = {"klassisch": "Klassisch (Reaktor)", "kern": "Observatorium (Kern)"}
+DESIGN_NAMEN_EN = {"klassisch": "Classic (reactor)", "kern": "Observatory (core)"}
 EIGENE_FARBEN = ("c", "titel", "bg", "text", "dim")          # Hexwerte #rrggbb; c = Hauptfarbe, Pflicht
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
@@ -37,6 +41,7 @@ STANDARD = {
     "person": "",
     "farbe": "rot",
     "farben": None,
+    "design": "klassisch",
     "bereiche": ["wetter", "systeme", "kalender", "welt", "verbindungen", "laufband", "gespraech", "aktionen", "begruessung"],
     "begruessungen": [[5, "Noch wach{, person}?"], [11, "Guten Morgen{, person}."], [18, "Hallo{, person}. Was liegt an?"],
                       [24, "Guten Abend{, person}."]],
@@ -183,6 +188,9 @@ def pruefen(o):
                            "nachtmodus is aus or auto (dimmed between 10 pm and 6 am)."))
     if e["bewegung"] not in BEWEGUNG:
         raise Ungueltig(_t("bewegung ist voll oder ruhig.", "bewegung is voll or ruhig."))
+    if e["design"] not in DESIGNS:
+        raise Ungueltig(_t("design ist klassisch (Reaktor) oder kern (Observatorium).",
+                           "design is klassisch (reactor) or kern (observatory)."))
     w = e["werte_namen"]
     if not isinstance(w, dict) or set(w) - {"strom", "euro", "last"}:
         raise Ungueltig(_t("werte_namen kennt nur strom, euro und last.", "werte_namen only knows strom, euro and last."))
@@ -262,7 +270,8 @@ def optionen():
     grenzen (Laengengrenzen)."""
     return {"farben": list(FARBEN), "farb_namen": dict(FARB_NAMEN_EN if SPRACHE == "en" else FARB_NAMEN), "bereiche": list(BEREICHE),
             "app_bereiche": list(APP_BEREICHE), "symbole": list(SYMBOLE), "nachtmodus": list(NACHTMODUS),
-            "bewegung": list(BEWEGUNG), "grenzen": dict(GRENZE)}
+            "bewegung": list(BEWEGUNG), "designs": list(DESIGNS),
+            "design_namen": dict(DESIGN_NAMEN_EN if SPRACHE == "en" else DESIGN_NAMEN), "grenzen": dict(GRENZE)}
 
 
 def beschreiben(e):
@@ -279,9 +288,10 @@ def beschreiben(e):
     if e["nachtmodus"] != "aus" or e["bewegung"] != "voll":
         extra += _t(" Nachtmodus: %s, Bewegung: %s.", " Night mode: %s, motion: %s.") % (e["nachtmodus"], e["bewegung"])
     keine = _t("keine", "none")
-    return (_t("Farbe: %s. Zeile unter dem Logo: %s. Bereiche an: %s%s. Knöpfe: %s.%s",
-               "Color: %s. Line under the logo: %s. Panels on: %s%s. Buttons: %s.%s") % (
-        farbe, e["untertitel"] or _t("(leer)", "(empty)"), ", ".join(e["bereiche"]) or keine,
+    design = (DESIGN_NAMEN_EN if SPRACHE == "en" else DESIGN_NAMEN)[e["design"]]
+    return (_t("Design: %s. Farbe: %s. Zeile unter dem Logo: %s. Bereiche an: %s%s. Knöpfe: %s.%s",
+               "Design: %s. Color: %s. Line under the logo: %s. Panels on: %s%s. Buttons: %s.%s") % (
+        design, farbe, e["untertitel"] or _t("(leer)", "(empty)"), ", ".join(e["bereiche"]) or keine,
         _t("; aus: ", "; off: ") + ", ".join(aus) if aus else "", ", ".join(k["text"] for k in e["aktionen"]) or keine, extra))
 
 

@@ -280,6 +280,13 @@ ask about what is missing or unclear:
 
 1. **Design:** red and gold like in the film (recommendation), cyan, blue, green or custom colors. For custom colors, ask
    about a favorite color or a model, and show two proposals as screenshots.
+    - Since 0.5 there is also the **Observatory**: a calm neural core in a field of stars instead of the reactor and
+      panels, cool blue, no ticker. It shows the answer as subtitles with the current word highlighted, "To read
+      back" (2 to 4 points) and "Honestly" (what isn't working right now). In `oberflaeche.json` this is
+      `design: kern`; all other answers give `design: klassisch` with their color.
+    - The person can switch at any time, by voice ("Jarvis, show the observatory") or in the gear menu. The panels
+      of the main page (point 2) apply to the classic design and are kept when switching. `design` follows the same
+      source rules as the color.
 2. **Panels on the main page:** system values, home, calendar, news, ticker, weather, connections,
    conversation history, quick actions, greeting. Suggestion: whatever fits the skills from round 4. **Only show
    what can be filled.** A box without a data source stays empty and looks broken: then leave it out or build the
@@ -500,8 +507,9 @@ build time. The person can still change things. After the yes, you save the answ
     - **Gear menu:** the app reads and changes appearance and behavior via `/v1/einstellungen` (on the home network and
       via remote access, with a device token). The response carries the allowed values, and the menu builds itself from them:
       `optionen` = `oberflaeche.optionen()` plus `verhalten` = `verhalten.optionen()` (exactly this schema; the app
-      expects `farben`, `farb_namen`, `bereiche`, `app_bereiche`, `symbole`, `nachtmodus`, `bewegung`, `grenzen`
-      and `verhalten`). Other panels of this installation appear this way by themselves.
+      expects `farben`, `farb_namen`, `bereiche`, `app_bereiche`, `symbole`, `nachtmodus`, `bewegung`, `designs`,
+      `design_namen` (since 0.5), `grenzen` and `verhalten`). Other panels of this installation appear this way by
+      themselves. `oberflaeche.optionen()` is authoritative, not this list.
     - **Scenes and yes button** (from app 4.6): the "Scenes" menu uses `POST /v1/szenen`; an older bridge (404) is
       shown as "doesn't know scenes yet". If an answer from `/v1/frage` carries the field `vorschlag`, the app shows a
       yes button; it sends the suggestion with `ja_knopf: true`. If an attachment is waiting, it goes along, then
@@ -537,7 +545,8 @@ build time. The person can still change things. After the yes, you save the answ
     - Brakes: five failed attempts, at most six approvals per hour
     - A password is intercepted before the brain (PBKDF2 hash) and never passed on.
     - **Also in the middle of a sentence** (since 0.4): check not only the whole message but windows of one to three
-      words with the length of the normalized password, at most six comparisons per message (PBKDF2 is expensive).
+      words with the length of the normalized password, at most 20 comparisons per message (PBKDF2 is expensive;
+      with six, 12 of 480 real questions would have been dropped in a measurement, since 0.5).
       If more word windows match than the limit allows, the message goes neither to the brain nor into the history:
       Jarvis asks to repeat it shorter or without the password. The length is kept as a number in `.env` (600),
       learned when the password is set; it reveals something about the password and belongs nowhere else. If the
@@ -572,6 +581,11 @@ build time. The person can still change things. After the yes, you save the answ
     - The app takes the color from the same state (color sets as CSS variables, custom colors derived from the
       main color), plus `app_bereiche` (what the phone app shows, default all), `app_aktionen`,
       night mode, calm motion and the name.
+    - **Design** (since 0.5): `design` is `klassisch` (reactor, default) or `kern` (observatory), checked by
+      `oberflaeche.py` and reported in `optionen` as `designs` with `design_namen`. HUD, PC window, app and web app
+      switch without reloading. The gear menu of the app and the PC window has a switch for it, which only appears
+      when the bridge reports `designs`. In the `kern` design the app has three tabs: conversation, status, skills. To
+      look at it without switching, add `?design=kern` to the HUD address.
     - **Behavior** (always): `daten/verhalten.json`, checked by `einrichtung/verhalten.py`: interim phrases on/off,
       answer style `kurz`/`normal`/`ausfuehrlich` (short/normal/detailed), quiet hours for announcements and reading
       aloud, with times. The default is the previous behavior. Tool `verhalten` (behavior; actions `zeigen`, `aendern`,
@@ -614,6 +628,15 @@ build time. The person can still change things. After the yes, you save the answ
       `/v1/echtzeit/verlauf`.
     - Put only what real-time mode needs into the instructions: name, tone, tools. Memory notes only if the person
       agrees that they go to Google.
+    - **Pass consent on word for word, never claim success** (since 0.5, from our own use): Gemini passed a "yes" on
+      as a long sentence with all the details, Jarvis took it for a new request and kept creating new drafts, and
+      Gemini still said "added". So two rules go into the instructions: if the person agrees to a question from
+      Jarvis (add, save, apply), Gemini passes only the consent on to the tool, word for word ("Yes, add it"), without
+      repeating the content. And Gemini never says something was added, saved, sent or done before Jarvis reported
+      exactly that; a draft or a refusal means nothing has happened yet.
+    - In the brain as well: if a draft already exists and the message agrees to it (even with repeated details), don't
+      create a new draft. If it isn't a clear yes, say honestly that nothing has been added yet and ask for a short
+      yes.
     - In the PC window (WebView2), allow the microphone and enable autoplay. The wake word pauses while real-time mode is running.
     - **Can be switched off per device:** a flag on the device token ("real-time allowed") blocks the one-time key. Devices
       of children never get real-time mode (Google's terms, round 4). The person flips the switch at the computer,
@@ -926,6 +949,40 @@ build time. The person can still change things. After the yes, you save the answ
       be a consent ("Yes, send it") is dropped: no button.
     - `daten/verhoerer.jsonl` (600, at most 500 lines) counts follow-up questions and accepted suggestions, with the
       sentence heard and the suggestion. It shows which words the ear often gets wrong.
+- **To read back and Honestly** (since 0.5, always; visible in the `kern` design, the bridge delivers the data in
+  both designs): ready-made in the release, `kern.py` with `test_kern.py`, standard library only, German and English
+  (`kern.setze_sprache`).
+    - **To read back:** `kern.nachlesen_regel()` goes into the fixed context, but only for sources with a screen
+      (app, web app, PC window and their test sources), never for speakers, phone or HA Assist.
+      `kern.nachlesen_aus()` removes the marker from text and voice before anything is read aloud. The points go
+      through the same password masking as the answer (`schwaerzen=`). Only one marker at the very end counts; if
+      there is another one before it (e.g. from a quoted email), there is no card and the outside marker stays
+      visible.
+    - The bridge returns `nachlesen` (2 to 4 points) in the answer of `/v1/frage` and in the history. Only devices
+      with a token get the history, never a public `zustand.json`: a wall display shows no conversation contents.
+    - **Honestly:** the self-test writes `daten/selbsttest.json` as `{zeit, gesamt, einzeln: [{name, art, zustand,
+      hinweis}]}`. `zustand` is `ok`, `trocken`, `hinweis` or `fehler`; `art: "dienst"` marks service checks with a
+      display name (e.g. "Voice → Ear"), otherwise `name` is the tool name. Other states or shapes show up as "unclear
+      entry", never silently skipped.
+    - The bridge reads every tool call in the brain's data stream with `kern.werkzeug_ergebnisse()` (own tools only,
+      no test sources) and remembers success or failure per tool with the time.
+    - **Required of the tool server:** every real failure (exception, service gone, timeout) comes back with
+      `isError: true`. Otherwise only "Fehler:"/"Error:" at the start, a technical error in the first line and any
+      shape other than a string or a list of complete, known blocks count as failures. Domain messages ("The speaker is unreachable right now") are not tool
+      failures; guessing them from the text caused false alarms.
+    - Only tool names matching `[a-z][a-z0-9_]*` (`bekannt=` with your own tool list narrows it further) and fixed
+      reasons go into the `ehrlich` field and the status context. An unreadable `selbsttest.json` shows up as the
+      limitation "self-test unreadable", unusable entries as "unclear entry".
+    - `kern.ehrlich_berechnen()` turns this into `ehrlich` = `{zeit, gesamt, bereit, liste: [{werkzeug, name,
+      grund}]}` or nothing. The field belongs in the state, also in `zustand.json`: only tool names and short
+      reasons, never output. Between two questions recalculate every 15 seconds, so a new self-test shows up without
+      a trigger.
+    - Before every question, `kern.lage_hinweis(ehrlich)` goes into the status context. If a request used a limited
+      tool, the bridge itself puts "Honestly: …" at the start of the answer with `kern.ehrlich_vorweg()`. A rule for
+      the brain alone wasn't enough in the test: it often didn't mention the limitation at all, or only at the end.
+    - Display in the `kern` design: the HUD shows a capsule with the count and the list with reasons plus a "ready"
+      bar. The app shows the same in the conversation and in the "status" tab, and marks the limited tools per area
+      in the skills. Amber stands only for limitations, never as decoration.
 
 ### Speed (measured, build it this way from the start)
 
@@ -1181,6 +1238,13 @@ move to 0.4`. Back up first (data, persona, `.env`). Then in this order: people 
 stays as before), move the memory (`gedaechtnis.migrieren` takes over `gedaechtnis.md` once; first agree with the
 person which entries belong to everyone), then the chosen building blocks, the app via its update to 4.6 or newer,
 rebuild the web app. Every stage with its check from phase 3.
+
+**Moving from 0.4 to 0.5:** `Read EINRICHTUNG.en.md, mode Change: move to 0.5`. Back up first. Then put `kern.py`
+with `test_kern.py` into `einrichtung/`, replace `oberflaeche.py` and the HUD template (the saved `oberflaeche.json`
+stays valid; `design` is missing there and then means `klassisch`). The bridge gets "To read back" and "Honestly"
+(building block for it), the self-test writes `einzeln` as described there, and the tool server reports real
+failures with `isError`. The two rules on consent go into the real-time instructions. Then update the app to 4.8.2 or
+newer and rebuild the web app. The new design is an offer: switch by voice or in the gear menu.
 
 Start `claude` in the Jarvis folder and say: `Lies EINRICHTUNG.md, Modus Ändern: <Wunsch>` (in English:
 `Read EINRICHTUNG.en.md, mode Change: <wish>`). Then only the matching round applies, for the appearance that is

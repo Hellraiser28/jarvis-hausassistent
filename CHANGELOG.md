@@ -1,5 +1,38 @@
 # Änderungen
 
+## 0.5.0 – 2026-10-29
+
+Design „Observatorium“. *English: the "Observatory" design: a calm neural core instead of the reactor, subtitles with
+the current word, "To read back" and "Honestly". The reactor design stays selectable. App 4.8.2.*
+
+- **Neues Design „Observatorium“** (`design: kern`): ein ruhiger neuronaler Kern im Sternenfeld, kühles Blau, ohne
+  Laufband, in HUD, PC-Fenster, App und Web-App. Wählbar im Setup („Deine Oberfläche“), per Zuruf und mit einem
+  neuen Schalter im Zahnrad. Das bisherige Design bleibt Standard und wählbar.
+- **Zum Nachlesen:** Bei Sachantworten bleiben 2 bis 4 Stichpunkte als Karte stehen, vorgelesen wird nur die
+  Antwort. Neues Feld `nachlesen` in `/v1/frage` und im Verlauf.
+- **Ehrlich gesagt:** Was im Selbsttest oder beim letzten Aufruf nicht ging, steht im Zustand (`ehrlich`, nur Namen
+  und kurze Gründe). Benutzt eine Anfrage so ein Werkzeug, beginnt die Antwort mit „Ehrlich gesagt: …“. Die App
+  markiert eingeschränkte Werkzeuge in den Fähigkeiten.
+- Neues Modul `kern.py` mit `test_kern.py`, `oberflaeche.py` kennt `design`, die Web-App reicht `nachlesen` weiter.
+- **Aus dem eigenen Betrieb:** Im Echtzeit-Modus gibt Gemini eine Zustimmung wörtlich weiter und behauptet nie
+  Erfolg, bevor Jarvis ihn meldet (ein langes „Ja“ mit allen Einzelheiten ergab sonst immer neue Entwürfe). Die
+  Kennwort-Prüfung mitten im Satz vergleicht bis zu 20 Wortfenster statt sechs: Bei sechs wären in einer Messung 12
+  von 480 echten Fragen verworfen worden.
+- **App 4.8.2:** Design „Observatorium“ mit drei Reitern (Gespräch, Lage, Fähigkeiten), Untertitel im Takt der
+  Stimme, Schalter im Zahnrad, Einschränkungen mit Grund.
+- **Unabhängige Prüfung vor dem Release** (Codex, 10 Funde, alle nachgeprüft):
+    - Im Echtzeit-Modus ging der Name einer angehängten Datei als Nutzernachricht an Gemini; ein fremder Dateiname
+      hätte so eine Anweisung werden können. Gemini erfährt jetzt nur noch, dass eine Datei bereitliegt.
+    - „Zum Nachlesen“ zählt nur eine Marke ganz am Ende, eine fremde Marke im Text ergibt keine Karte.
+    - „Ehrlich gesagt“ steht immer vorn, auch wenn die Antwort selbst anders beginnt. Kaputte Werkzeugblöcke gelten als
+      Fehler; eine kaputte Zeit im Selbsttest verwirft nicht mehr den ganzen Test; Namen werden geprüft.
+    - Bauanleitung: vollständiges Schema fürs Zahnrad, `isError` als Pflicht des Werkzeug-Servers.
+    - Tests laufen unter Windows (Rechteprüfung `0600` dort übersprungen, Sperr-Test schließt seine Dateien).
+    - Nachprüfung (Codex): 6 Funde geschlossen, 3 teilweise und nachgebessert (nur vollständige, bekannte
+      Werkzeugblöcke gelten als Erfolg; jeder unbrauchbare Selbsttest-Eintrag ist sichtbar; Namen ohne Zeilenumbruch,
+      Anzeigenamen ohne Steuer- und Richtungszeichen), 1 bewusst offen (Design über Lautsprecher, wie die Farbe).
+      Dienst-Prüfungen des Selbsttests (`art: "dienst"`) erscheinen mit ihrem Namen.
+
 ## 0.4.0 – 2026-10-28
 
 Für die ganze Familie und für den Papierkram. *English: for the whole family and for paperwork: people with their own

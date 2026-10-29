@@ -198,7 +198,13 @@ try:
     def besetzt(fd, art, n):
         raise OSError(36, "Resource deadlock avoided")
     sys.modules["msvcrt"].locking = besetzt
-    besetzt_fehler = [wirft(m._sperren, os.open(os.path.join(T, "sperre"), os.O_RDWR | os.O_CREAT, 0o600)) for m in (gd, sz, briefe)]
+    besetzt_fehler = []
+    for m in (gd, sz, briefe):        # Deskriptor immer schliessen, sonst scheitert unter Windows das Aufraeumen (WinError 32)
+        fd = os.open(os.path.join(T, "sperre"), os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            besetzt_fehler.append(wirft(m._sperren, fd))
+        finally:
+            os.close(fd)
 finally:
     builtins.__import__ = imp_echt
     del sys.modules["msvcrt"]

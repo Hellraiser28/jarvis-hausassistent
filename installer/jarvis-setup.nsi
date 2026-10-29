@@ -801,6 +801,7 @@ Function SeiteOberflaeche
   ${NSD_CB_AddString} $hDesign "$(T_DESIGN3)"
   ${NSD_CB_AddString} $hDesign "$(T_DESIGN4)"
   ${NSD_CB_AddString} $hDesign "$(T_DESIGN5)"
+  ${NSD_CB_AddString} $hDesign "$(T_DESIGN6)"
   !insertmacro Auswahl $hDesign $Design
   ${NSD_CreateLabel} 155u 0 145u 10u "$(T_OB_UNTERTITEL)"
   Pop $0

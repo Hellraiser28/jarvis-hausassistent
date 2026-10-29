@@ -272,6 +272,13 @@ aus `antworten.json` (Design, Untertitel, Bereiche, Wünsche) und frag nur nach,
 
 1. **Design:** Rot und Gold wie im Film (Empfehlung), Cyan, Blau, Grün oder eigene Farben. Bei eigenen Farben nach
    Lieblingsfarbe oder Vorbild fragen und zwei Vorschläge als Bildschirmfoto zeigen.
+    - Seit 0.5 gibt es dazu das **Observatorium**: ein ruhiger neuronaler Kern im Sternenfeld statt Reaktor und
+      Kästen, kühles Blau, ohne Laufband. Es zeigt die Antwort als Untertitel mit mitlaufendem Wort, „Zum Nachlesen“
+      (2 bis 4 Stichpunkte) und „Ehrlich gesagt“ (was gerade nicht geht). In `oberflaeche.json` ist das
+      `design: kern`; alle anderen Antworten ergeben `design: klassisch` mit ihrer Farbe.
+    - Die Person kann jederzeit wechseln, per Zuruf („Jarvis, zeig das Observatorium“) oder im Zahnrad. Die
+      Bereiche der Hauptseite (Punkt 2) gelten für das klassische Design und bleiben beim Wechsel erhalten. Für
+      `design` gelten dieselben Quellenregeln wie für die Farbe.
 2. **Bereiche der Hauptseite:** Systemwerte, Haus, Kalender, Nachrichten, Laufband, Wetter, Verbindungen,
    Gesprächsverlauf, Schnellaktionen, Begrüßung. Vorschlag: was zu den Fähigkeiten aus Runde 4 passt. **Nur zeigen,
    was sich füllen lässt.** Ein Kasten ohne Datenquelle bleibt leer und wirkt kaputt: dann weglassen oder die Quelle
@@ -489,8 +496,9 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
     - **Zahnrad-Menü:** Die App liest und ändert Aussehen und Verhalten über `/v1/einstellungen` (im Heimnetz und
       über den Fernzugang, mit Geräte-Token). Die Antwort trägt die erlaubten Werte, das Menü baut sich daraus auf:
       `optionen` = `oberflaeche.optionen()` plus `verhalten` = `verhalten.optionen()` (genau dieses Schema, die App
-      erwartet `farben`, `farb_namen`, `bereiche`, `app_bereiche`, `symbole`, `nachtmodus`, `bewegung`, `grenzen`
-      und `verhalten`). Andere Bereiche dieser Installation erscheinen so von selbst.
+      erwartet `farben`, `farb_namen`, `bereiche`, `app_bereiche`, `symbole`, `nachtmodus`, `bewegung`, `designs`,
+      `design_namen` (seit 0.5), `grenzen` und `verhalten`). Andere Bereiche dieser Installation erscheinen so von
+      selbst. Maßgeblich ist `oberflaeche.optionen()`, nicht diese Aufzählung.
     - **Szenen und Ja-Knopf** (ab App 4.6): Das Menü „Szenen“ spricht `POST /v1/szenen`, eine ältere Brücke (404)
       meldet die App als „kennt Szenen noch nicht“. Trägt eine Antwort von `/v1/frage` das Feld `vorschlag`, zeigt
       die App einen Ja-Knopf; er schickt den Vorschlag mit `ja_knopf: true`. Liegt ein Anhang bereit, geht der mit,
@@ -526,8 +534,8 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
     - Bremsen: fünf Fehlversuche, höchstens sechs Freigaben pro Stunde
     - Ein Kennwort wird vor dem Gehirn abgefangen (PBKDF2-Hash) und nie weitergegeben.
     - **Auch mitten im Satz** (seit 0.4): Prüf nicht nur die ganze Nachricht, sondern Wortfenster aus ein bis drei
-      Wörtern mit der Länge des normalisierten Kennworts, höchstens sechs Vergleiche je Nachricht (PBKDF2 ist
-      teuer). Gibt es mehr passende Wortfenster als die Grenze, geht die Nachricht weder ans Gehirn noch in den
+      Wörtern mit der Länge des normalisierten Kennworts, höchstens 20 Vergleiche je Nachricht (PBKDF2 ist
+      teuer; bei sechs wären in einer Messung 12 von 480 echten Fragen verworfen worden, seit 0.5). Gibt es mehr passende Wortfenster als die Grenze, geht die Nachricht weder ans Gehirn noch in den
       Verlauf: Jarvis bittet, sie kürzer oder ohne Kennwort zu wiederholen. Die Länge steht als Zahl in der `.env`
       (600), gelernt beim Setzen; sie verrät etwas über das Kennwort und gehört nirgends sonst hin. Kommt das Kennwort
       ohne offene Freigabe
@@ -562,6 +570,11 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
     - Die App übernimmt die Farbe aus demselben Zustand (Farbsätze als CSS-Variablen, eigene Farben aus der
       Hauptfarbe abgeleitet), dazu `app_bereiche` (was die Handy-App zeigt, Standard alle), `app_aktionen`,
       Nachtmodus, ruhige Bewegung und den Namen.
+    - **Design** (seit 0.5): `design` ist `klassisch` (Reaktor, Standard) oder `kern` (Observatorium), geprüft von
+      `oberflaeche.py` und in `optionen` als `designs` mit `design_namen` gemeldet. HUD, PC-Fenster, App und Web-App
+      schalten ohne Neuladen um. Das Zahnrad von App und PC-Fenster hat dafür einen Schalter, der nur erscheint,
+      wenn die Brücke `designs` meldet. Im Design `kern` hat die App drei Reiter: Gespräch, Lage, Fähigkeiten. Zum
+      Ansehen ohne Umstellen `?design=kern` an die Adresse des HUD hängen.
     - **Verhalten** (immer): `daten/verhalten.json`, geprüft von `einrichtung/verhalten.py`: Zwischensätze an/aus,
       Antwortstil kurz/normal/ausführlich, Nachtruhe für Durchsagen und Vorlesen mit Zeiten. Standard ist das
       bisherige Verhalten. Werkzeug `verhalten` (zeigen, aendern, standard) mit denselben Quellenregeln.
@@ -603,6 +616,16 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
       `/v1/echtzeit/verlauf` mitgeschrieben.
     - In die Anweisung nur, was Echtzeit braucht: Name, Ton, Werkzeuge. Gedächtnisnotizen nur, wenn die Person
       zustimmt, dass sie an Google gehen.
+    - **Zustimmungen wörtlich, nie Erfolg behaupten** (seit 0.5, aus dem eigenen Betrieb): Gemini gab ein „Ja“ als
+      langen Satz mit allen Einzelheiten weiter, Jarvis hielt das für eine neue Bitte und legte immer wieder einen
+      neuen Entwurf an, und Gemini sagte trotzdem „eingetragen“. Deshalb zwei Regeln in die Anweisung: Stimmt die
+      Person einer Rückfrage von Jarvis zu (eintragen, speichern, übernehmen), gibt Gemini an das Werkzeug wörtlich
+      nur die Zustimmung weiter („Ja, trag ein“), ohne den Inhalt zu wiederholen. Und Gemini sagt nie, etwas sei
+      eingetragen, gespeichert, gesendet oder erledigt, bevor Jarvis genau das gemeldet hat; ein Entwurf oder eine
+      Ablehnung heißt: Es ist noch nichts passiert.
+    - Dazu im Gehirn: Liegt schon ein Entwurf vor und die Nachricht ist eine Zustimmung dazu (auch mit wiederholten
+      Einzelheiten), keinen neuen Entwurf anlegen. Reicht sie nicht als klares Ja, ehrlich sagen, dass noch nichts
+      eingetragen ist, und um ein kurzes Ja bitten.
     - Im PC-Fenster (WebView2) Mikrofon erlauben und Autoplay freigeben. Das Weckwort pausiert, solange Echtzeit läuft.
     - **Je Gerät abschaltbar:** Ein Merkmal am Geräte-Token („Echtzeit erlaubt“) sperrt den Einmalschlüssel. Geräte
       von Kindern bekommen Echtzeit nie (Bedingungen von Google, Runde 4). Den Schalter legt die Person am Rechner um,
@@ -920,6 +943,40 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
       eine Zustimmung wäre („Ja, schick sie ab“), verwirft sie: kein Knopf.
     - `daten/verhoerer.jsonl` (600, höchstens 500 Zeilen) zählt Rückfragen und angenommene Vorschläge, mit dem
       gehörten Satz und dem Vorschlag. Daran sieht man, welche Wörter das Ohr oft falsch versteht.
+- **Zum Nachlesen und Ehrlich gesagt** (seit 0.5, immer; zu sehen im Design `kern`, die Daten liefert die Brücke in
+  beiden Designs): fertig im Release `kern.py` mit `test_kern.py`, nur Standardbibliothek, Deutsch und Englisch
+  (`kern.setze_sprache`).
+    - **Zum Nachlesen:** `kern.nachlesen_regel()` kommt in den festen Kontext, aber nur für Quellen mit Anzeige
+      (App, Web-App, PC-Fenster und ihre Testquellen), nie für Lautsprecher, Telefon oder HA-Assist.
+      `kern.nachlesen_aus()` nimmt die Marke aus Text und Stimme, bevor vorgelesen wird. Die Stichpunkte laufen durch
+      dieselbe Kennwort-Schwärzung wie die Antwort (`schwaerzen=`). Es zählt nur eine Marke ganz am Ende; steht davor
+      noch eine (etwa aus einer zitierten Mail), gibt es keine Karte und die fremde Marke bleibt sichtbar.
+    - Die Brücke gibt `nachlesen` (2 bis 4 Stichpunkte) in der Antwort von `/v1/frage` und im Verlauf mit. Den
+      Verlauf bekommen nur Geräte mit Token, nie eine öffentliche `zustand.json`: Eine Wandseite zeigt keine
+      Gesprächsinhalte.
+    - **Ehrlich gesagt:** Der Selbsttest schreibt `daten/selbsttest.json` als `{zeit, gesamt, einzeln: [{name, art,
+      zustand, hinweis}]}`. `zustand` ist `ok`, `trocken`, `hinweis` oder `fehler`; `art: "dienst"` steht bei
+      Dienst-Prüfungen mit Anzeigenamen (z. B. „Stimme → Ohr“), sonst ist `name` der Werkzeugname. Andere Zustände
+      oder Formen erscheinen als „unklarer Eintrag“, nie still übergangen.
+    - Die Brücke liest jeden Werkzeugaufruf im Datenstrom des Gehirns mit `kern.werkzeug_ergebnisse()` mit (nur
+      eigene Werkzeuge, keine Testquellen) und merkt sich je Werkzeug Erfolg oder Fehler mit Zeitpunkt.
+    - **Pflicht für den Werkzeug-Server:** Jeder echte Fehler (Ausnahme, Dienst weg, Zeitüberschreitung) kommt mit
+      `isError: true` zurück. Als Fehler zählen sonst nur „Fehler:“/„Error:“ am Anfang, ein technischer Fehler in der
+      ersten Zeile und jede andere Form als ein String oder eine Liste vollständiger, bekannter Blöcke. Fachliche Meldungen („Die Box ist gerade nicht erreichbar“) sind
+      kein Werkzeugfehler; sie aus dem Text zu raten ergab Fehlalarme.
+    - Ins Feld `ehrlich` und in den Lage-Kontext kommen nur Werkzeugnamen nach dem Muster `[a-z][a-z0-9_]*`
+      (`bekannt=` mit der eigenen Werkzeugliste engt weiter ein) und feste Gründe. Eine unlesbare `selbsttest.json`
+      erscheint selbst als Einschränkung „Selbsttest nicht lesbar“, unbrauchbare Einträge als „unklarer Eintrag“.
+    - `kern.ehrlich_berechnen()` macht daraus `ehrlich` = `{zeit, gesamt, bereit, liste: [{werkzeug, name, grund}]}`
+      oder nichts. Das Feld gehört in den Zustand, auch in `zustand.json`: nur Werkzeugnamen und kurze Gründe, nie
+      Ausgaben. Zwischen zwei Fragen alle 15 Sekunden neu rechnen, damit ein neuer Selbsttest ohne Anlass erscheint.
+    - Vor jeder Frage kommt `kern.lage_hinweis(ehrlich)` in den Lage-Kontext. Hat eine Anfrage ein eingeschränktes
+      Werkzeug benutzt, setzt die Brücke mit `kern.ehrlich_vorweg()` selbst „Ehrlich gesagt: …“ an den Anfang der
+      Antwort. Eine Regel für das Gehirn allein reichte im Test nicht, es nannte die Einschränkung oft gar nicht oder
+      erst am Ende.
+    - Anzeige im Design `kern`: Das HUD zeigt eine Kapsel mit der Zahl und die Liste mit Gründen samt Balken
+      „bereit“. Die App zeigt dasselbe im Gespräch und im Reiter „Lage“ und markiert in den Fähigkeiten je Bereich die
+      eingeschränkten Werkzeuge. Bernstein steht nur für Einschränkungen, nie als Schmuck.
 
 ### Tempo (gemessen, von Anfang an so bauen)
 
@@ -1175,6 +1232,14 @@ auf 0.4 umsteigen`. Erst sichern (Daten, Persona, `.env`). Dann in dieser Reihen
 `gedaechtnis.md` einmalig; vorher mit der Person klären, welche Einträge allen gehören), danach die gewählten
 Bausteine, die App über ihr Update auf 4.6 oder neuer, die Web-App neu bauen. Jede Stufe mit ihrer Probe aus
 Phase 3.
+
+**Umstieg von 0.4 auf 0.5:** `Lies EINRICHTUNG.md, Modus Ändern: auf 0.5 umsteigen`. Erst sichern. Dann `kern.py`
+mit `test_kern.py` nach `einrichtung/` legen, `oberflaeche.py` und die HUD-Vorlage tauschen (die gespeicherte
+`oberflaeche.json` bleibt gültig, `design` fehlt dort und heißt dann `klassisch`). In die Brücke kommen „Zum
+Nachlesen“ und „Ehrlich gesagt“ (Baustein dazu), der Selbsttest schreibt `einzeln` wie dort beschrieben, und der
+Werkzeug-Server meldet echte Fehler mit `isError`. In die Echtzeit-Anweisung die beiden Regeln zu Zustimmungen. Danach
+die App über ihr Update auf 4.8.2 oder neuer und die Web-App neu bauen. Das neue Design ist ein Angebot: Umschalten
+per Zuruf oder im Zahnrad.
 
 Im Jarvis-Ordner `claude` starten und sagen: `Lies EINRICHTUNG.md, Modus Ändern: <Wunsch>`. Dann gilt nur die
 passende Runde, für das Aussehen also Runde 6a. Danach `profil.json` und die Fähigkeiten-Übersicht nachziehen und die betroffene Stufe neu testen.

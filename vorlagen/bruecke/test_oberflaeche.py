@@ -112,8 +112,17 @@ finally:
     shutil.rmtree(d)
 o = ob.optionen()
 pruef("optionen: Schema fuers Zahnrad", set(o) == {"farben", "farb_namen", "bereiche", "app_bereiche", "symbole",
-                                                    "nachtmodus", "bewegung", "grenzen"}
+                                                    "nachtmodus", "bewegung", "designs", "design_namen", "grenzen"}
       and o["app_bereiche"] == list(ob.APP_BEREICHE) and all(f in o["farb_namen"] for f in o["farben"]))
+# Design "Observatorium" (seit 0.5)
+pruef("design: Vorgabe klassisch", ob.pruefen({})["design"] == "klassisch")
+pruef("design: kern gueltig", ob.pruefen({"design": "kern"})["design"] == "kern")
+try:
+    ob.pruefen({"design": "ultron"})
+    pruef("design: unbekannt abgelehnt", False)
+except ob.Ungueltig:
+    pruef("design: unbekannt abgelehnt", True)
+pruef("design: beschreiben nennt es", ob.beschreiben(ob.pruefen({"design": "kern"})).startswith("Design: Observatorium"))
 # Sprache (0.3.0): englische Grundwerte und Meldungen, danach wieder Deutsch
 ob.setze_sprache("en")
 en = ob.pruefen({})
@@ -124,7 +133,7 @@ try:
     pruef("en: lila abgelehnt", False)
 except ob.Ungueltig as x:
     pruef("en: Meldung englisch", str(x).startswith("There is no color"))
-pruef("en: Beschreibung englisch", ob.beschreiben(en).startswith("Color: Red-gold."))
+pruef("en: Beschreibung englisch", ob.beschreiben(en).startswith("Design: Classic (reactor). Color: Red-gold."))
 pruef("en: Farbnamen englisch", ob.optionen()["farb_namen"]["blau"] == "Blue")
 try:
     ob.setze_sprache("fr")

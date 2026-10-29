@@ -974,6 +974,18 @@ public class MainActivity extends Activity {
         frage(text, quelle, anhang, null, 0, null);
     }
 
+    // Seit 4.7: gemeinsamer Versand fuer normale und Echtzeit-Fragen; das Original (Uri) wird gestreamt
+    byte[] frageSenden(JSONObject kopf, JSONObject anhang, Uri original, long laenge, String originalTyp) throws Exception {
+        if (original != null && anhang != null) {
+            String k = kopf.toString(), an = anhang.toString();
+            byte[] vorne = (k.substring(0, k.length() - 1) + ",\"anhang\":" + an.substring(0, an.length() - 1)
+                    + ",\"original\":{\"typ\":" + JSONObject.quote(originalTyp == null ? "" : originalTyp)
+                    + ",\"daten\":\"").getBytes(StandardCharsets.UTF_8);
+            return httpStrom("/v1/frage", vorne, original, laenge, "\"}}}".getBytes(StandardCharsets.UTF_8), 245000);
+        }
+        return http("POST", "/v1/frage", json(kopf.put("anhang", anhang)), "application/json", 245000);
+    }
+
     // Seit 4.4 (0.3.3): dazu das unveraenderte Original (Uri), gestreamt; die Bruecke gibt es nur den Werkzeugen
     void frage(final String text, final String quelle, final JSONObject anhang, final Uri original, final long laenge,
                final String originalTyp) {
@@ -992,16 +1004,7 @@ public class MainActivity extends Activity {
                     jaKnopf = false;
                     kopf.put("ja_knopf", true);
                 }
-                byte[] roh;
-                if (original != null && anhang != null) {
-                    String k = kopf.toString(), an = anhang.toString();
-                    byte[] vorne = (k.substring(0, k.length() - 1) + ",\"anhang\":" + an.substring(0, an.length() - 1)
-                            + ",\"original\":{\"typ\":" + JSONObject.quote(originalTyp == null ? "" : originalTyp)
-                            + ",\"daten\":\"").getBytes(StandardCharsets.UTF_8);
-                    roh = httpStrom("/v1/frage", vorne, original, laenge, "\"}}}".getBytes(StandardCharsets.UTF_8), 245000);
-                } else {
-                    roh = http("POST", "/v1/frage", json(kopf.put("anhang", anhang)), "application/json", 245000);
-                }
+                byte[] roh = frageSenden(kopf, anhang, original, laenge, originalTyp);
                 JSONObject a = new JSONObject(new String(roh, StandardCharsets.UTF_8));
                 fertig[0] = true;
                 try {
@@ -1017,6 +1020,8 @@ public class MainActivity extends Activity {
                 if (dateien != null && dateien.length() > 0) js("window.onDateien && window.onDateien(" + dateien.toString() + ")");
                 String vorschlag = a.optString("vorschlag", "");       // seit 4.6 (0.4): "Meinst du ...?" mit Ja-Knopf
                 if (!vorschlag.isEmpty()) js("window.onVorschlag && window.onVorschlag(" + q(vorschlag) + ")");
+                JSONArray nachlesen = a.optJSONArray("nachlesen");     // seit 4.8 (Design Kern): "Zum Nachlesen"
+                if (nachlesen != null && nachlesen.length() > 0) js("window.onNachlesen && window.onNachlesen(" + nachlesen.toString() + ")");
                 if (stimme && !s.isEmpty()) sprichSaetze(s);
                 else js("onStatus('bereit')");
             } catch (Exception e) {
@@ -1369,6 +1374,30 @@ public class MainActivity extends Activity {
                             .put("quelle", "echtzeit-app").put("geraet", "Handy").put("echtzeit", true)),
                             "application/json", 245000), StandardCharsets.UTF_8));
                     antwort = a.optString("antwort");
+                } catch (Exception e) {
+                    antwort = tx("Das Hausgehirn ist gerade nicht erreichbar.", "The home brain can't be reached right now.");
+                }
+                js("onEchtzeitAntwort(" + q(id) + "," + q(antwort) + ")");
+            }});
+        }
+
+        /** Seit 4.7 (Jarvis 0.4.2): Echtzeit-Frage mit der bereitliegenden Datei. Gemini sieht die Datei nicht, die App
+         *  haengt sie an genau diese Frage (z. B. "Leg das in Paperless ab"). Das Original geht mit, wenn es zur
+         *  gewaehlten Datei passt, wie bei frageMitAnhangOriginal. */
+        @JavascriptInterface
+        public void echtzeitFrageMitAnhang(final String id, final String bitte, final String anhang, final double groesse,
+                                           final String typ, final String name) {
+            final Uri u = letzteDatei;
+            letzteDatei = null;                   // eine Auswahl gilt fuer genau einen Anhang
+            imHintergrund(new Runnable() { public void run() {
+                String antwort;
+                try {
+                    JSONObject kopf = new JSONObject().put("text", bitte).put("quelle", "echtzeit-app").put("geraet", "Handy")
+                            .put("echtzeit", true);
+                    long n = u == null ? -1 : dateiGroesse(u);
+                    boolean passt = n > 0 && n <= ORIGINAL_MAX && n == (long) groesse && name != null && name.equals(dateiName(u));
+                    byte[] roh = frageSenden(kopf, new JSONObject(anhang), passt ? u : null, n, typ);
+                    antwort = new JSONObject(new String(roh, StandardCharsets.UTF_8)).optString("antwort");
                 } catch (Exception e) {
                     antwort = tx("Das Hausgehirn ist gerade nicht erreichbar.", "The home brain can't be reached right now.");
                 }

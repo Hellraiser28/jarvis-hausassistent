@@ -45,6 +45,10 @@ Alle Bilder zeigen erfundene Beispieldaten.
   umgewandelte Dateien. Welche Dienste er dafür nutzt, wählst du im Setup.
 - **Dein Jarvis, nicht meiner.** Das Setup fragt nach dir, nach der Persönlichkeit, nach dem, was er können soll,
   und nach deiner Oberfläche: Farben, Bereiche, Begrüßung, eigene Knöpfe. Claude baut nur, was du willst.
+- **Sagt ehrlich, was gerade nicht geht** (seit 0.5): Im neuen Design „Observatorium“ steht ein ruhiger Kern
+  statt des Reaktors, die Antwort läuft als Untertitel mit, Fakten bleiben als „Zum Nachlesen“ stehen. Fällt ein
+  Dienst aus, sagt Jarvis das zuerst („Ehrlich gesagt: …“) und zeigt, was gerade eingeschränkt ist. Das
+  Reaktor-Design bleibt wählbar.
 - **Er baut sein Aussehen auf Zuruf um:** „Jarvis, mach dich grün“, „Zeig mal, wie Blau aussieht“, „Blende das
   Laufband aus“, „Mach das rückgängig“. Am PC, auf dem Bildschirm und in der App, ohne Neuladen. Updates
   überschreiben deine Einstellungen nicht.

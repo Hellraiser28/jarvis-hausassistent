@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>J.A.R.V.I.S.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
 /* Oberflaeche (seit 25.10.2026 getrennt): Diese Seite ist Code und fuer alle gleich. Was sie zu DEINEM Jarvis macht
    (Farbe, Bereiche, Zeile unter dem Logo, Begruessungen, Knoepfe), kommt von der Bruecke mit dem Zustand (zustand.json
@@ -13,13 +13,13 @@
    prueft jeden Wert). Ein Update dieser Seite laesst die Einstellungen deshalb stehen.
    Die Seite prueft beim Anwenden noch einmal (der Glance-Ordner ist fuer mehrere Konten beschreibbar) und merkt sich
    den letzten Stand im Browser, damit beim Laden nicht die Grundfarbe aufblitzt. */
-const STANDARD = {"name": "J.A.R.V.I.S.", "untertitel": "Just A Rather Very Intelligent System", "person": "", "farbe": "rot", "farben": null, "bereiche": ["wetter", "systeme", "kalender", "welt", "verbindungen", "laufband", "gespraech", "aktionen", "begruessung"], "begruessungen": [[5, "Noch wach{, person}?"], [11, "Guten Morgen{, person}."], [18, "Hallo{, person}. Was liegt an?"], [24, "Guten Abend{, person}."]], "start": [["J.A.R.V.I.S.", ""], ["Arc-Reaktor", "STABIL"], ["Gehirn", "CLAUDE"], ["Stimme", "BEREIT"]], "aktionen": [{"text": "Briefing", "frage": "Gib mir ein Briefing.", "symbol": "briefing"}, {"text": "Termine", "frage": "Was steht heute an?", "symbol": "kalender"}, {"text": "Wetter", "frage": "Wie wird das Wetter heute?", "symbol": "wetter"}, {"text": "News", "frage": "Was gibt's Neues in der Welt?", "symbol": "news"}], "app_aktionen": [], "app_bereiche": ["werte", "wetter", "strom", "termine", "haus", "server", "radio", "nachrichten", "schnellzugriff", "begruessung"], "nachtmodus": "aus", "bewegung": "voll", "werte_namen": {"strom": "STROM", "euro": "HEUTE", "last": "LAST"}, "pc_name": "PC", "verbindungen_extra": []};
+const STANDARD = {"name": "J.A.R.V.I.S.", "untertitel": "Just A Rather Very Intelligent System", "person": "", "farbe": "rot", "farben": null, "design": "klassisch", "bereiche": ["wetter", "systeme", "kalender", "welt", "verbindungen", "laufband", "gespraech", "aktionen", "begruessung"], "begruessungen": [[5, "Noch wach{, person}?"], [11, "Guten Morgen{, person}."], [18, "Hallo{, person}. Was liegt an?"], [24, "Guten Abend{, person}."]], "start": [["J.A.R.V.I.S.", ""], ["Arc-Reaktor", "STABIL"], ["Gehirn", "CLAUDE"], ["Stimme", "BEREIT"]], "aktionen": [{"text": "Briefing", "frage": "Gib mir ein Briefing.", "symbol": "briefing"}, {"text": "Termine", "frage": "Was steht heute an?", "symbol": "kalender"}, {"text": "Wetter", "frage": "Wie wird das Wetter heute?", "symbol": "wetter"}, {"text": "News", "frage": "Was gibt's Neues in der Welt?", "symbol": "news"}], "app_aktionen": [], "app_bereiche": ["werte", "wetter", "strom", "termine", "haus", "server", "radio", "nachrichten", "schnellzugriff", "begruessung"], "nachtmodus": "aus", "bewegung": "voll", "werte_namen": {"strom": "STROM", "euro": "HEUTE", "last": "LAST"}, "pc_name": "PC", "verbindungen_extra": []};
 // Sprache (0.3.0): ?sprache=de|en in der Adresse, sonst die Wahl im Browser (localStorage "jarvis-sprache"), sonst
 // (seit 0.3.1) die Sprache der Einrichtung, die die Bruecke im Zustand mitschickt ("sprache", gemerkt unter
 // "jarvis-sprache-bruecke"), sonst die Sprache des Browsers bzw. von Windows im PC-Fenster. Neue Texte immer in beide
 // Sprachen.
-const TEXTE = { de: {"faehigkeiten_gross": "FÄHIGKEITEN", "einstellungen": "Einstellungen", "systeme": "Systeme", "haus": "Haus", "kalender": "Kalender", "welt": "Welt", "verbindungen": "Verbindungen", "gespraech": "Gespräch", "st_bereit": "Bereit", "st_hoert": "Höre zu", "st_denkt": "Denke nach", "st_spricht": "Spreche", "st_fehler": "Störung", "echtzeit_titel": "Gespräch in Echtzeit (Gemini Live): einfach reden, reinreden erlaubt", "echtzeit": "Echtzeit", "autostart": "Mit Windows starten", "autostart_k": "Jarvis läuft im Hintergrund und hört auf „Hey Jarvis“", "desktop": "Desktop-Symbol", "desktop_k": "zum Öffnen von Hand", "pc_client": "PC-Client", "pc_client_v": "PC-Client {0}", "nach_updates": "Nach Updates suchen", "jetzt_aktualisieren": "Jetzt aktualisieren", "lade_faehigkeiten": "Lade Fähigkeiten …", "nachrichten": "NACHRICHTEN", "lade_meldungen": "Lade Meldungen …", "frag": "Frag Jarvis …", "senden": "Senden", "neu_titel": "Neu in {0}", "neu_ok": "Verstanden", "aria_anhang": "Datei anhängen", "datei_oeffnen": "Öffnen", "datei_speichern": "Speichern unter …", "datei_gespeichert": "Gespeichert: {0}", "datei_alt": "Zum Öffnen bitte den PC-Client aktualisieren.", "datei_fehler": "Mit der Datei hat es nicht geklappt: {0}", "anhang_weg": "Anhang entfernen", "anhang_laedt": "bereite vor …", "anhang_wartet": "Die Datei wird noch vorbereitet …", "anhang_gross": "Die Datei ist zu groß (höchstens {0} MB).", "anhang_original": "Original {0} MB dabei", "anhang_original_gross": "Original über {0} MB, nur aufbereitet", "anhang_ton_lang": "Die Aufnahme ist {0} Minuten lang, höchstens {1} gehen.", "anhang_fehler": "Mit der Datei hat es nicht geklappt: {0}", "anhang_alt": "Dieser PC-Client kann noch keine Dateien, bitte aktualisieren.", "q_app_extern": "App unterwegs", "q_echtzeit_pc": "Echtzeit PC", "q_echtzeit_app": "Echtzeit App", "q_echtzeit_extern": "Echtzeit unterwegs", "q_echtzeit": "Echtzeit", "keine_verbindung": "Keine Verbindung", "freigabe_offen": "Freigabe offen: {0} · Kennwort sagen und Push bestätigen", "admin": "Admin-Modus · noch {0}", "pc_aus": "aus", "pc_haengt": "Steuerung hängt", "pc_du": "du bist dran", "pc_verbunden": "verbunden", "gehirn": "Gehirn", "stimme": "Stimme", "noch_nichts": "Noch nichts gesagt. Ungewöhnlich ruhig hier.", "verlauf_geschuetzt": "Das Gespräch steht im PC-Fenster und in der App (mit Anmeldung), nicht offen im Heimnetz.", "keine_termine": "Keine Termine. Genieß es.", "bis": "{0} bis {1} °C", "mediathek": "Neu in der Mediathek", "faehigkeiten": "Fähigkeiten", "werkzeuge": "Werkzeuge", "bereiche": "Bereiche", "an_gross": "AN", "aus_gross": "AUS", "erinnerungen": "Erinnerungen", "naechste": " · nächste {0}", "nur": "nur {0}", "fuss": "Eingänge: {0}   ·   Stand {1}", "fuss_pc": "   ·   Beispiel antippen = an Jarvis schicken", "pruefung_fehl": "Prüfung fehlgeschlagen: {0}", "version_da": "Version {0} verfügbar · {1}", "aktuell": "aktuell · geprüft {0} · {1}", "lade_neu": "Lade die neue Version, Jarvis startet gleich neu …", "suche": "Suche …", "et_startet": "⚡ Echtzeit startet …", "et_geht_nicht": "Echtzeit geht gerade nicht: {0}", "keine_antwort": "keine Antwort", "mikrofon": "Mikrofon", "tonverarbeitung": "Tonverarbeitung", "wiedergabe": "Wiedergabe", "et_schritt": "Echtzeit: {0} nicht verfügbar ({1}).", "et_klick": "⚡ Einmal ins Fenster klicken, dann geht's los", "et_weg": "Echtzeit-Verbindung weg ({0}).", "et_laeuft": "⚡ Echtzeit · einfach reden, reinreden geht", "et_gruss": "(Die Sitzung beginnt. Begrüß die Person in einem kurzen Satz.)", "hausgehirn": "▸ Hausgehirn", "hausgehirn_weg": "Das Hausgehirn ist gerade nicht erreichbar.", "et_ende_hey": "Echtzeit beendet. „Hey Jarvis“ geht wieder.", "et_still": "Zwei Minuten Stille, Echtzeit beendet.", "et_ende": "Echtzeit beendet.", "arc": "Arc-Reaktor", "stabil": "STABIL", "w_sunny": "Sonnig", "w_clear-night": "Klare Nacht", "w_partlycloudy": "Wolkig", "w_cloudy": "Bedeckt", "w_rainy": "Regen", "w_pouring": "Starkregen", "w_snowy": "Schnee", "w_snowy-rainy": "Schneeregen", "w_fog": "Nebel", "w_lightning": "Gewitter", "w_lightning-rainy": "Gewitter", "w_windy": "Windig", "w_windy-variant": "Windig", "w_hail": "Hagel", "z_stil_kurz": "kurz", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "ausführlich", "z_farbe_rot": "Rot-Gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blau", "z_farbe_gruen": "Grün", "z_hb_wetter": "Wetter", "z_hb_systeme": "Systeme", "z_hb_haus": "Haus", "z_hb_kalender": "Kalender", "z_hb_welt": "Weltlage", "z_hb_verbindungen": "Verbindungen", "z_hb_laufband": "Laufband", "z_hb_gespraech": "Gespräch", "z_hb_aktionen": "Knöpfe", "z_hb_begruessung": "Begrüßung", "z_hb_werte": "Werte", "z_sy_briefing": "Bericht", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Kopfhörer", "z_sy_news": "Zeitung", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Spiel", "z_sy_monitor": "Bildschirm", "z_sy_liste": "Liste", "z_sy_kalender": "Kalender", "z_sy_licht": "Licht", "z_sy_wetter": "Sonne", "z_sy_haus": "Haus", "z_sy_stern": "Stern", "z_sy_film": "Film", "z_aussehen": "AUSSEHEN", "z_aussehen_hinweis": "Gilt für Wandbildschirm, PC-Fenster und App und bleibt bei Updates erhalten. Sagen geht auch: „Jarvis, mach dich grün.“", "z_farbe": "Farbe", "z_eigene_farbe": "Eigene Farbe", "z_eigene_farbe_k": "Hauptfarbe, der Rest wird daraus berechnet", "z_eigene_farbe_titel": "eigene Farbe", "z_name_assistent": "Name des Assistenten", "z_so_nennt": "So nennt er dich", "z_untertitel": "Zeile unter dem Logo", "z_nachtmodus": "Nachtmodus", "z_nachtmodus_k": "22 bis 6 Uhr gedimmt", "z_ruhig": "Ruhige Bewegung", "z_ruhig_k": "langsamer, ohne Pulsieren", "z_knoepfe_titel": "KNÖPFE IM SCHNELLZUGRIFF", "z_k_text_ph": "Beschriftung, z. B. Licht", "z_k_frage_ph": "Was Jarvis tun soll, z. B. Mach das Licht im Wohnzimmer an.", "z_symbol": "Symbol", "z_knopf_dazu": "KNOPF DAZU", "z_wand_zeigen": "AM WANDBILDSCHIRM UND PC ZEIGEN", "z_rueckgaengig": "RÜCKGÄNGIG", "z_grundeinstellung": "GRUNDEINSTELLUNG", "z_grund_frage": "Aussehen auf die Grundeinstellung zurücksetzen (Stand nach der Einrichtung)?", "z_verhalten": "VERHALTEN", "z_verhalten_hinweis": "Gilt für Jarvis überall, auch am PC und an den Lautsprechern.", "z_zwischensaetze": "Zwischensätze", "z_zwischensaetze_k": "„Ich schau kurz in den Kalender …“", "z_antworten": "Antworten", "z_nachtruhe": "Nachtruhe", "z_nachtruhe_k": "keine Durchsagen, kein Vorlesen", "z_von_bis": "von … bis", "z_jarvis_antwortet_nicht": "Jarvis antwortet nicht.", "z_gespeichert": "✓ Gespeichert", "z_nach_oben": "nach oben", "z_entfernen": "entfernen", "z_uhr": "{0} Uhr", "z_beschriftung_fehlt": "Beschriftung und Auftrag ausfüllen.", "z_von": "von", "z_bis": "bis", "z_dieser_pc": "DIESER PC", "z_knoepfe_hinweis": "Gelten für PC-Fenster und Wandbildschirm. Die App kann eigene haben."},
-  en: {"faehigkeiten_gross": "SKILLS", "einstellungen": "Settings", "systeme": "Systems", "haus": "Home", "kalender": "Calendar", "welt": "World", "verbindungen": "Connections", "gespraech": "Conversation", "st_bereit": "Ready", "st_hoert": "Listening", "st_denkt": "Thinking", "st_spricht": "Speaking", "st_fehler": "Fault", "echtzeit_titel": "Real-time conversation (Gemini Live): just talk, interrupting is fine", "echtzeit": "Real-time", "autostart": "Start when you sign in", "autostart_k": "Jarvis runs in the background and listens for “Hey Jarvis”", "desktop": "Desktop icon", "desktop_k": "to open it by hand", "pc_client": "PC client", "pc_client_v": "PC client {0}", "nach_updates": "Check for updates", "jetzt_aktualisieren": "Update now", "lade_faehigkeiten": "Loading skills …", "nachrichten": "NEWS", "lade_meldungen": "Loading news …", "frag": "Ask Jarvis …", "senden": "Send", "neu_titel": "New in {0}", "neu_ok": "Got it", "aria_anhang": "Attach file", "datei_oeffnen": "Open", "datei_speichern": "Save as …", "datei_gespeichert": "Saved: {0}", "datei_alt": "Please update the PC client to open files.", "datei_fehler": "That didn't work with the file: {0}", "anhang_weg": "Remove attachment", "anhang_laedt": "preparing …", "anhang_wartet": "The file is still being prepared …", "anhang_gross": "The file is too large (at most {0} MB).", "anhang_original": "original {0} MB included", "anhang_original_gross": "original over {0} MB, prepared only", "anhang_ton_lang": "The recording is {0} minutes long, at most {1} work.", "anhang_fehler": "That file didn't work: {0}", "anhang_alt": "This PC client can't handle files yet, please update.", "q_app_extern": "App on the go", "q_echtzeit_pc": "Real-time PC", "q_echtzeit_app": "Real-time app", "q_echtzeit_extern": "Real-time on the go", "q_echtzeit": "Real-time", "keine_verbindung": "No connection", "freigabe_offen": "Approval pending: {0} · say the password and confirm the push", "admin": "Admin mode · {0} left", "pc_aus": "off", "pc_haengt": "control stuck", "pc_du": "your turn", "pc_verbunden": "connected", "gehirn": "Brain", "stimme": "Voice", "noch_nichts": "Nothing said yet. Unusually quiet here.", "verlauf_geschuetzt": "The conversation is shown in the PC window and the app (signed in), not openly on the home network.", "keine_termine": "No appointments. Enjoy it.", "bis": "{0} to {1} °C", "mediathek": "New in the media library", "faehigkeiten": "Skills", "werkzeuge": "Tools", "bereiche": "Areas", "an_gross": "ON", "aus_gross": "OFF", "erinnerungen": "Reminders", "naechste": " · next {0}", "nur": "only {0}", "fuss": "Inputs: {0}   ·   As of {1}", "fuss_pc": "   ·   Tap an example = send it to Jarvis", "pruefung_fehl": "Check failed: {0}", "version_da": "Version {0} available · {1}", "aktuell": "up to date · checked {0} · {1}", "lade_neu": "Downloading the new version, Jarvis restarts in a moment …", "suche": "Searching …", "et_startet": "⚡ Real-time starting …", "et_geht_nicht": "Real-time isn't available right now: {0}", "keine_antwort": "no answer", "mikrofon": "Microphone", "tonverarbeitung": "Audio processing", "wiedergabe": "Playback", "et_schritt": "Real-time: {0} not available ({1}).", "et_klick": "⚡ Click into the window once, then off we go", "et_weg": "Real-time connection lost ({0}).", "et_laeuft": "⚡ Real-time · just talk, interrupting works", "et_gruss": "(The session starts. Greet the person in one short sentence.)", "hausgehirn": "▸ Home brain", "hausgehirn_weg": "The home brain can't be reached right now.", "et_ende_hey": "Real-time ended. “Hey Jarvis” works again.", "et_still": "Two minutes of silence, real-time ended.", "et_ende": "Real-time ended.", "arc": "Arc reactor", "stabil": "STABLE", "w_sunny": "Sunny", "w_clear-night": "Clear night", "w_partlycloudy": "Partly cloudy", "w_cloudy": "Cloudy", "w_rainy": "Rain", "w_pouring": "Heavy rain", "w_snowy": "Snow", "w_snowy-rainy": "Sleet", "w_fog": "Fog", "w_lightning": "Thunderstorm", "w_lightning-rainy": "Thunderstorm", "w_windy": "Windy", "w_windy-variant": "Windy", "w_hail": "Hail", "z_stil_kurz": "short", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "detailed", "z_farbe_rot": "Red-gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blue", "z_farbe_gruen": "Green", "z_hb_wetter": "Weather", "z_hb_systeme": "Systems", "z_hb_haus": "Home", "z_hb_kalender": "Calendar", "z_hb_welt": "World", "z_hb_verbindungen": "Connections", "z_hb_laufband": "Ticker", "z_hb_gespraech": "Conversation", "z_hb_aktionen": "Buttons", "z_hb_begruessung": "Greeting", "z_hb_werte": "Values", "z_sy_briefing": "Report", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Headphones", "z_sy_news": "Newspaper", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Game", "z_sy_monitor": "Screen", "z_sy_liste": "List", "z_sy_kalender": "Calendar", "z_sy_licht": "Light", "z_sy_wetter": "Sun", "z_sy_haus": "House", "z_sy_stern": "Star", "z_sy_film": "Film", "z_aussehen": "APPEARANCE", "z_aussehen_hinweis": "Applies to the wall display, PC window and app, and survives updates. You can also just say: “Jarvis, turn green.”", "z_farbe": "Color", "z_eigene_farbe": "Custom color", "z_eigene_farbe_k": "Main color, the rest is derived from it", "z_eigene_farbe_titel": "custom color", "z_name_assistent": "Assistant's name", "z_so_nennt": "What he calls you", "z_untertitel": "Line under the logo", "z_nachtmodus": "Night mode", "z_nachtmodus_k": "dimmed from 10 pm to 6 am", "z_ruhig": "Calm motion", "z_ruhig_k": "slower, no pulsing", "z_knoepfe_titel": "QUICK ACCESS BUTTONS", "z_k_text_ph": "Label, e.g. Light", "z_k_frage_ph": "What Jarvis should do, e.g. Turn on the living room light.", "z_symbol": "Icon", "z_knopf_dazu": "ADD BUTTON", "z_wand_zeigen": "SHOW ON WALL DISPLAY AND PC", "z_rueckgaengig": "UNDO", "z_grundeinstellung": "RESET", "z_grund_frage": "Reset the appearance to the default (as after setup)?", "z_verhalten": "BEHAVIOR", "z_verhalten_hinweis": "Applies to Jarvis everywhere, including the PC and speakers.", "z_zwischensaetze": "Interim phrases", "z_zwischensaetze_k": "“Let me check the calendar …”", "z_antworten": "Answers", "z_nachtruhe": "Quiet hours", "z_nachtruhe_k": "no announcements, no reading aloud", "z_von_bis": "from … to", "z_jarvis_antwortet_nicht": "Jarvis isn't answering.", "z_gespeichert": "✓ Saved", "z_nach_oben": "move up", "z_entfernen": "remove", "z_uhr": "{0}:00", "z_beschriftung_fehlt": "Fill in the label and the task.", "z_von": "from", "z_bis": "to", "z_dieser_pc": "THIS PC", "z_knoepfe_hinweis": "Apply to the PC window and wall display. The app can have its own."} };
+const TEXTE = { de: {"faehigkeiten_gross": "FÄHIGKEITEN", "einstellungen": "Einstellungen", "systeme": "Systeme", "haus": "Haus", "kalender": "Kalender", "welt": "Welt", "verbindungen": "Verbindungen", "gespraech": "Gespräch", "st_bereit": "Bereit", "st_hoert": "Höre zu", "st_denkt": "Denke nach", "st_spricht": "Spreche", "st_fehler": "Störung", "echtzeit_titel": "Gespräch in Echtzeit (Gemini Live): einfach reden, reinreden erlaubt", "echtzeit": "Echtzeit", "autostart": "Mit Windows starten", "autostart_k": "Jarvis läuft im Hintergrund und hört auf „Hey Jarvis“", "desktop": "Desktop-Symbol", "desktop_k": "zum Öffnen von Hand", "pc_client": "PC-Client", "pc_client_v": "PC-Client {0}", "nach_updates": "Nach Updates suchen", "jetzt_aktualisieren": "Jetzt aktualisieren", "lade_faehigkeiten": "Lade Fähigkeiten …", "nachrichten": "NACHRICHTEN", "lade_meldungen": "Lade Meldungen …", "frag": "Frag Jarvis …", "senden": "Senden", "neu_titel": "Neu in {0}", "neu_ok": "Verstanden", "aria_anhang": "Datei anhängen", "datei_oeffnen": "Öffnen", "datei_speichern": "Speichern unter …", "datei_gespeichert": "Gespeichert: {0}", "datei_alt": "Zum Öffnen bitte den PC-Client aktualisieren.", "datei_fehler": "Mit der Datei hat es nicht geklappt: {0}", "anhang_weg": "Anhang entfernen", "anhang_laedt": "bereite vor …", "anhang_wartet": "Die Datei wird noch vorbereitet …", "anhang_gross": "Die Datei ist zu groß (höchstens {0} MB).", "anhang_original": "Original {0} MB dabei", "anhang_original_gross": "Original über {0} MB, nur aufbereitet", "anhang_ton_lang": "Die Aufnahme ist {0} Minuten lang, höchstens {1} gehen.", "anhang_fehler": "Mit der Datei hat es nicht geklappt: {0}", "anhang_alt": "Dieser PC-Client kann noch keine Dateien, bitte aktualisieren.", "q_app_extern": "App unterwegs", "q_echtzeit_pc": "Echtzeit PC", "q_echtzeit_app": "Echtzeit App", "q_echtzeit_extern": "Echtzeit unterwegs", "q_echtzeit": "Echtzeit", "keine_verbindung": "Keine Verbindung", "freigabe_offen": "Freigabe offen: {0} · Kennwort sagen und Push bestätigen", "admin": "Admin-Modus · noch {0}", "pc_aus": "aus", "pc_haengt": "Steuerung hängt", "pc_du": "du bist dran", "pc_verbunden": "verbunden", "gehirn": "Gehirn", "stimme": "Stimme", "noch_nichts": "Noch nichts gesagt. Ungewöhnlich ruhig hier.", "verlauf_geschuetzt": "Das Gespräch steht im PC-Fenster und in der App (mit Anmeldung), nicht offen im Heimnetz.", "keine_termine": "Keine Termine. Genieß es.", "bis": "{0} bis {1} °C", "mediathek": "Neu in der Mediathek", "faehigkeiten": "Fähigkeiten", "werkzeuge": "Werkzeuge", "bereiche": "Bereiche", "an_gross": "AN", "aus_gross": "AUS", "erinnerungen": "Erinnerungen", "naechste": " · nächste {0}", "nur": "nur {0}", "fuss": "Eingänge: {0}   ·   Stand {1}", "fuss_pc": "   ·   Beispiel antippen = an Jarvis schicken", "pruefung_fehl": "Prüfung fehlgeschlagen: {0}", "version_da": "Version {0} verfügbar · {1}", "aktuell": "aktuell · geprüft {0} · {1}", "lade_neu": "Lade die neue Version, Jarvis startet gleich neu …", "suche": "Suche …", "et_startet": "⚡ Echtzeit startet …", "et_geht_nicht": "Echtzeit geht gerade nicht: {0}", "keine_antwort": "keine Antwort", "mikrofon": "Mikrofon", "tonverarbeitung": "Tonverarbeitung", "wiedergabe": "Wiedergabe", "et_schritt": "Echtzeit: {0} nicht verfügbar ({1}).", "et_klick": "⚡ Einmal ins Fenster klicken, dann geht's los", "et_weg": "Echtzeit-Verbindung weg ({0}).", "et_laeuft": "⚡ Echtzeit · einfach reden, reinreden geht", "et_gruss": "(Die Sitzung beginnt. Begrüß die Person in einem kurzen Satz.)", "hausgehirn": "▸ Hausgehirn", "hausgehirn_weg": "Das Hausgehirn ist gerade nicht erreichbar.", "et_ende_hey": "Echtzeit beendet. „Hey Jarvis“ geht wieder.", "et_still": "Zwei Minuten Stille, Echtzeit beendet.", "et_ende": "Echtzeit beendet.", "arc": "Arc-Reaktor", "stabil": "STABIL", "w_sunny": "Sonnig", "w_clear-night": "Klare Nacht", "w_partlycloudy": "Wolkig", "w_cloudy": "Bedeckt", "w_rainy": "Regen", "w_pouring": "Starkregen", "w_snowy": "Schnee", "w_snowy-rainy": "Schneeregen", "w_fog": "Nebel", "w_lightning": "Gewitter", "w_lightning-rainy": "Gewitter", "w_windy": "Windig", "w_windy-variant": "Windig", "w_hail": "Hagel", "z_stil_kurz": "kurz", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "ausführlich", "z_farbe_rot": "Rot-Gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blau", "z_farbe_gruen": "Grün", "z_hb_wetter": "Wetter", "z_hb_systeme": "Systeme", "z_hb_haus": "Haus", "z_hb_kalender": "Kalender", "z_hb_welt": "Weltlage", "z_hb_verbindungen": "Verbindungen", "z_hb_laufband": "Laufband", "z_hb_gespraech": "Gespräch", "z_hb_aktionen": "Knöpfe", "z_hb_begruessung": "Begrüßung", "z_hb_werte": "Werte", "z_sy_briefing": "Bericht", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Kopfhörer", "z_sy_news": "Zeitung", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Spiel", "z_sy_monitor": "Bildschirm", "z_sy_liste": "Liste", "z_sy_kalender": "Kalender", "z_sy_licht": "Licht", "z_sy_wetter": "Sonne", "z_sy_haus": "Haus", "z_sy_stern": "Stern", "z_sy_film": "Film", "z_aussehen": "AUSSEHEN", "z_aussehen_hinweis": "Gilt für Wandbildschirm, PC-Fenster und App und bleibt bei Updates erhalten. Sagen geht auch: „Jarvis, mach dich grün.“", "z_farbe": "Farbe", "z_eigene_farbe": "Eigene Farbe", "z_eigene_farbe_k": "Hauptfarbe, der Rest wird daraus berechnet", "z_eigene_farbe_titel": "eigene Farbe", "z_name_assistent": "Name des Assistenten", "z_so_nennt": "So nennt er dich", "z_untertitel": "Zeile unter dem Logo", "z_nachtmodus": "Nachtmodus", "z_nachtmodus_k": "22 bis 6 Uhr gedimmt", "z_ruhig": "Ruhige Bewegung", "z_ruhig_k": "langsamer, ohne Pulsieren", "z_kern": "Design Observatorium", "z_kern_k": "neuronaler Kern statt Reaktor", "z_knoepfe_titel": "KNÖPFE IM SCHNELLZUGRIFF", "z_k_text_ph": "Beschriftung, z. B. Licht", "z_k_frage_ph": "Was Jarvis tun soll, z. B. Mach das Licht im Wohnzimmer an.", "z_symbol": "Symbol", "z_knopf_dazu": "KNOPF DAZU", "z_wand_zeigen": "AM WANDBILDSCHIRM UND PC ZEIGEN", "z_rueckgaengig": "RÜCKGÄNGIG", "z_grundeinstellung": "GRUNDEINSTELLUNG", "z_grund_frage": "Aussehen auf die Grundeinstellung zurücksetzen (Stand nach der Einrichtung)?", "z_verhalten": "VERHALTEN", "z_verhalten_hinweis": "Gilt für Jarvis überall, auch am PC und an den Lautsprechern.", "z_zwischensaetze": "Zwischensätze", "z_zwischensaetze_k": "„Ich schau kurz in den Kalender …“", "z_antworten": "Antworten", "z_nachtruhe": "Nachtruhe", "z_nachtruhe_k": "keine Durchsagen, kein Vorlesen", "z_von_bis": "von … bis", "z_jarvis_antwortet_nicht": "Jarvis antwortet nicht.", "z_gespeichert": "✓ Gespeichert", "z_nach_oben": "nach oben", "z_entfernen": "entfernen", "z_uhr": "{0} Uhr", "z_beschriftung_fehlt": "Beschriftung und Auftrag ausfüllen.", "z_von": "von", "z_bis": "bis", "z_dieser_pc": "DIESER PC", "z_knoepfe_hinweis": "Gelten für PC-Fenster und Wandbildschirm. Die App kann eigene haben.", "k_rolle": "Hausassistent", "k_haus": "HAUS {0}", "k_spricht": "Spricht · Stimme {0}", "k_nicht": "{0} Dienste nicht verfügbar", "k_nicht1": "1 Dienst nicht verfügbar", "k_kapsel": "{0} Dienste eingeschränkt", "k_kapsel1": "1 Dienst eingeschränkt", "k_ehrlich": "EHRLICH GESAGT", "k_ehrlich_satz": "Das kann ich gerade nicht. Ich sage es dir, statt so zu tun, als ginge es:", "k_bereit": "{0} / {1} bereit", "k_nachlesen": "ZUM NACHLESEN", "k_bleibt": "Bleibt bis zu deiner nächsten Frage.", "k_schliessen": "Schließen", "k_sprich": "Sprich oder schreib …", "k_ki": "{0} ist eine KI. Wichtiges bitte selbst prüfen.", "k_kern_aria": "Neuronaler Kern"},
+  en: {"faehigkeiten_gross": "SKILLS", "einstellungen": "Settings", "systeme": "Systems", "haus": "Home", "kalender": "Calendar", "welt": "World", "verbindungen": "Connections", "gespraech": "Conversation", "st_bereit": "Ready", "st_hoert": "Listening", "st_denkt": "Thinking", "st_spricht": "Speaking", "st_fehler": "Fault", "echtzeit_titel": "Real-time conversation (Gemini Live): just talk, interrupting is fine", "echtzeit": "Real-time", "autostart": "Start when you sign in", "autostart_k": "Jarvis runs in the background and listens for “Hey Jarvis”", "desktop": "Desktop icon", "desktop_k": "to open it by hand", "pc_client": "PC client", "pc_client_v": "PC client {0}", "nach_updates": "Check for updates", "jetzt_aktualisieren": "Update now", "lade_faehigkeiten": "Loading skills …", "nachrichten": "NEWS", "lade_meldungen": "Loading news …", "frag": "Ask Jarvis …", "senden": "Send", "neu_titel": "New in {0}", "neu_ok": "Got it", "aria_anhang": "Attach file", "datei_oeffnen": "Open", "datei_speichern": "Save as …", "datei_gespeichert": "Saved: {0}", "datei_alt": "Please update the PC client to open files.", "datei_fehler": "That didn't work with the file: {0}", "anhang_weg": "Remove attachment", "anhang_laedt": "preparing …", "anhang_wartet": "The file is still being prepared …", "anhang_gross": "The file is too large (at most {0} MB).", "anhang_original": "original {0} MB included", "anhang_original_gross": "original over {0} MB, prepared only", "anhang_ton_lang": "The recording is {0} minutes long, at most {1} work.", "anhang_fehler": "That file didn't work: {0}", "anhang_alt": "This PC client can't handle files yet, please update.", "q_app_extern": "App on the go", "q_echtzeit_pc": "Real-time PC", "q_echtzeit_app": "Real-time app", "q_echtzeit_extern": "Real-time on the go", "q_echtzeit": "Real-time", "keine_verbindung": "No connection", "freigabe_offen": "Approval pending: {0} · say the password and confirm the push", "admin": "Admin mode · {0} left", "pc_aus": "off", "pc_haengt": "control stuck", "pc_du": "your turn", "pc_verbunden": "connected", "gehirn": "Brain", "stimme": "Voice", "noch_nichts": "Nothing said yet. Unusually quiet here.", "verlauf_geschuetzt": "The conversation is shown in the PC window and the app (signed in), not openly on the home network.", "keine_termine": "No appointments. Enjoy it.", "bis": "{0} to {1} °C", "mediathek": "New in the media library", "faehigkeiten": "Skills", "werkzeuge": "Tools", "bereiche": "Areas", "an_gross": "ON", "aus_gross": "OFF", "erinnerungen": "Reminders", "naechste": " · next {0}", "nur": "only {0}", "fuss": "Inputs: {0}   ·   As of {1}", "fuss_pc": "   ·   Tap an example = send it to Jarvis", "pruefung_fehl": "Check failed: {0}", "version_da": "Version {0} available · {1}", "aktuell": "up to date · checked {0} · {1}", "lade_neu": "Downloading the new version, Jarvis restarts in a moment …", "suche": "Searching …", "et_startet": "⚡ Real-time starting …", "et_geht_nicht": "Real-time isn't available right now: {0}", "keine_antwort": "no answer", "mikrofon": "Microphone", "tonverarbeitung": "Audio processing", "wiedergabe": "Playback", "et_schritt": "Real-time: {0} not available ({1}).", "et_klick": "⚡ Click into the window once, then off we go", "et_weg": "Real-time connection lost ({0}).", "et_laeuft": "⚡ Real-time · just talk, interrupting works", "et_gruss": "(The session starts. Greet the person in one short sentence.)", "hausgehirn": "▸ Home brain", "hausgehirn_weg": "The home brain can't be reached right now.", "et_ende_hey": "Real-time ended. “Hey Jarvis” works again.", "et_still": "Two minutes of silence, real-time ended.", "et_ende": "Real-time ended.", "arc": "Arc reactor", "stabil": "STABLE", "w_sunny": "Sunny", "w_clear-night": "Clear night", "w_partlycloudy": "Partly cloudy", "w_cloudy": "Cloudy", "w_rainy": "Rain", "w_pouring": "Heavy rain", "w_snowy": "Snow", "w_snowy-rainy": "Sleet", "w_fog": "Fog", "w_lightning": "Thunderstorm", "w_lightning-rainy": "Thunderstorm", "w_windy": "Windy", "w_windy-variant": "Windy", "w_hail": "Hail", "z_stil_kurz": "short", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "detailed", "z_farbe_rot": "Red-gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blue", "z_farbe_gruen": "Green", "z_hb_wetter": "Weather", "z_hb_systeme": "Systems", "z_hb_haus": "Home", "z_hb_kalender": "Calendar", "z_hb_welt": "World", "z_hb_verbindungen": "Connections", "z_hb_laufband": "Ticker", "z_hb_gespraech": "Conversation", "z_hb_aktionen": "Buttons", "z_hb_begruessung": "Greeting", "z_hb_werte": "Values", "z_sy_briefing": "Report", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Headphones", "z_sy_news": "Newspaper", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Game", "z_sy_monitor": "Screen", "z_sy_liste": "List", "z_sy_kalender": "Calendar", "z_sy_licht": "Light", "z_sy_wetter": "Sun", "z_sy_haus": "House", "z_sy_stern": "Star", "z_sy_film": "Film", "z_aussehen": "APPEARANCE", "z_aussehen_hinweis": "Applies to the wall display, PC window and app, and survives updates. You can also just say: “Jarvis, turn green.”", "z_farbe": "Color", "z_eigene_farbe": "Custom color", "z_eigene_farbe_k": "Main color, the rest is derived from it", "z_eigene_farbe_titel": "custom color", "z_name_assistent": "Assistant's name", "z_so_nennt": "What he calls you", "z_untertitel": "Line under the logo", "z_nachtmodus": "Night mode", "z_nachtmodus_k": "dimmed from 10 pm to 6 am", "z_ruhig": "Calm motion", "z_ruhig_k": "slower, no pulsing", "z_kern": "Observatory design", "z_kern_k": "neural core instead of the reactor", "z_knoepfe_titel": "QUICK ACCESS BUTTONS", "z_k_text_ph": "Label, e.g. Light", "z_k_frage_ph": "What Jarvis should do, e.g. Turn on the living room light.", "z_symbol": "Icon", "z_knopf_dazu": "ADD BUTTON", "z_wand_zeigen": "SHOW ON WALL DISPLAY AND PC", "z_rueckgaengig": "UNDO", "z_grundeinstellung": "RESET", "z_grund_frage": "Reset the appearance to the default (as after setup)?", "z_verhalten": "BEHAVIOR", "z_verhalten_hinweis": "Applies to Jarvis everywhere, including the PC and speakers.", "z_zwischensaetze": "Interim phrases", "z_zwischensaetze_k": "“Let me check the calendar …”", "z_antworten": "Answers", "z_nachtruhe": "Quiet hours", "z_nachtruhe_k": "no announcements, no reading aloud", "z_von_bis": "from … to", "z_jarvis_antwortet_nicht": "Jarvis isn't answering.", "z_gespeichert": "✓ Saved", "z_nach_oben": "move up", "z_entfernen": "remove", "z_uhr": "{0}:00", "z_beschriftung_fehlt": "Fill in the label and the task.", "z_von": "from", "z_bis": "to", "z_dieser_pc": "THIS PC", "z_knoepfe_hinweis": "Apply to the PC window and wall display. The app can have its own.", "k_rolle": "Home assistant", "k_haus": "HOME · {0}", "k_spricht": "Speaking · voice {0}", "k_nicht": "{0} services unavailable", "k_nicht1": "1 service unavailable", "k_kapsel": "{0} services limited", "k_kapsel1": "1 service limited", "k_ehrlich": "HONESTLY", "k_ehrlich_satz": "This isn't working right now. I'd rather tell you than pretend it is:", "k_bereit": "{0} / {1} ready", "k_nachlesen": "TO READ BACK", "k_bleibt": "Stays until your next question.", "k_schliessen": "Close", "k_sprich": "Speak or type …", "k_ki": "{0} is an AI. Please double-check anything important.", "k_kern_aria": "Neural core"} };
 const STANDARD_EN = {"begruessungen": [[5, "Still up{, person}?"], [11, "Good morning{, person}."], [18, "Hello{, person}. What's up?"], [24, "Good evening{, person}."]], "start": [["J.A.R.V.I.S.", ""], ["Arc reactor", "STABLE"], ["Brain", "CLAUDE"], ["Voice", "READY"]], "aktionen": [{"text": "Briefing", "frage": "Give me a briefing.", "symbol": "briefing"}, {"text": "Calendar", "frage": "What's on today?", "symbol": "kalender"}, {"text": "Weather", "frage": "What's the weather today?", "symbol": "wetter"}, {"text": "News", "frage": "What's new in the world?", "symbol": "news"}], "werte_namen": {"strom": "POWER", "euro": "TODAY", "last": "LOAD"}};
 const SP = (() => {
   const m = /[?&]sprache=(de|en)\b/.exec(location.search);
@@ -68,6 +68,7 @@ function oberflaecheSauber(o) {
   if (Array.isArray(o.verbindungen_extra)) e.verbindungen_extra = o.verbindungen_extra.map((z) => paar(z, 30, 30)).filter(Boolean).slice(0, 4);
   if (["aus", "auto"].includes(o.nachtmodus)) e.nachtmodus = o.nachtmodus;
   if (["voll", "ruhig"].includes(o.bewegung)) e.bewegung = o.bewegung;
+  if (["klassisch", "kern"].includes(o.design)) e.design = o.design;        // seit 28.10.2026
   if (SP === "en") for (const k of Object.keys(STANDARD_EN))       // deutsche Grundwerte -> englische
     if (JSON.stringify(e[k]) === JSON.stringify(STANDARD[k])) e[k] = JSON.parse(JSON.stringify(STANDARD_EN[k]));
   return e;
@@ -361,6 +362,7 @@ body.mit-eingabe .zahnrad.da { display: flex; }
 .zahnrad { position: relative; }
 .zahnrad.neu::after { content: ""; position: absolute; top: 3px; right: 3px; width: 8px; height: 8px; border-radius: 50%;
   background: var(--gruen); box-shadow: 0 0 6px var(--gruen); }
+.schalter[hidden] { display: none; }
 .schalter { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px dashed rgba(var(--c-rgb),.15);
   font-size: 15px; cursor: pointer; }
 .schalter small { display: block; color: var(--dim); font-size: 12px; }
@@ -383,9 +385,166 @@ body.mit-eingabe .zahnrad.da { display: flex; }
   .reaktor { width: min(70vw, 340px); }
   .kopfrechts { gap: 10px; } .wetter span { display: none; }
 }
+
+/* ---------- Design "Kern" (seit 28.10.2026, Uebergabe der HA-Sitzung, Farbwelt "Observatorium"). Nur der neuronale
+   Kern im Sternenfeld, Untertitel, Karten "Ehrlich gesagt" und "Zum Nachlesen". Einstellungen, "Neu in" und die
+   Faehigkeiten-Seite sind die bisherigen, nur in den kuehlen Farben. */
+#kern { display: none; }
+html.design-kern { --c: #a9c4ff; --c2: #7f9ad6; --c-rgb: 169,196,255; --c3: rgba(169,196,255,.14); --bg: #070a12; --text: #e8ecf4;
+  --dim: #9aa6bc; --titel: #e8ecf4; --kern: #eef3ff; --amber: #d9b26a; --rot: #e0857a; --gruen: #6cc4a1;
+  --f-rgb: 14,19,32; --f2-rgb: 12,17,29; --f3-rgb: 9,13,23; --v1: #0c111d; --v2: #090d17; --aus: #2a3346; }
+html.design-kern body { background: #070a12; font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+html.design-kern h1, html.design-kern h2, html.design-kern .einst h2, html.design-kern .neu h2, html.design-kern .neu button { font-family: 'IBM Plex Sans Condensed', sans-serif; }
+html.design-kern #start { display: none !important; }
+html.design-kern body::before { display: none; }
+html.design-kern .raster > :not(#neu):not(#einst):not(#seite2):not(header) { display: none !important; }
+html.design-kern body:not(.skills) .raster > header { display: none; }
+html.design-kern body:not(.skills) #kern { display: flex; }
+#kern { position: fixed; inset: 0; z-index: 1; overflow: auto; flex-direction: column; background-color: #070a12;
+  background-image: radial-gradient(ellipse 60% 55% at 50% 44%, rgba(120,150,210,0.10) 0%, rgba(7,10,18,0) 70%);
+  color: #e8ecf4; font-family: 'IBM Plex Sans', system-ui, sans-serif; --glut: #a9c4ff; }
+.k-sterne { position: absolute; inset: 0; pointer-events: none; }
+.k-sterne span { position: absolute; border-radius: 50%; background: #dfe6f5; }
+.k-kopf { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding: 24px 40px; }
+.k-ort { display: flex; flex-direction: column; gap: 3px; min-width: 160px; }
+.k-ort b { font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: .32em; }
+.k-ort span { font-size: 12px; letter-spacing: .06em; color: #9aa6bc; }
+.k-kapsel { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px; border: 1px solid rgba(217,178,106,.45);
+  border-radius: 22px; color: #e8ecf4; background: transparent; font: 13px 'IBM Plex Sans', sans-serif; cursor: pointer; }
+.k-kapsel[hidden] { display: none; }
+.k-kapsel i { width: 8px; height: 8px; border-radius: 50%; background: #d9b26a; }
+.k-rechts { display: flex; align-items: center; gap: 12px; }
+.k-knopf { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 1px solid rgba(196,210,236,.22); background: transparent;
+  color: #c9d1e0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.k-knopf[hidden] { display: none; }
+.k-knopf svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.k-knopf:focus-visible, .k-kapsel:focus-visible, .k-zu:focus-visible, #k-frage:focus-visible { outline: 2px solid #a9c4ff; outline-offset: 2px; }
+.k-uhr { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.k-uhr b { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 500; letter-spacing: .02em; }
+.k-uhr span { font-size: 12px; color: #9aa6bc; }
+.k-mitte { position: relative; flex: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 32px 56px; padding: 0 40px 24px; }
+.k-karte { flex: 0 1 300px; min-width: 260px; padding: 20px 22px 16px; background: rgba(14,19,32,.88); border: 1px solid rgba(196,210,236,.16);
+  border-radius: 6px; display: flex; flex-direction: column; gap: 12px; }
+.k-karte[hidden], .k-faden[hidden], #k-balken[hidden] { display: none; }
+.k-karte.leer, .k-faden.leer { visibility: hidden; }
+.k-zeile { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 20px; }
+.k-karte h2 { margin: 0; font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .24em; }
+#k-ehrlich { order: 1; } #k-ehrlich h2 { color: #d9b26a; }
+#k-faden-l { order: 2; } .k-kern { order: 3; } #k-faden-r { order: 4; }
+#k-nachlesen { order: 5; } #k-nachlesen h2 { color: #a9c4ff; }
+.k-zeit { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9aa6bc; }
+.k-karte p { margin: 0; font-size: 14px; line-height: 1.5; color: #c9d1e0; }
+.k-liste { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.k-liste li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(196,210,236,.10); }
+.k-liste li span:last-child { color: #9aa6bc; text-align: right; }
+#k-balken { display: flex; align-items: center; gap: 10px; }
+#k-balken div { flex: 1; height: 4px; background: rgba(196,210,236,.12); border-radius: 2px; }
+#k-balken i { display: block; height: 4px; background: #6cc4a1; border-radius: 2px; }
+#k-balken span { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9aa6bc; }
+.k-nl { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; color: #c9d1e0; }
+.k-fuss-karte { font-size: 12px; color: #76839b; border-top: 1px solid rgba(196,210,236,.10); padding-top: 10px; }
+.k-zu { width: 44px; height: 44px; margin: -12px -14px -12px 0; background: transparent; border: none; color: #9aa6bc; cursor: pointer; }
+.k-zu svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.k-faden { flex: none; margin: 0 -64px; position: relative; top: -60px; }
+@media (max-width: 1100px) { .k-faden { display: none !important; } }
+.k-kern { flex: 0 1 520px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.k-svg { width: min(100%, 420px, 50vh); aspect-ratio: 1 / 1; }
+#k-name { margin: 0; font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 64px; font-weight: 600; letter-spacing: .24em;
+  line-height: 1; padding-left: .24em; color: #e8ecf4; text-shadow: none; }
+.k-status { display: flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: .22em; color: #9aa6bc; min-height: 16px; text-transform: uppercase; }
+.k-status svg { display: none; }
+html.k-spricht .k-status svg { display: block; }
+html.k-eingeschraenkt.k-bereit .k-status { color: #d9b26a; }
+#k-werkzeug { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #9aa6bc; min-height: 18px; text-align: center; }
+#k-werkzeug.amber { color: #d9b26a; } #k-werkzeug.rot { color: #e0857a; }
+#k-text { margin: 4px 0 0; max-width: 540px; text-align: center; font-size: 20px; line-height: 1.55; color: #76839b; max-height: 4.65em; overflow: hidden; }
+#k-text .g { color: #e8ecf4; }
+#k-text .j { color: #ffffff; border-bottom: 2px solid var(--glut); }
+.k-fuss { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 40px 24px; }
+#k-form { width: min(100%, 620px); display: flex; align-items: center; gap: 8px; padding: 6px; background: rgba(14,19,32,.92);
+  border: 1px solid rgba(196,210,236,.22); border-radius: 28px; }
+#k-form[hidden] { display: none; }
+#k-frage { flex: 1; min-width: 0; height: 44px; background: transparent; border: none; color: #e8ecf4; font: 16px 'IBM Plex Sans', sans-serif; outline: none; }
+#k-frage::placeholder { color: #76839b; }
+#k-mic { background: #e8ecf4; color: #070a12; border: none; }
+#k-anhang { font-size: 12px; color: #9aa6bc; min-height: 0; }
+.k-hinweis { font-size: 12px; color: #76839b; }
+#k-ring { stroke: rgba(196,210,236,.28); stroke-width: 1; fill: none; }
+html.k-hoert #k-ring { stroke: var(--glut); stroke-width: 6; stroke-dasharray: 3 6; animation: k-ring 1.2s linear infinite; }
+html.k-denkt #k-ring { stroke: rgba(196,210,236,.55); stroke-width: 1.5; stroke-dasharray: 60 20; }
+html.k-eingeschraenkt.k-bereit #k-ring { stroke: #d9b26a; stroke-opacity: .75; }
+#k-punkt { display: none; }
+html.k-eingeschraenkt.k-bereit #k-punkt { display: inline; }
+#k-herzg { transform-box: fill-box; transform-origin: center; transition: transform .6s ease, opacity .6s ease; }
+html.k-bereit #k-herzg { transform: scale(.8); opacity: .78; }
+html.k-hoert #k-herzg { transform: scale(1.086); }
+.k-dreh { transform-box: view-box; transform-origin: 50% 50%; animation: k-dreh 120s linear infinite; }
+html.k-denkt .k-dreh { animation-duration: 14s; }
+.k-atem { transform-box: fill-box; transform-origin: center; animation: k-atem 5s ease-in-out infinite; }
+.k-pegel { transform-box: fill-box; transform-origin: bottom; animation: k-pegel .8s ease-in-out infinite alternate; }
+@keyframes k-dreh { to { transform: rotate(360deg); } }
+@keyframes k-atem { 0%, 100% { transform: scale(1); opacity: .92; } 50% { transform: scale(1.05); opacity: 1; } }
+@keyframes k-pegel { from { transform: scaleY(.4); } to { transform: scaleY(1); } }
+@keyframes k-ring { to { stroke-dashoffset: -18; } }
+html.ruhig #kern, html.ruhig #kern * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { #kern, #kern * { animation: none !important; transition: none !important; } }
+@media (max-width: 640px) { .k-kopf { padding: 16px; } .k-mitte { padding: 0 16px 16px; gap: 20px; } #k-name { font-size: 40px; }
+  #k-text { font-size: 17px; } .k-fuss { padding: 0 16px 16px; } .k-karte { min-width: 0; flex-basis: 100%; } }
 </style>
 </head>
 <body>
+<div id="kern">
+  <div class="k-sterne" id="k-sterne" aria-hidden="true"></div>
+  <header class="k-kopf">
+    <div class="k-ort"><b id="k-ort"></b><span id="k-rolle"></span></div>
+    <button type="button" class="k-kapsel" id="k-kapsel" hidden><i></i><span id="k-kapsel-text"></span></button>
+    <div class="k-rechts">
+      <button type="button" class="k-knopf" id="k-faeh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+      <button type="button" class="k-knopf" id="k-zahnrad" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
+      <div class="k-uhr"><b id="k-uhr">--:--</b><span id="k-datum"></span></div>
+    </div>
+  </header>
+  <main class="k-mitte">
+    <aside class="k-karte" id="k-ehrlich" hidden>
+      <div class="k-zeile"><h2 id="k-ehrlich-titel"></h2><span class="k-zeit" id="k-ehrlich-zeit"></span></div>
+      <p id="k-ehrlich-satz"></p>
+      <ul class="k-liste" id="k-ehrlich-liste"></ul>
+      <div id="k-balken"><div><i id="k-balken-i"></i></div><span id="k-balken-text"></span></div>
+    </aside>
+    <svg class="k-faden" id="k-faden-l" hidden aria-hidden="true" width="80" height="120" viewBox="0 0 80 120"><path d="M0 20 C 40 20, 40 100, 80 100" fill="none" stroke="rgba(196,210,236,0.45)" stroke-width="1"/><circle cx="80" cy="100" r="2.5" fill="#c9d1e0"/></svg>
+    <section class="k-kern" aria-label="Kern">
+      <div class="k-svg"><svg viewBox="0 0 400 400" width="100%" height="100%" role="img" id="k-bild">
+        <defs><radialGradient id="k-herzverlauf" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:#ffffff"/><stop offset="22%" style="stop-color:#eef3ff;stop-opacity:.95"/><stop offset="55%" style="stop-color:var(--glut);stop-opacity:.35"/><stop offset="100%" style="stop-color:var(--glut);stop-opacity:0"/></radialGradient></defs>
+        <circle id="k-ring" cx="200" cy="200" r="188"/>
+        <g id="k-skala" stroke="rgba(196,210,236,0.35)" stroke-width="1"></g>
+        <g class="k-dreh"><g id="k-kanten" stroke-width="0.6" style="stroke:var(--glut)"></g><g id="k-knoten"></g></g>
+        <g id="k-herzg"><circle class="k-atem" cx="200" cy="200" r="70" fill="url(#k-herzverlauf)"/></g>
+        <circle id="k-punkt" cx="333" cy="67" r="6" fill="#d9b26a"/>
+      </svg></div>
+      <h1 id="k-name">JARVIS</h1>
+      <div class="k-status"><svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true"><g style="fill:var(--glut)"><rect class="k-pegel" x="0" y="5" width="2" height="9"/><rect class="k-pegel" x="5" y="1" width="2" height="13" style="animation-delay:.2s"/><rect class="k-pegel" x="10" y="3" width="2" height="11" style="animation-delay:.4s"/><rect class="k-pegel" x="15" y="6" width="2" height="8" style="animation-delay:.1s"/></g></svg><span id="k-status-text"></span></div>
+      <div id="k-werkzeug"></div>
+      <p id="k-text" aria-live="polite"></p>
+    </section>
+    <svg class="k-faden" id="k-faden-r" hidden aria-hidden="true" width="80" height="120" viewBox="0 0 80 120"><path d="M0 100 C 40 100, 40 20, 80 20" fill="none" stroke="rgba(196,210,236,0.45)" stroke-width="1"/><circle cx="0" cy="100" r="2.5" fill="#c9d1e0"/></svg>
+    <aside class="k-karte" id="k-nachlesen" hidden>
+      <div class="k-zeile"><h2 id="k-nl-titel"></h2><button type="button" class="k-zu" id="k-zu"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1l10 10M11 1 1 11"/></svg></button></div>
+      <ul class="k-nl" id="k-nl-liste"></ul>
+      <span class="k-fuss-karte" id="k-bleibt"></span>
+    </aside>
+  </main>
+  <footer class="k-fuss">
+    <form id="k-form" hidden>
+      <button type="button" class="k-knopf" id="k-mic" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button type="button" class="k-knopf" id="k-klammer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7-7l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.3-2.3l7.9-7.9"/></svg></button>
+      <label for="k-frage" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)" id="k-frage-label"></label>
+      <input id="k-frage" type="text" autocomplete="off">
+      <button type="submit" class="k-knopf" id="k-senden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+    </form>
+    <span id="k-anhang"></span>
+    <span class="k-hinweis" id="k-ki"></span>
+  </footer>
+</div>
 <div class="start" id="start"><div class="mini"></div><div><div class="logo" id="startlogo">J.A.R.V.I.S.</div><div id="startzeilen"></div></div></div>
 <div class="raster">
   <header>
@@ -469,6 +628,7 @@ body.mit-eingabe .zahnrad.da { display: flex; }
         <div class="e-zeile"><span data-t="z_untertitel">Zeile unter dem Logo</span><input type="text" id="e-untertitel" maxlength="60" data-schluessel="untertitel"></div>
         <div class="schalter" id="e-nacht"><div><span data-t="z_nachtmodus">Nachtmodus</span><small data-t="z_nachtmodus_k"></small></div><i></i></div>
         <div class="schalter" id="e-ruhig"><div><span data-t="z_ruhig">Ruhige Bewegung</span><small data-t="z_ruhig_k"></small></div><i></i></div>
+        <div class="schalter" id="e-kern" hidden><div><span data-t="z_kern">Design Observatorium</span><small data-t="z_kern_k"></small></div><i></i></div>
         <details class="e-gruppe"><summary data-t="z_wand_zeigen">AM WANDBILDSCHIRM UND PC ZEIGEN</summary><div id="e-bereiche"></div></details>
         <details class="e-gruppe"><summary data-t="z_knoepfe_titel">KNÖPFE IM SCHNELLZUGRIFF</summary>
           <p class="e-hinweis" data-t="z_knoepfe_hinweis"></p>
@@ -552,6 +712,7 @@ function nachtPruefen() {                  // nachtmodus "auto": zwischen 22 und
 function oberflaecheAnwenden() {          // beliebig oft aufrufbar: beim Laden und bei jeder Aenderung
   const O = OBERFLAECHE;
   farbeSetzen();
+  kernAnwenden();                         // seit 28.10.2026: Design Kern
   document.documentElement.classList.toggle("ruhig", O.bewegung === "ruhig" || matchMedia("(prefers-reduced-motion: reduce)").matches);
   nachtPruefen();
   document.title = O.name; $("titel").textContent = O.name;
@@ -623,7 +784,7 @@ function begruessung() {
 
 async function zustand() {
   const z = await lade("zustand.json");
-  if (!z) { document.body.className = "fehler" + (PC() ? " mit-eingabe" : "") + (SEITE === "skills" ? " skills" : ""); $("zustand").textContent = tx("keine_verbindung"); return; }
+  if (!z) { document.body.className = "fehler" + (PC() ? " mit-eingabe" : "") + (SEITE === "skills" ? " skills" : ""); $("zustand").textContent = tx("keine_verbindung"); kernAktualisieren(null, "fehler"); return; }
   spracheDerBruecke(z.sprache);
   if (z.oberflaeche && z.oberflaeche_stand !== OB_STAND) {      // Jarvis hat sein Aussehen geaendert (oder erster Abruf)
     OB_STAND = z.oberflaeche_stand; OBERFLAECHE = oberflaecheSauber(z.oberflaeche);
@@ -666,6 +827,7 @@ async function zustand() {
     if ($("neueste")) tippe($("neueste"), wartend.text);
     wartend = null;
   }
+  kernAktualisieren(z, st);
   einpassen();
 }
 let verlaufSchluessel = null;
@@ -1101,6 +1263,7 @@ function eAussehen() {
   if (o.farbe === "eigene" && o.farben) $("e-eigen").value = o.farben.c;
   for (const k of ["name", "person", "untertitel"]) { const el = $("e-" + k); if (document.activeElement !== el) el.value = o[k] || ""; }
   eSchalter("e-nacht", o.nachtmodus === "auto"); eSchalter("e-ruhig", o.bewegung === "ruhig");
+  $("e-kern").hidden = !(opt.designs || []).includes("kern"); eSchalter("e-kern", o.design === "kern");
   $("e-bereiche").innerHTML = opt.bereiche.map((b) => `<div class="schalter${o.bereiche.includes(b) ? " an" : ""}" data-bereich="${esc(b)}">` +
     `<div><span>${esc(eName("hb_" + b, b))}</span></div><i></i></div>`).join("");
   const l = o.aktionen || [];
@@ -1120,7 +1283,7 @@ function eVerhalten() {
   $("e-von").innerHTML = stunden(v.nachtruhe_von); $("e-bis").innerHTML = stunden(v.nachtruhe_bis);
 }
 $("einst").addEventListener("click", (e) => {
-  const t = e.target.closest("[data-farbe],[data-bereich],[data-stil],[data-weg],[data-hoch],#e-nacht,#e-ruhig,#e-zwischen,#e-ruhe,#e-rueck,#e-grund,#e-k-dazu");
+  const t = e.target.closest("[data-farbe],[data-bereich],[data-stil],[data-weg],[data-hoch],#e-nacht,#e-ruhig,#e-kern,#e-zwischen,#e-ruhe,#e-rueck,#e-grund,#e-k-dazu");
   if (!t || !ES) return;
   const o = ES.oberflaeche;
   if (t.dataset.farbe) eEinstellen("oberflaeche", t.dataset.farbe === "eigene" ? { farbe: "eigene", farben: { c: $("e-eigen").value } } : { farbe: t.dataset.farbe });
@@ -1133,6 +1296,7 @@ $("einst").addEventListener("click", (e) => {
   } else switch (t.id) {
     case "e-nacht": eEinstellen("oberflaeche", { nachtmodus: o.nachtmodus === "auto" ? "aus" : "auto" }); break;
     case "e-ruhig": eEinstellen("oberflaeche", { bewegung: o.bewegung === "ruhig" ? "voll" : "ruhig" }); break;
+    case "e-kern": eEinstellen("oberflaeche", { design: o.design === "kern" ? "klassisch" : "kern" }); break;
     case "e-zwischen": eEinstellen("verhalten", { zwischensaetze: ES.verhalten.zwischensaetze === "an" ? "aus" : "an" }); break;
     case "e-ruhe": eEinstellen("verhalten", { nachtruhe: ES.verhalten.nachtruhe === "an" ? "aus" : "an" }); break;
     case "e-rueck": eEinstellen("oberflaeche", null, "rueckgaengig"); break;
@@ -1363,6 +1527,154 @@ function echtzeitKnopfPruefen() { if (etApi()) $("echtzeit-knopf").classList.add
 window.addEventListener("pywebviewready", echtzeitKnopfPruefen);
 setTimeout(echtzeitKnopfPruefen, 2000);
 
+
+/* ---------- Design "Kern" (seit 28.10.2026, Entwurf "Observatorium"). Waehlbar ueber die
+   Oberflaeche (design: kern) oder ?design=kern in der Adresse; das bisherige Design bleibt. Daten: Zustand (Status,
+   Werkzeug, ehrlich), im PC-Fenster dazu der Verlauf (Untertitel, nachlesen). Glance zeigt keine Gespraechsinhalte. */
+// Funktionen und var statt const/let: oberflaecheAnwenden() laeuft beim Laden schon, bevor dieser Block erreicht ist
+function KERN() { const m = /[?&]design=(kern|klassisch)\b/.exec(location.search); return (m ? m[1] : OBERFLAECHE.design) === "kern"; }
+function KERN_GLUT() { return (OBERFLAECHE.farbe === "eigene" && OBERFLAECHE.farben && OBERFLAECHE.farben.c) || "#a9c4ff"; }
+var kernGebaut = false, kernTextSchluessel, kernWorte = [], kernTakt = null, kernZu = null, kernNl = false, kernErster = true;
+function kernBauen() {
+  if (kernGebaut) return;
+  kernGebaut = true;
+  let s = 11;
+  const zufall = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  let h = "";
+  for (let i = 0; i < 60; i++) {
+    const x = (zufall() * 100).toFixed(2), y = (zufall() * 100).toFixed(2), g = zufall() < 0.9 ? 1 : 1.5, o = (0.12 + zufall() * 0.35).toFixed(2);
+    h += `<span style="left:${x}%;top:${y}%;width:${g}px;height:${g}px;opacity:${o}"></span>`;
+  }
+  $("k-sterne").innerHTML = h;
+  let skala = "";
+  for (let i = 0; i < 72; i++) {
+    const w = (i / 72) * 2 * Math.PI, l = i % 6 === 0 ? 10 : 4;
+    skala += `<line x1="${(200 + Math.cos(w) * 188).toFixed(1)}" y1="${(200 + Math.sin(w) * 188).toFixed(1)}" x2="${(200 + Math.cos(w) * (188 - l)).toFixed(1)}" y2="${(200 + Math.sin(w) * (188 - l)).toFixed(1)}"/>`;
+  }
+  $("k-skala").innerHTML = skala;
+  const p = [], n = 48, gold = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < n; i++) {
+    const y = 1 - (i / (n - 1)) * 2, r = Math.sqrt(1 - y * y), t = gold * i, x = Math.cos(t) * r, z = Math.sin(t) * r;
+    p.push({ x: 200 + x * 150, y: 200 + (y * Math.cos(0.4) - z * Math.sin(0.4)) * 150, z: y * Math.sin(0.4) + z * Math.cos(0.4) });
+  }
+  $("k-knoten").innerHTML = p.map((a) => `<circle cx="${a.x.toFixed(1)}" cy="${a.y.toFixed(1)}" r="${a.z > 0 ? 2.4 : 1.3}" fill="#f4f7ff" fill-opacity="${a.z > 0 ? 0.95 : 0.4}"/>`).join("");
+  let k = "";
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = p[i], b = p[j];
+      if (Math.hypot(a.x - b.x, a.y - b.y) < 58) k += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke-opacity="${a.z + b.z > 0 ? 0.6 : 0.2}"/>`;
+    }
+    if (i % 4 === 0) k += `<line x1="${p[i].x.toFixed(1)}" y1="${p[i].y.toFixed(1)}" x2="200" y2="200" stroke-opacity="0.18"/>`;
+  }
+  $("k-kanten").innerHTML = k;
+  $("k-kapsel").addEventListener("click", () => $("k-ehrlich").scrollIntoView({ behavior: "smooth", block: "center" }));
+  $("k-faeh").addEventListener("click", () => seite("skills"));
+  $("k-zahnrad").addEventListener("click", () => $("zahnrad").click());
+  $("k-zu").addEventListener("click", () => { kernZu = kernTextSchluessel; $("k-nachlesen").classList.add("leer"); $("k-faden-r").classList.add("leer"); });
+  $("k-mic").addEventListener("click", () => $("echtzeit-knopf").click());
+  $("k-klammer").addEventListener("click", () => $("klammer").click());
+  $("k-form").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    $("frage").value = $("k-frage").value; $("k-frage").value = "";
+    if ($("eingabe").requestSubmit) $("eingabe").requestSubmit(); else $("eingabe").dispatchEvent(new Event("submit", { cancelable: true }));
+  });
+}
+function kernAnwenden() {
+  const an = KERN();
+  document.documentElement.classList.toggle("design-kern", an);   // nicht "kern": die Klasse hat der Reaktor
+  if (!an) return;
+  kernBauen();
+  const O = OBERFLAECHE, name = String(O.name || "JARVIS").replace(/\./g, "").toUpperCase();
+  $("kern").style.setProperty("--glut", KERN_GLUT());
+  $("k-name").textContent = name; $("k-bild").setAttribute("aria-label", tx("k_kern_aria"));
+  $("k-ort").textContent = O.person ? tx("k_haus", O.person.toUpperCase()) : name;
+  $("k-rolle").textContent = tx("k_rolle");
+  $("k-ehrlich-titel").textContent = tx("k_ehrlich"); $("k-ehrlich-satz").textContent = tx("k_ehrlich_satz");
+  $("k-nl-titel").textContent = tx("k_nachlesen"); $("k-bleibt").textContent = tx("k_bleibt");
+  $("k-zu").setAttribute("aria-label", tx("k_schliessen")); $("k-faeh").setAttribute("aria-label", tx("faehigkeiten"));
+  $("k-faeh").title = tx("faehigkeiten"); $("k-zahnrad").setAttribute("aria-label", tx("einstellungen")); $("k-zahnrad").title = tx("einstellungen");
+  $("k-mic").setAttribute("aria-label", tx("echtzeit")); $("k-klammer").setAttribute("aria-label", tx("aria_anhang"));
+  $("k-senden").setAttribute("aria-label", tx("senden")); $("k-frage").placeholder = tx("k_sprich"); $("k-frage-label").textContent = tx("k_sprich");
+  $("k-ki").textContent = tx("k_ki", name);
+  kernUhr();
+}
+function kernUhr() {
+  if (!KERN()) return;
+  const d = new Date();
+  $("k-uhr").textContent = d.toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit" });
+  $("k-datum").textContent = d.toLocaleDateString(LOC, { weekday: "long", day: "numeric", month: "long" });
+}
+// Untertitel: gesprochene Woerter hell, das aktuelle weiss mit Unterstrich, der Rest leise. bis = Index des aktuellen
+// Worts, null = alles gesprochen, -1 = noch nichts.
+function kernTextZeigen(bis) {
+  const el = $("k-text");
+  if (!kernWorte.length) return;
+  const vorn = bis === null ? kernWorte.length : Math.max(0, bis);
+  el.innerHTML = (vorn ? `<span class="g">${esc(kernWorte.slice(0, vorn).join(" "))} </span>` : "") +
+    (bis !== null && bis >= 0 && bis < kernWorte.length ? `<span class="j">${esc(kernWorte[bis])}</span> ` : "") +
+    (bis !== null ? `<span>${esc(kernWorte.slice(bis >= 0 ? bis + 1 : 0).join(" "))}</span>` : "");
+  const j = el.querySelector(".j"), zeile = parseFloat(getComputedStyle(el).lineHeight) || 30;
+  el.scrollTop = j ? Math.max(0, j.offsetTop - el.offsetTop - zeile) : bis === null ? el.scrollHeight : 0;
+}
+function kernSprechen(text) {        // im Takt der Stimme: rund 14 Zeichen pro Sekunde (wie die Bruecke rechnet)
+  clearInterval(kernTakt);
+  const laenge = kernWorte.join(" ").length || 1, dauer = Math.max(2000, (laenge / 14) * 1000), start = Date.now();
+  const grenzen = []; let summe = 0;
+  kernWorte.forEach((w) => { summe += w.length + 1; grenzen.push(summe); });
+  kernTakt = setInterval(() => {
+    const pos = ((Date.now() - start) / dauer) * laenge, i = grenzen.findIndex((g) => g > pos);
+    if (i < 0) { clearInterval(kernTakt); kernTakt = null; kernTextZeigen(null); return; }
+    kernTextZeigen(i);
+  }, 120);
+}
+function kernAktualisieren(z, st) {
+  if (!KERN()) return;
+  const H = document.documentElement, s = z ? (["bereit", "hoert", "denkt", "spricht"].includes(st) ? st : "bereit") : "fehler";
+  ["k-bereit", "k-hoert", "k-denkt", "k-spricht", "k-fehler"].forEach((c) => H.classList.toggle(c, c === "k-" + s));
+  const e = z && z.ehrlich && Array.isArray(z.ehrlich.liste) && z.ehrlich.liste.length ? z.ehrlich : null;
+  H.classList.toggle("k-eingeschraenkt", !!e);
+  const n = e ? e.liste.length : 0;
+  $("k-status-text").textContent = !z ? tx("keine_verbindung") : s === "spricht" ? tx("k_spricht", z.stimme || "")
+    : s === "hoert" ? tx("st_hoert") : s === "denkt" ? tx("st_denkt") : e ? tx(n === 1 ? "k_nicht1" : "k_nicht", n) : "";
+  const h = $("hinweis");
+  $("k-werkzeug").textContent = h ? h.textContent : "";
+  $("k-werkzeug").className = h && /\bamber\b/.test(h.className) ? "amber" : h && /\brot\b/.test(h.className) ? "rot" : "";
+  $("k-kapsel").hidden = !e;
+  if (e) {
+    $("k-kapsel-text").textContent = tx(n === 1 ? "k_kapsel1" : "k_kapsel", n);
+    $("k-ehrlich-zeit").textContent = e.zeit || "";
+    $("k-ehrlich-liste").innerHTML = e.liste.map((x) => `<li><span>${esc(x.name)}</span><span>${esc(x.grund)}</span></li>`).join("");
+    const g = Number(e.gesamt) || 0, b = Number(e.bereit) || 0;
+    $("k-balken").hidden = !g;
+    if (g) { $("k-balken-i").style.width = Math.round((100 * b) / g) + "%"; $("k-balken-text").textContent = tx("k_bereit", b, g); }
+  }
+  const PCF = PC();
+  $("k-form").hidden = !PCF; $("k-zahnrad").hidden = !PCF;
+  $("k-mic").hidden = !(PCF && $("echtzeit-knopf") && $("echtzeit-knopf").classList.contains("da"));
+  $("k-anhang").textContent = $("anhang") && !$("anhang").hidden ? $("anhang-name").textContent : "";
+  // Untertitel und Nachlesen nur mit Verlauf (PC-Fenster mit Token); auf Glance die Begruessung
+  const v = z && Array.isArray(z.verlauf) ? z.verlauf : null, letzte = v && v.length ? v[v.length - 1] : null;
+  const schl = letzte ? String(letzte.zeit) : v ? "" : "glance";
+  if (schl !== kernTextSchluessel) {
+    kernTextSchluessel = schl; clearInterval(kernTakt); kernTakt = null;
+    kernWorte = letzte ? String(letzte.antwort || "").split(/\s+/).filter(Boolean) : [];
+    if (!kernWorte.length) $("k-text").textContent = v ? "" : ($("gruss") ? $("gruss").textContent : "");
+    else kernTextZeigen(kernErster ? null : -1);
+    const nl = letzte && Array.isArray(letzte.nachlesen) ? letzte.nachlesen.slice(0, 4) : [];
+    $("k-nl-liste").innerHTML = nl.map((x) => `<li>${esc(x)}</li>`).join("");
+    kernNl = nl.length > 0;
+  }
+  if (z) kernErster = false;
+  if (s === "spricht" && kernWorte.length && !kernTakt && $("k-text").querySelector(".g") === null) kernSprechen();
+  if (s !== "spricht" && kernTakt) { clearInterval(kernTakt); kernTakt = null; kernTextZeigen(null); }
+  // Der Kern bleibt mittig: Ist nur eine Karte da, haelt die andere unsichtbar ihren Platz (SVG kennt .hidden nicht)
+  const zE = !!e, zN = kernNl && kernZu !== kernTextSchluessel, eine = zE || zN;
+  $("k-ehrlich").hidden = $("k-nachlesen").hidden = !eine;
+  $("k-ehrlich").classList.toggle("leer", !zE); $("k-nachlesen").classList.toggle("leer", !zN);
+  ["k-faden-l", "k-faden-r"].forEach((id) => $(id).toggleAttribute("hidden", !eine));
+  $("k-faden-l").classList.toggle("leer", !zE); $("k-faden-r").classList.toggle("leer", !zN);
+}
+setInterval(kernUhr, 1000);
 begruessung(); setInterval(begruessung, 600000);
 uhr(); setInterval(uhr, 1000);
 setInterval(nachtPruefen, 60000);

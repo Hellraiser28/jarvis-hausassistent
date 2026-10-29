@@ -48,6 +48,7 @@ jobs:
           python3 -B vorlagen/bruecke/test_briefe.py
           python3 -B vorlagen/bruecke/test_sprache_040.py
           python3 -B vorlagen/bruecke/test_funde_040.py
+          python3 -B vorlagen/bruecke/test_kern.py
           python3 -B vorlagen/pc/test_echtzeit_befehl.py
           python3 -B vorlagen/pc/test_fenster_schutz.py
           python3 -B vorlagen/pc/test_neuigkeiten.py

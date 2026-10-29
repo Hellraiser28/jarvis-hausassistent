@@ -45,6 +45,9 @@ All images show made-up sample data.
   files. You choose the services for that in the setup.
 - **Your Jarvis, not mine.** The setup asks about you, the personality, what it should do and your interface
   (colors, panels, greeting, your own buttons). Claude only builds what you want.
+- **Says honestly what isn't working** (since 0.5): in the new "Observatory" design a calm core replaces the
+  reactor, the answer runs along as subtitles, facts stay as "To read back". If a service fails, Jarvis says so
+  first ("Honestly: …") and shows what is limited right now. The reactor design stays selectable.
 - **Changes its appearance on request:** "Jarvis, turn green", "show me blue", "hide the ticker", "undo that". On the
   PC, the wall display and in the app, without reloading. Updates never overwrite your settings.
 - **Grows with you:** say what you are planning, e.g. "keep an eye on my finances". Claude looks for suitable tools,
