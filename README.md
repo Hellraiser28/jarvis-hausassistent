@@ -29,6 +29,15 @@ Ein privates Fanprojekt. Nicht verbunden mit Marvel, Disney, Anthropic oder Goog
   <img src="docs/bilder/jarvis-zahnrad.jpg" width="260" alt="Das Zahnrad-Menü der App: Aussehen, Verhalten, Diese App, Verbindung, Info und Update">
 </p>
 
+**Design „Observatorium“** (seit 0.5, im Setup, per Zuruf oder im Zahnrad wählbar):
+
+![Das Jarvis-Fenster im Design Observatorium: Untertitel im Takt der Stimme, „Zum Nachlesen“ und „Ehrlich gesagt“](docs/bilder/jarvis-observatorium.jpg)
+
+<p>
+  <img src="docs/bilder/jarvis-app-observatorium.jpg" width="260" alt="Die App im Design Observatorium: Antwort mit Karte zum Nachlesen und dem Hinweis, was gerade nicht geht">
+  <img src="docs/bilder/jarvis-app-faehigkeiten.jpg" width="260" alt="Die Fähigkeiten in der App: eingeschränkte Werkzeuge stehen in Bernstein beim jeweiligen Bereich">
+</p>
+
 ![Setup-Seite „Deine Oberfläche“: Design, Zeile unter dem Logo, Bereiche der Hauptseite](docs/bilder/setup-oberflaeche.png)
 
 Alle Bilder zeigen erfundene Beispieldaten.

@@ -29,6 +29,15 @@ A private fan project. Not affiliated with Marvel, Disney, Anthropic or Google.
   <img src="docs/bilder/jarvis-zahnrad.jpg" width="260" alt="The app's gear menu: appearance, behavior, this app, connection, info and update">
 </p>
 
+**"Observatory" design** (since 0.5, choose it in the setup, by voice or in the gear menu):
+
+![The Jarvis window in the observatory design: subtitles in time with the voice, "To read back" and "Honestly"](docs/bilder/jarvis-observatorium.jpg)
+
+<p>
+  <img src="docs/bilder/jarvis-app-observatorium.jpg" width="260" alt="The app in the observatory design: an answer with the read-back card and a note on what isn't working right now">
+  <img src="docs/bilder/jarvis-app-faehigkeiten.jpg" width="260" alt="The skills in the app: limited tools are shown in amber next to their area">
+</p>
+
 ![Setup page "Your interface": design, line under the logo, panels of the main page](docs/bilder/setup-oberflaeche.png)
 
 All images show made-up sample data.
