@@ -28,6 +28,9 @@ ERLAUBT = {
     "radio": {},
     "vorlesen": {},
     "nachricht": {"aktion": ("senden",), "kanal": ("push", "durchsage")},
+    # Seit 0.6: Fernseher oder Beamer an/aus, optional mit app (z. B. "Kinoabend": Licht dimmen, Fernseher an, App
+    # oeffnen). Nur sinnvoll, wenn es ein eigenes Werkzeug "fernsehen" gibt, sonst diese Zeile entfernen.
+    "fernsehen": {"aktion": ("an", "aus")},
     "warten": {},
 }
 PFLICHT = {"geraet_steuern": ("entity_id", "dienst"), "musik": ("suche",), "radio": ("sender",), "vorlesen": ("text",),
@@ -328,6 +331,10 @@ def beschreibung(schritt, namen=None):
                                                            (" " + str(a.get("raeume") or a.get("routine") or "")).rstrip())
     if w == "warten":
         return _t("%d Sekunden warten", "Wait %d seconds") % a.get("sekunden", 5)
+    if w == "fernsehen":
+        if str(a.get("aktion") or "an").lower() == "aus":
+            return _t("Fernseher aus", "TV off")
+        return _t("Fernseher an", "TV on") + ((_t(", %s öffnen", ", open %s") % a["app"]) if a.get("app") else "")
     return w
 
 

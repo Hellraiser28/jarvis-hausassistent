@@ -148,10 +148,39 @@ def neu_fuer(daten, anfrage):
     return [x for _, x in sorted(aus, key=lambda x: x[0])]
 
 
-def aktiv_schreiben(daten, pid, besitzer, anfrage):
-    """Vor jeder Frage: wer fragt, fuer den Werkzeug-Server dieses Gehirns (Kindprozess, liest per os.getppid())."""
-    _schreiben(os.path.join(_ordner(daten, "aktiv"), "%d.json" % int(pid)),
-               json.dumps({"besitzer": besitzer, "anfrage": anfrage, "zeit": time.time()}).encode())
+def aktiv_schreiben(daten, pid, besitzer, anfrage, person="", spam=False, fremd=""):
+    """Vor jeder Frage: wer fragt, fuer den Werkzeug-Server dieses Gehirns (Kindprozess, liest per os.getppid()).
+    Seit 0.6 auch die Person hinter dem Geraet (Rechte, Gedaechtnis), ob die eigene Nachricht der Person den
+    Spam-Ordner nennt (nie bei einem Ja-Knopf) und ob die Frage schon fremden Text mitbringt (fremd, z. B. "Anhang";
+    Fremdtext-Sperre, bruecke/fremdtext.py). Alle drei sind optional, aeltere Aufrufe schreiben sie leer.
+    Wo es /proc gibt, steht zusaetzlich prozess_start drin (Startzeit des Gehirn-Prozesses): Der Hook der
+    Fremdtext-Sperre erkennt daran eine PID, die inzwischen einem anderen Prozess gehoert (fremdtext.gehirn_pid)."""
+    eintrag = {"besitzer": besitzer, "anfrage": anfrage, "person": person, "spam": bool(spam),
+               "fremd": str(fremd or ""), "zeit": time.time()}
+    start = prozess_start(pid)
+    if start is not None:
+        eintrag["prozess_start"] = start
+    _schreiben(os.path.join(_ordner(daten, "aktiv"), "%d.json" % int(pid)), json.dumps(eintrag).encode())
+
+
+def prozess_start(pid):
+    """Startzeit eines Prozesses in Takten seit dem Systemstart (/proc/<pid>/stat, Feld 22), None ohne /proc. Gleiche
+    Rechnung wie fremdtext.prozess_start (hier ohne Abhaengigkeit; test_fremdtext prueft, dass beide gleich zaehlen)."""
+    try:
+        with open("/proc/%d/stat" % int(pid), encoding="utf-8") as f:
+            stat = f.read()
+        return int(stat[stat.rindex(")") + 2:].split()[19])          # nach "(name) " beginnt Feld 3
+    except (OSError, ValueError, IndexError, TypeError):
+        return None
+
+
+def aktiv_spam(daten, pid):
+    """Seit 0.6: nennt die laufende Frage dieses Gehirns den Spam-Ordner? Im Zweifel nein."""
+    try:
+        with open(os.path.join(daten, "ablage", "aktiv", "%d.json" % int(pid)), encoding="utf-8") as f:
+            return json.load(f).get("spam") is True
+    except (OSError, ValueError, TypeError, AttributeError):
+        return False
 
 
 def aktiv_lesen(daten, pid):
@@ -163,6 +192,19 @@ def aktiv_lesen(daten, pid):
         return "", ""
     b, q = str(a.get("besitzer") or ""), str(a.get("anfrage") or "")
     return (b, q) if BESITZER.match(b) and BESITZER.match(q) else ("", "")
+
+
+PERSON = re.compile(r"^[a-z][a-z0-9_-]{0,23}$")
+
+
+def aktiv_person(daten, pid):
+    """Person der laufenden Frage dieses Gehirns (seit 0.6), sonst "". Nur gueltige Kennungen (wie personen.ID)."""
+    try:
+        with open(os.path.join(daten, "ablage", "aktiv", "%d.json" % int(pid)), encoding="utf-8") as f:
+            p = str(json.load(f).get("person") or "")
+    except (OSError, ValueError, TypeError, AttributeError):
+        return ""
+    return p if PERSON.match(p) else ""
 
 
 def aufraeumen(daten):

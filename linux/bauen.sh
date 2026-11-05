@@ -1,8 +1,9 @@
 #!/bin/sh
 # Linux-Paket fuer das Release bauen (seit 25.10.2026): dist/Jarvis-Linux.tar.gz mit dem Ordner jarvis-linux/.
 #   linux/bauen.sh
-# Inhalt: installieren.sh, PC-Client, Symbol, Paketlisten mit Pruefsummen, dazu fuer --neu die Bauanleitung und die
-# Vorlagen (HUD, Pruefmodul der Oberflaeche). Feste Zeitstempel und Besitzer, damit derselbe Stand dasselbe Archiv ergibt.
+# Inhalt: installieren.sh, PC-Client, Symbol, Paketlisten mit Pruefsummen, dazu fuer --neu die Bauanleitung und unter
+# vorlagen/ alles, was nach ~/Jarvis/einrichtung kommt. Feste Zeitstempel und Besitzer, damit derselbe Stand dasselbe
+# Archiv ergibt.
 set -eu
 HIER=$(cd "$(dirname "$0")" && pwd)
 R=$(dirname "$HIER")
@@ -14,19 +15,24 @@ cp "$HIER/installieren.sh" "$DIST/jarvis-linux/"
 chmod 755 "$DIST/jarvis-linux/installieren.sh"
 cp "$V/pc/jarvis_pc.py" "$V/pc/jarvis.png" "$V/pc/pakete-linux.txt" "$V/pc/weckwort.txt" "$DIST/jarvis-linux/"
 [ -f "$V/pc/pakete-linux-arm.txt" ] && cp "$V/pc/pakete-linux-arm.txt" "$DIST/jarvis-linux/"
-cp "$V/hud/index.html" "$DIST/jarvis-linux/hud.html"
-cp "$V/bruecke/oberflaeche.py" "$V/bruecke/verhalten.py" "$V/webapp/jarvis-web.js" "$V/webapp/webapp_bauen.py" \
-  "$DIST/jarvis-linux/"
-cp "$R/app/android/assets/app.html" "$DIST/jarvis-linux/app.html"
-cp "$V/bruecke/test_oberflaeche.py" "$V/bruecke/test_verhalten.py" "$DIST/jarvis-linux/"
-# Fertige Bruecken-Module mit ihren Tests (seit 0.3.3)
-for f in anhang.py ed25519.py ausgabe.py pdf.py bilddienst.py konvertieren.py zusatzdienste.py test_anhang.py test_ed25519.py test_pdf.py test_ausgabe.py test_bilddienst.py test_konvertieren.py; do
-  cp "$V/bruecke/$f" "$DIST/jarvis-linux/"
-done
+# Vorlagen fuer --neu (seit 0.6 per Platzhalter statt fester Liste, Pruefung 05.11.2026: es kamen nur die Module von
+# 0.3.3 mit): alle Bruecken-Module mit ihren Tests, HUD, App-Seite, Web-App und die Ordner grundriss/, sprecher/,
+# gemeinsam/. installieren.sh --neu kopiert vorlagen/ 1:1 nach ~/Jarvis/einrichtung (wie das Windows-Setup).
+VL=$DIST/jarvis-linux/vorlagen
+mkdir -p "$VL"
+cp "$V"/bruecke/*.py "$VL/"
+cp "$V/hud/index.html" "$VL/hud.html"
+cp "$R/app/android/assets/app.html" "$V/webapp/jarvis-web.js" "$V/webapp/webapp_bauen.py" "$V/pc/jarvis.png" "$VL/"
+cp -R "$V/grundriss" "$V/sprecher" "$V/gemeinsam" "$VL/"
+# test_grundriss.py sucht das Beispielhaus in ../grundriss/ und neben sich, nicht in einrichtung/grundriss/: die Testdaten
+# deshalb zusaetzlich neben die Tests, sonst ueberspringt er den Teil im Projekt
+cp "$V/grundriss/beispiel-haus3d.json" "$VL/"
 cp "$R/EINRICHTUNG.md" "$R/EINRICHTUNG.en.md" "$DIST/jarvis-linux/"
 cp "$R/LICENSE" "$DIST/jarvis-linux/LICENSE"
-chmod 644 "$DIST/jarvis-linux/"*.py "$DIST/jarvis-linux/"*.js "$DIST/jarvis-linux/"*.txt "$DIST/jarvis-linux/"*.png "$DIST/jarvis-linux/"*.html \
-  "$DIST/jarvis-linux/"*.md "$DIST/jarvis-linux/LICENSE"
+find "$DIST/jarvis-linux" -depth \( -name __pycache__ -o -name '*.pyc' \) -exec rm -rf {} +
+find "$DIST/jarvis-linux" -type d -exec chmod 755 {} +
+find "$DIST/jarvis-linux" -type f -exec chmod 644 {} +
+chmod 755 "$DIST/jarvis-linux/installieren.sh"
 python3 -m py_compile "$DIST/jarvis-linux/jarvis_pc.py"
 rm -rf "$DIST/jarvis-linux/__pycache__"
 bash -n "$DIST/jarvis-linux/installieren.sh"

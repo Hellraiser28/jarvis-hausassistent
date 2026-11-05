@@ -1,5 +1,39 @@
 # Änderungen
 
+## 0.6.0 – 2026-11-05
+
+Haus, Handy und Stimme. *English: your home in 3D with device menus, speaker recognition, phone control, memory as a
+constellation, follow-ups, arrival messages, guests, room announcements, outgoing calls, projector screen and family
+quiz, and an untrusted-text lock. App 4.14, PC client 22.*
+
+- **3D-Haus:** `haus3d.js` zeigt das Zuhause als drehbares Modell (Räume, Türen, Fenster, Treppen, Möbel, Tag und
+  Nacht) im PC-Fenster, auf dem Wandbildschirm, in App und Web-App. Geräte leuchten, wenn sie laufen, ein Tippen öffnet
+  ihr Menü zum Schalten, Fernseher und Leinwand zeigen Titel oder App. Die Brücke liefert den Plan über `/v1/grundriss`
+  und schaltet über `/v1/grundriss/steuern` nur Geräte aus dem Plan. Neu: `grundriss.py` mit Test, ein erfundenes
+  Beispielhaus (`beispielhaus_erzeugen.py`) und eine Vorschauseite.
+- **Stimmerkennung:** `sprecher.py` und der Dienst `jarvis_sprecher.py` (sherpa-onnx, ERes2Net) erkennen am
+  Lautsprecher, wer spricht. Modi `aus`, `zeigen`, `anwenden`. Die Stimme senkt Rechte nur, sie hebt sie nie an.
+  Anlernen in der App unter „Meine Stimme“, nur mit Zustimmung jeder Person.
+- **Handy-Steuerung:** `handy.py`. Harmloses sofort (Wecker, Timer, Taschenlampe, App öffnen), Anrufe und WhatsApp
+  erst nach dem gesprochenen Ja, eine SMS als Entwurf, Bedienen über die Bedienungshilfe nur auf ausdrücklichen
+  Wunsch. Banking-, Kennwort-, Mail- und Nachrichten-Apps bedient Jarvis nie, die Sperrlisten sind in Brücke und
+  App gleich.
+- **Gedächtnis als Sternbild:** `POST /v1/gedaechtnis`, `gedaechtnis.sternbild()`, Nutzung „zuletzt gebraucht“ und
+  die Haus-Regel: Haus-Einträge ändern nur, wer sie angelegt hat, und die Hauptperson.
+- **Offene Fäden** (`faeden.py`), **Ankunft** (`ankunft.py`), **Gäste** mit befristetem Zugang und Gäste-WLAN
+  (`gaeste.py`, Rolle `gast` in `personen.py`), **Räume und Durchsagen** (`raeume.py`), **Jarvis ruft an**
+  (`anruf.py`), **Plattengesundheit** (`nas_gesundheit.py`), **Leinwand** (`leinwand.py`) und **Familien-Quiz**
+  (`quiz.py`), jedes Modul mit eigenem Test, Deutsch und Englisch.
+- **Fremdtext-Sperre:** `fremdtext.py`. Nach Mail, Webseite, Dokument, Anhang, Bildschirminhalt, Kalendertext oder
+  Release Notes sperrt der Werkzeug-Server in derselben Frage alles mit Wirkung und fragt nach. Der Hook
+  `fremdtext_hook.py` deckt Websuche, Webabruf und PC-Werkzeuge ab (Exec-Form, `onFailure: block`).
+- **Aussehen je Person:** Familienpersonen ändern nur ihre eigenen Geräte, neues Feld `haus` über dem Namen
+  (`oberflaeche.py`).
+- **Update-Zentrale** jetzt als fertiges Modul `updates.py`. Szenen kennen den Schritt `fernsehen`, `ausgabe.py`
+  merkt sich Person, Spam-Erlaubnis und fremden Text der laufenden Frage.
+- **App 4.14:** 3D-Haus, Handy-Steuerung, „Meine Stimme“, Sternbild. **PC-Client 22.**
+- Die Bauanleitung beschreibt jeden neuen Baustein samt Abnahmeprobe und den Umstieg von 0.5.1.
+
 ## 0.5.1 – 2026-10-29
 
 Reiter „Lage“. *English: a "Status" tab in the Observatory design with appointments, this computer, containers,

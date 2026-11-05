@@ -12,8 +12,10 @@ HUD=${HUD:-$RELEASE/vorlagen/hud/index.html}      # HUD (fuer alle gleich, Einst
 OBERFLAECHE=${OBERFLAECHE:-$RELEASE/vorlagen/bruecke/oberflaeche.py}   # Pruefmodul fuer die Oberflaechen-Einstellungen
 # Fester Link auf die App im neuesten GitHub-Release (Setup-Seite "Jarvis aufs Handy", als Link und als QR-Code)
 APP_URL=${APP_URL:-https://github.com/Hellraiser28/jarvis-hausassistent/releases/latest/download/Jarvis-App.apk}
-for f in "$CLIENT/jarvis_pc.py" "$CLIENT/jarvis.ico" "$CLIENT/pakete.txt" "$CLIENT/weckwort.txt" "$HUD" "$OBERFLAECHE"; do
-  [ -f "$f" ] || { echo "FEHLER: $f fehlt (erst release/vorlagen_erzeugen.sh laufen lassen)" >&2; exit 1; }
+for f in "$CLIENT/jarvis_pc.py" "$CLIENT/jarvis.ico" "$CLIENT/pakete.txt" "$CLIENT/weckwort.txt" "$HUD" "$OBERFLAECHE" \
+         "$RELEASE/vorlagen/grundriss/beispiel-haus3d.json" "$RELEASE/vorlagen/sprecher/jarvis_sprecher.py" \
+         "$RELEASE/vorlagen/gemeinsam/sternbild.js"; do
+  [ -f "$f" ] || { echo "FEHLER: $f fehlt (vorlagen/ unvollständig, Repo-Stand neu auschecken)" >&2; exit 1; }
 done
 
 # Dateien, die ins Setup kommen
@@ -22,18 +24,23 @@ mkdir -p "$HIER/dateien" "$HIER/dist"
 cp "$HIER/einrichten.ps1" "$HIER/entfernen.ps1" "$RELEASE/EINRICHTUNG.md" "$RELEASE/EINRICHTUNG.en.md" "$HIER/bilder/seitenbild.bmp" \
   "$HIER/dateien/"
 cp "$CLIENT/jarvis_pc.py" "$CLIENT/jarvis.ico" "$CLIENT/pakete.txt" "$CLIENT/weckwort.txt" "$HIER/dateien/"
-cp "$HUD" "$HIER/dateien/hud.html"
-cp "$OBERFLAECHE" "$HIER/dateien/oberflaeche.py"
-# Verhalten und Web-App (seit 25.10.2026), fuer den Weg "neu" (Claude baut daraus die Bruecke)
-cp "$RELEASE/vorlagen/bruecke/verhalten.py" "$RELEASE/vorlagen/webapp/jarvis-web.js" "$RELEASE/vorlagen/webapp/webapp_bauen.py" \
-  "$HIER/dateien/"
-cp "$RELEASE/app/android/assets/app.html" "$HIER/dateien/app.html"
-# Symbol fuer die Web-App und die Einheitentests der beiden Pruefmodule (laufen neben den Modulen)
-cp "$CLIENT/jarvis.png" "$RELEASE/vorlagen/bruecke/test_oberflaeche.py" "$RELEASE/vorlagen/bruecke/test_verhalten.py" "$HIER/dateien/"
-# Fertige Bruecken-Module mit ihren Tests (seit 0.3.3): Anhaenge, Update-Signatur, Dateien zurueck, PDF, Bilder, Umwandeln
-for f in anhang.py ed25519.py ausgabe.py pdf.py bilddienst.py konvertieren.py zusatzdienste.py test_anhang.py test_ed25519.py test_pdf.py test_ausgabe.py test_bilddienst.py test_konvertieren.py; do
-  cp "$RELEASE/vorlagen/bruecke/$f" "$HIER/dateien/"
-done
+# Vorlagen fuer den Weg "neu" (Claude baut daraus die Bruecke). Seit 0.6 per Platzhalter statt fester Liste (Pruefung
+# 05.11.2026: das Setup brachte nur die Module von 0.3.3 mit): alle Bruecken-Module mit ihren Tests, HUD, App-Seite,
+# Web-App und die Ordner grundriss/, sprecher/, gemeinsam/. Das Setup legt dateien/vorlagen/ als
+# <Ordner>\einrichtung\vorlagen ab, einrichten.ps1 kopiert den Inhalt 1:1 nach %USERPROFILE%\Jarvis\einrichtung.
+VL=$HIER/dateien/vorlagen
+mkdir -p "$VL"
+cp "$RELEASE"/vorlagen/bruecke/*.py "$VL/"
+cp "$OBERFLAECHE" "$VL/oberflaeche.py"
+cp "$HUD" "$VL/hud.html"
+cp "$RELEASE/app/android/assets/app.html" "$RELEASE/vorlagen/webapp/jarvis-web.js" "$RELEASE/vorlagen/webapp/webapp_bauen.py" \
+  "$CLIENT/jarvis.png" "$VL/"
+cp -R "$RELEASE/vorlagen/grundriss" "$RELEASE/vorlagen/sprecher" "$RELEASE/vorlagen/gemeinsam" "$VL/"
+# test_grundriss.py sucht das Beispielhaus in ../grundriss/ und neben sich, nicht in einrichtung/grundriss/: die Testdaten
+# deshalb zusaetzlich neben die Tests, sonst ueberspringt er den Teil im Projekt
+cp "$RELEASE/vorlagen/grundriss/beispiel-haus3d.json" "$VL/"
+find "$VL" -depth \( -name __pycache__ -o -name '*.pyc' \) -exec rm -rf {} +
+echo "Vorlagen: $(find "$VL" -type f | wc -l) Dateien, davon $(find "$VL" -maxdepth 1 -name '*.py' | wc -l) Python-Dateien flach"
 # Lizenz fuer die Lizenzseite: Markdown-Zeichen weg, Windows-Zeilenenden
 sed -e 's/^#\{1,\} //' -e 's/\*\*\*//g' -e 's/\*\*//g' -e 's/\[\([^]]*\)\](#[^)]*)/\1/g' -e 's/^<\(http[^>]*\)>$/\1/' \
   -e 's/$/\r/' "$RELEASE/LICENSE" > "$HIER/dateien/LICENSE.txt"

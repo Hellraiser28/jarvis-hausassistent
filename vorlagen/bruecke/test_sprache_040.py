@@ -87,6 +87,12 @@ pruef("Szene: eigene Werkzeuge nicht vorgegeben", "hoerspiel" not in sz.ERLAUBT 
 sz.speichern(T, "Good night", [LICHT], "alex")
 pruef("Szene finden: my scene", sz.finden(sz.laden(T), "my scene good night")["name"] == "Good night")
 pruef("Szene finden: die Szene", sz.finden(sz.laden(T), "die Szene good night")["name"] == "Good night")
+# seit 0.6: Schritt fernsehen
+pruef("Szene: Fernseher an mit App", sz.beschreibung({"werkzeug": "fernsehen", "argumente": {"aktion": "an", "app": "Media"}})
+      == "TV on, open Media")
+pruef("Szene: Fernseher aus", sz.beschreibung({"werkzeug": "fernsehen", "argumente": {"aktion": "aus"}}) == "TV off")
+pruef("Szene: Fernsehen, falsche aktion englisch", "is not possible in a scene (only an, aus)" in wirft(
+    sz.schritte_pruefen, [{"werkzeug": "fernsehen", "argumente": {"aktion": "apps"}}]))
 sz.setze_sprache("de")
 pruef("Szene zurueck auf Deutsch", sz.beschreibung(PUSH) == "Push an Sam: „Dinner“")
 shutil.rmtree(T)

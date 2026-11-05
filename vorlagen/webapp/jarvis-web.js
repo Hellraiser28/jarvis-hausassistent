@@ -16,6 +16,8 @@
   const WEB_VERSION = "4.6";
   // Texte kommen aus dem Woerterbuch der Oberflaeche (tx, seit 4.2); die Schicht laeuft vor ihr, fragt also erst spaeter
   const T = (k, ...w) => (typeof window.tx === "function" ? window.tx(k, ...w) : k);
+  // Seit 0.6: Schluessel mit eigener Fassung je Sprache, falls eine aeltere app.html ihn noch nicht kennt (tx gibt dann k)
+  const TE = (k, de, en) => { const t = T(k); return t !== k ? t : /^de/i.test(document.documentElement.lang || navigator.language || "") ? de : en; };
   const L = (k, v) => {
     try {
       if (v === undefined) return localStorage.getItem(k);
@@ -61,6 +63,11 @@
       ton.src = URL.createObjectURL(wav);
       if (alt.startsWith("blob:")) URL.revokeObjectURL(alt);
       ton.onended = () => { if (nr === laeuft) rueck("onStatus", "bereit"); };
+      // seit 29.10.2026: Huelle der Stimme fuer die Kern-Animation, aus der WAV selbst (ohne WebAudio im Wiedergabeweg,
+      // ein angehaltener AudioContext koennte unter iOS sonst den Ton verschlucken)
+      let huelle = null;
+      try { if (typeof window.kernWavHuelle === "function") huelle = window.kernWavHuelle(await wav.arrayBuffer(), 50); } catch (e) { huelle = null; }
+      ton.onplaying = () => { if (huelle && nr === laeuft && typeof window.kernHuelle === "function") window.kernHuelle(huelle, 50, performance.now() - ton.currentTime * 1000); };
       rueck("onStatus", "spricht");
       await ton.play();
     } catch (e) {
@@ -124,9 +131,33 @@
     },
     lage: async () => { try { rueck("onLage", await ruf("GET", "/v1/lage")); } catch (e) { /* egal */ } },
     faehigkeiten: async () => { try { rueck("onFaehigkeiten", await ruf("GET", "/v1/faehigkeiten")); } catch (e) { /* egal */ } },
+    // seit 29.10.2026: 3D-Grundriss; bei Fehler null, die Ansicht behaelt dann den letzten Stand
+    grundriss: async () => { try { rueck("onGrundriss", await ruf("GET", "/v1/grundriss")); } catch (e) { rueck("onGrundriss", null); } },
+    // seit 30.10.2026: Bild des Grundrisses (Bildansicht, Geraetefotos, Titelbilder) mit Token, als Blob-URL (die Ansicht
+    // gibt sie beim Schliessen frei)
+    grundrissBild: async (name) => {
+      try {
+        if (!/^(eg|og|kg|dg|k\d)_[a-z0-9_]{1,30}\.(jpg|png|webp)$/.test(name)) throw new Error("Name");
+        rueck("onGrundrissBild", name, URL.createObjectURL(await ruf("GET", "/v1/grundriss/bild/" + name, null, true)));
+      } catch (e) { rueck("onGrundrissBild", name, null); }
+    },
+    // seit 01.11.2026: Geraete-Menue im 3D-Haus; die Nummer ordnet die Antwort dem Knopf zu
+    grundrissSteuern: async (nr, auftrag) => {
+      try { rueck("onGrundrissSteuern", Number(nr) || 0, await ruf("POST", "/v1/grundriss/steuern", JSON.parse(auftrag || "{}"))); }
+      catch (e) {
+        rueck("onGrundrissSteuern", Number(nr) || 0, { ok: false, meldung: e.code === 404
+          ? TE("web_gr_alt", "Diese Brücke kann das noch nicht.", "This bridge can't do that yet.")
+          : e.code === 403 ? TE("web_gr_verboten", "Schalten ist für dieses Gerät nicht freigegeben.", "Switching isn't allowed for this device.")
+          : T("web_fehler", e.message) });
+      }
+    },
     szenen: async (auftrag) => {        // seit 4.6 (Jarvis 0.4)
       try { rueck("onSzenen", await ruf("POST", "/v1/szenen", JSON.parse(auftrag || "{}"))); }
       catch (e) { rueck("onSzenen", { fehler: e.code === 404 ? T("web_szenen_alt") : T("web_fehler", e.message) }); }
+    },
+    gedaechtnis: async (auftrag) => {   // seit 4.10: Sternbild; die Bruecke nimmt die Person aus dem Token
+      try { rueck("onGedaechtnis", await ruf("POST", "/v1/gedaechtnis", JSON.parse(auftrag || "{}"))); }
+      catch (e) { rueck("onGedaechtnis", { fehler: e.code === 404 ? T("sb_alt") : T("web_fehler", e.message) }); }
     },
     einstellungen: async (auftrag) => {
       try { rueck("onEinstellungen", await ruf("POST", "/v1/einstellungen", JSON.parse(auftrag || "{}"))); }

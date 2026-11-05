@@ -65,6 +65,22 @@ pruef("Fuer die App", [x["name"] for x in sz.fuer_app(sz.laden(T))] == ["Schlafe
 pruef("Loeschen", sz.loeschen(T, "Essen fertig", "sam")["name"] == "Essen fertig" and len(sz.laden(T)) == 1)
 # Unix-Rechte nur ausserhalb von Windows pruefbar (dort gelten ACLs)
 pruef("Datei 600", os.name == "nt" or oct(os.stat(os.path.join(T, sz.DATEI)).st_mode & 0o777) == "0o600")
+
+# Seit 0.6: Schritt "fernsehen" (z. B. Kinoabend: Fernseher an und App oeffnen, spaeter aus)
+tv = sz.schritte_pruefen([{"werkzeug": "fernsehen", "argumente": {"aktion": "an", "app": "Mediathek"}},
+                          {"werkzeug": "fernsehen", "argumente": {"aktion": "aus"}}])
+pruef("Fernsehen: an (mit app) und aus angenommen", len(tv) == 2 and tv[0]["argumente"]["app"] == "Mediathek")
+try:
+    sz.schritte_pruefen([{"werkzeug": "fernsehen", "argumente": {"aktion": "apps"}}])
+    pruef("Fernsehen: andere aktion abgelehnt", False, "angenommen")
+except sz.Fehler as x:
+    pruef("Fernsehen: andere aktion abgelehnt", "nur an, aus" in str(x), str(x))
+pruef("Fernsehen: Beschreibung", sz.beschreibung(tv[0]) == "Fernseher an, Mediathek öffnen"
+      and sz.beschreibung(tv[1]) == "Fernseher aus", [sz.beschreibung(x) for x in tv])
+pruef("Fernsehen: ohne aktion heisst an", sz.beschreibung({"werkzeug": "fernsehen", "argumente": {}}) == "Fernseher an")
+s, neu = sz.speichern(T, "Kinoabend", [LICHT] + tv[:1], "sam")
+pruef("Fernsehen: Szene mit Licht und Fernseher speicherbar", neu and "Fernseher an, Mediathek öffnen" in sz.als_text(s),
+      sz.als_text(s))
 shutil.rmtree(T)
 print("Szenen: %d ok, %d Fehler" % (ok, fehler))
 sys.exit(1 if fehler else 0)

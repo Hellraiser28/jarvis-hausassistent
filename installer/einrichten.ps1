@@ -319,6 +319,34 @@ function Verbinden($A) {
 }
 
 # ------------------------------------------------------------------ Weg 2: neuen Jarvis mit Claude Code einrichten
+# Vorlagen (seit 0.6 alles, was das Setup unter einrichtung\vorlagen ablegt: Bruecken-Module mit Tests, HUD, App-Seite,
+# Web-App, Unterordner grundriss\, sprecher\, gemeinsam\) kommen 1:1 nach <Projekt>\einrichtung, Unterordner bleiben
+# Unterordner. Erneuter Lauf: Vorhandenes, das Claude erweitert haben kann, nicht ueberschreiben; die neue Fassung liegt
+# dann als <name>.neu daneben (seit 25.10.2026). Rekursiv statt fester Liste (Pruefung 05.11.2026: die Liste stand auf 0.3.3).
+$Sicherheitsmodule = @('anhang.py', 'ed25519.py', 'ausgabe.py', 'pdf.py', 'bilddienst.py', 'konvertieren.py', 'zusatzdienste.py',
+                       'fremdtext.py', 'fremdtext_hook.py', 'handy.py', 'personen.py', 'gaeste.py', 'sprecher.py',
+                       'anruf.py', 'raeume.py', 'postfach.py', 'updates.py', 'jarvis_sprecher.py')   # Vergleich nach Dateiname, auch in Unterordnern
+function Vorlagen-Kopieren([string]$Quelle, [string]$ZielOrdner, [string]$Rel) {
+  New-Item -ItemType Directory -Force -Path $ZielOrdner | Out-Null
+  foreach ($E in @(Get-ChildItem -LiteralPath $Quelle -Force | Sort-Object Name)) {
+    $Dort = Join-Path $ZielOrdner $E.Name
+    $f = $Rel + $E.Name
+    if ($E.PSIsContainer) {
+      if ($E.Name -ne '__pycache__') { Vorlagen-Kopieren $E.FullName $Dort ($f + '\') }
+      continue
+    }
+    if ($E.Extension -eq '.pyc') { continue }
+    if ((Test-Path -LiteralPath $Dort -PathType Leaf) -and (Pruefsumme $Dort) -ne (Pruefsumme $E.FullName)) {
+      Copy-Item -LiteralPath $E.FullName -Destination "$Dort.neu" -Force
+      # Seit 0.3.4 (Pruefbericht 0.3.3, Fund 16): Sicherheitsmodule nicht nur nebenbei erwaehnen
+      if ($Sicherheitsmodule -contains $E.Name) {
+        Write-Host ('   ' + (T 'WICHTIG: einrichtung\{0} ist ein Sicherheitsmodul und wurde nicht ersetzt. {0}.neu enthält Sicherheitskorrekturen: Claude im Jarvis-Ordner bitten, sie zu übernehmen, bevor Jarvis weiterläuft.' 'IMPORTANT: einrichtung\{0} is a security module and was not replaced. {0}.neu contains security fixes: ask Claude in the Jarvis folder to apply them before Jarvis keeps running.') -f $f) -ForegroundColor Red
+      }
+      Hinweis ((T 'einrichtung\{0} behalten (vielleicht angepasst), die neue Vorlage liegt als {0}.neu daneben.' 'kept einrichtung\{0} (maybe customized), the new template is next to it as {0}.neu.') -f $f)
+    } else { Copy-Item -LiteralPath $E.FullName -Destination $Dort -Force }
+  }
+}
+
 function Neu($A) {
   $Projekt = Join-Path $env:USERPROFILE 'Jarvis'
 
@@ -330,23 +358,11 @@ function Neu($A) {
   $Anleitung = T 'EINRICHTUNG.md' 'EINRICHTUNG.en.md'
   Copy-Item (Join-Path $Mitgeliefert 'jarvis_pc.py') (Join-Path $Projekt 'einrichtung\jarvis_pc.py') -Force
   Copy-Item (Join-Path $Mitgeliefert 'jarvis.ico') (Join-Path $Projekt 'einrichtung\jarvis.ico') -Force
-  # Erneuter Lauf: Vorlagen, die Claude erweitert haben kann, nicht ueberschreiben; die neue Fassung liegt dann als
-  # <name>.neu daneben (seit 25.10.2026)
-  foreach ($f in 'hud.html', 'oberflaeche.py', 'verhalten.py', 'test_oberflaeche.py', 'test_verhalten.py', 'app.html',
-                 'jarvis-web.js', 'webapp_bauen.py', 'jarvis.png',
-                 'anhang.py', 'ed25519.py', 'ausgabe.py', 'pdf.py', 'bilddienst.py', 'konvertieren.py', 'zusatzdienste.py',
-                 'test_anhang.py', 'test_ed25519.py', 'test_pdf.py', 'test_ausgabe.py', 'test_bilddienst.py', 'test_konvertieren.py') {
-    $Dort = Join-Path $Projekt "einrichtung\$f"
-    $Neu = Join-Path $Mitgeliefert $f
-    if ((Test-Path -LiteralPath $Dort) -and (Pruefsumme $Dort) -ne (Pruefsumme $Neu)) {
-      Copy-Item $Neu "$Dort.neu" -Force
-      # Seit 0.3.4 (Pruefbericht 0.3.3, Fund 16): Sicherheitsmodule nicht nur nebenbei erwaehnen
-      if (@('anhang.py', 'ed25519.py', 'ausgabe.py', 'pdf.py', 'bilddienst.py', 'konvertieren.py', 'zusatzdienste.py') -contains $f) {
-        Write-Host ('   ' + (T 'WICHTIG: einrichtung\{0} ist ein Sicherheitsmodul und wurde nicht ersetzt. {0}.neu enthält Sicherheitskorrekturen: Claude im Jarvis-Ordner bitten, sie zu übernehmen, bevor Jarvis weiterläuft.' 'IMPORTANT: einrichtung\{0} is a security module and was not replaced. {0}.neu contains security fixes: ask Claude in the Jarvis folder to apply them before Jarvis keeps running.') -f $f) -ForegroundColor Red
-      }
-      Hinweis ((T 'einrichtung\{0} behalten (vielleicht angepasst), die neue Vorlage liegt als {0}.neu daneben.' 'kept einrichtung\{0} (maybe customized), the new template is next to it as {0}.neu.') -f $f)
-    } else { Copy-Item $Neu $Dort -Force }
+  $Vorlagen = Join-Path $Mitgeliefert 'vorlagen'
+  if (-not (Test-Path -LiteralPath $Vorlagen -PathType Container)) {
+    throw (T 'Die Vorlagen fehlen (einrichtung\vorlagen). Bitte das Setup erneut ausführen.' 'The templates are missing (einrichtung\vorlagen). Please run the setup again.')
   }
+  Vorlagen-Kopieren $Vorlagen (Join-Path $Projekt 'einrichtung') ''
   $F = @($A['faehigkeiten'] -split ',' | Where-Object { $_ })
   $Antworten = [ordered]@{
     quelle          = 'Jarvis-Setup ' + $A['setup_version']

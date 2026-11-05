@@ -82,6 +82,20 @@ try:
     pruef("aktiv: unbekanntes Gehirn leer", ausgabe.aktiv_lesen(d, 4243) == ("", ""))
     ausgabe.aktiv_schreiben(d, 4244, "", "")
     pruef("aktiv: ohne Fragenden leer", ausgabe.aktiv_lesen(d, 4244) == ("", ""))
+    # seit 0.6: Person, Spam-Erlaubnis und Fremdtext der laufenden Frage
+    pruef("aktiv: alter Aufruf ohne Person, kein Spam", ausgabe.aktiv_person(d, 4242) == "" and not ausgabe.aktiv_spam(d, 4242))
+    ausgabe.aktiv_schreiben(d, 4245, "geraet2", "anfrage10", person="sam", spam=True, fremd="Anhang")
+    pruef("aktiv: Person der Frage", ausgabe.aktiv_person(d, 4245) == "sam")
+    pruef("aktiv: Spam nur ausdruecklich", ausgabe.aktiv_spam(d, 4245) is True and ausgabe.aktiv_spam(d, 4243) is False)
+    a = json.load(open(os.path.join(d, "ablage", "aktiv", "4245.json"), encoding="utf-8"))
+    pruef("aktiv: Fremdtext vermerkt", a.get("fremd") == "Anhang" and a.get("spam") is True)
+    ausgabe.aktiv_schreiben(d, 4246, "geraet2", "anfrage11", person="../alex")
+    pruef("aktiv: ungueltige Person wird leer", ausgabe.aktiv_person(d, 4246) == "")
+    ausgabe.aktiv_schreiben(d, 4247, "geraet2", "anfrage12", spam="ja")
+    pruef("aktiv: Spam nur als echtes Ja (bool)", ausgabe.aktiv_spam(d, 4247) is True
+          and json.load(open(os.path.join(d, "ablage", "aktiv", "4247.json")))["spam"] is True)
+    open(os.path.join(d, "ablage", "aktiv", "4248.json"), "w").write("[1, 2]")
+    pruef("aktiv: kaputte Datei heisst niemand, kein Spam", ausgabe.aktiv_person(d, 4248) == "" and not ausgabe.aktiv_spam(d, 4248))
     if os.name == "posix":
         pruef("Datei 600, Ordner 700", oct(os.stat(os.path.join(d, "ablage", k1 + ".bin")).st_mode & 0o777) == "0o600"
               and oct(os.stat(os.path.join(d, "ablage")).st_mode & 0o777) == "0o700"

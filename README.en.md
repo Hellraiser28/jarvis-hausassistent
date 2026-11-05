@@ -10,6 +10,8 @@ Deutsche Fassung: [README.md](README.md)
 
 Jarvis is a home assistant with its own voice and personality, inspired by the AI butler from the Iron Man films.
 It knows your calendar, your home and the world, remembers what you tell it, and only does what you allow.
+Since 0.6 it shows your home as a 3D model where you tap devices to switch them, recognises at the speakers who is
+talking, and does things on your phone when you ask.
 
 This is **not a finished program**. It is a build guide that **Claude Code** follows to build your own Jarvis.
 Every home is different (computers, smart home, calendars, wishes), so Claude asks, proposes, builds and tests each
@@ -22,12 +24,37 @@ switched in the gear menu. The build guide for Claude is [EINRICHTUNG.en.md](EIN
 
 A private fan project. Not affiliated with Marvel, Disney, Anthropic or Google.
 
-![The Jarvis window on the PC and wall display, with made-up sample data](docs/bilder/jarvis-hud.jpg)
+![Your home in 3D: rooms, furniture and devices with their state; a tap opens the device menu. Made-up sample house](docs/bilder/jarvis-haus3d.jpg)
 
 <p>
-  <img src="docs/bilder/jarvis-app.jpg" width="260" alt="The Android app with reactor, status cards and quick actions">
-  <img src="docs/bilder/jarvis-zahnrad.jpg" width="260" alt="The app's gear menu: appearance, behavior, this app, connection, info and update">
+  <img src="docs/bilder/jarvis-haus3d-handy.jpg" width="260" alt="The 3D house on the phone, scenes and running devices at the bottom">
+  <img src="docs/bilder/jarvis-sternbild.jpg" width="260" alt="Memory as a constellation: every star is something Jarvis remembers">
 </p>
+
+## New in 0.6
+
+- **Your home in 3D.** Claude builds a model from your description, with rooms, doors, windows, stairs and
+  furniture. Rotate and zoom, tap a device and switch it. TVs and the projector screen show what is playing, lamps
+  glow. In the PC window, on the wall display, in the app and the web app.
+- **It recognises who is speaking.** Three short sentences in the app, and Jarvis knows at the speakers who is
+  asking. The voice can only lower permissions, never raise them, and it is not a password. Voice profiles stay on
+  your own computer, and nobody is enrolled without their consent.
+- **It works your phone.** "Open Spotify", "Set an alarm for 6:30" or "Torch on" happen right away. Calls and
+  WhatsApp are prepared as a card and only go out after your spoken yes; a text message is left as a draft. Banking,
+  password and mail apps are never operated.
+- **Your memory as a constellation.** Every star is something Jarvis remembers, brighter the more often it is used.
+  Tap, edit, or let it forget.
+- **It follows up and passes things on.** It brings up open plans once, casually. "Tell Mia, when she gets home,
+  that dinner is in the oven" is delivered as soon as her phone is back on the Wi-Fi. Guests get time-limited access
+  with their own rules and, if you like, the QR code for the guest Wi-Fi.
+- **Announcements in the right room** and, if you want, **a phone call**: a wake-up call, severe weather or a
+  critical disk fault, with fixed rules for quiet hours and frequency.
+- **TV, projector screen and family quiz**, if you have the devices: TV and apps by voice, recipe and shopping list on
+  the projector, a quiz with a host voice for the whole family.
+- **Protection against untrusted text.** Once Jarvis has read an email, a web page or a document in a question, it
+  switches nothing and sends nothing in that same question, it asks you instead.
+- Plus app 4.14, PC client 22 and a template with tests for every new building block. Details are in the
+  [CHANGELOG](CHANGELOG.md).
 
 **"Observatory" design** (since 0.5, choose it in the setup, by voice or in the gear menu):
 
@@ -36,6 +63,15 @@ A private fan project. Not affiliated with Marvel, Disney, Anthropic or Google.
 <p>
   <img src="docs/bilder/jarvis-app-observatorium.jpg" width="260" alt="The app in the observatory design: an answer with the read-back card and a note on what isn't working right now">
   <img src="docs/bilder/jarvis-app-faehigkeiten.jpg" width="260" alt="The skills in the app: limited tools are shown in amber next to their area">
+</p>
+
+**"Reactor" design** (default) and the app's gear menu:
+
+![The Jarvis window on the PC and wall display](docs/bilder/jarvis-hud.jpg)
+
+<p>
+  <img src="docs/bilder/jarvis-app.jpg" width="260" alt="The Android app with reactor, status cards and quick actions">
+  <img src="docs/bilder/jarvis-zahnrad.jpg" width="260" alt="The app's gear menu: appearance, behavior, this app, connection, info and update">
 </p>
 
 ![Setup page "Your interface": design, line under the logo, panels of the main page](docs/bilder/setup-oberflaeche.png)
@@ -121,7 +157,13 @@ Read in October 2026. The current version at each provider is what counts.
     - In the EEA, Switzerland and the UK the paid-service data rules apply to the free quota as well. Elsewhere,
       Google may use free-quota input to improve its products.
 - **Messages to others:** Jarvis marks messages it sends on your behalf as sent by an AI.
-- **Jarvis does not tell voices apart.** Permissions apply per device and access path, not per speaker.
+- **Speaker recognition (since 0.6, optional):** voice profiles are biometric data (GDPR Art. 9). Nobody is
+  enrolled without their explicit consent, for children their parents' consent. The profiles stay on your own
+  computer. The voice only lowers permissions and is not a password; without speaker recognition,
+  permissions apply per device and access path.
+- **Phone control (since 0.6, optional):** when Jarvis operates your phone through the accessibility
+  service, the screen content goes to Claude. Blocked apps (banking, passwords, mail, messaging) are never
+  operated.
 
 ## Setting it up
 
@@ -233,8 +275,11 @@ What Jarvis never does: [NEVER.en.md](NEVER.en.md). How Jarvis is built, its lim
 | `app/` | sources of the Android app and its build script (with its own signing key) |
 | `vorlagen/pc/` | the PC client for Windows and Linux (wake word, Jarvis window, voice) and its packages with checksums |
 | `vorlagen/hud/` | the interface, the same for everyone. Its settings come from the bridge |
-| `vorlagen/bruecke/` | ready-made building blocks of the bridge with unit tests: appearance and behavior (`oberflaeche.py`, `verhalten.py`), files (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), update signature (`ed25519.py`), since 0.4 people, memory, scenes, mailbox and letters (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`) |
+| `vorlagen/bruecke/` | ready-made building blocks of the bridge with unit tests: appearance and behavior (`oberflaeche.py`, `verhalten.py`), files (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), update signature (`ed25519.py`), since 0.4 people, memory, scenes, mailbox and letters (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`), since 0.6 the 3D house, speaker recognition, phone control, untrusted-text lock, follow-ups, arrival, guests, rooms, calls, projector screen, quiz, update centre and disk health (`grundriss.py`, `sprecher.py`, `handy.py`, `fremdtext.py`, `faeden.py`, `ankunft.py`, `gaeste.py`, `raeume.py`, `anruf.py`, `leinwand.py`, `quiz.py`, `updates.py`, `nas_gesundheit.py`) |
 | `vorlagen/webapp/` | web app for iPhone and browser: layer `jarvis-web.js` and build script (interface from `app/`) |
+| `vorlagen/grundriss/` | since 0.6: the 3D house view (`haus3d.js` with `three.min.js`), a made-up sample house with its generator and a preview page |
+| `vorlagen/gemeinsam/` | since 0.6: memory as a constellation (`sternbild.js`, `sternbild.css`) for the window, the app and the web app |
+| `vorlagen/sprecher/` | since 0.6: the speaker recognition service (`jarvis_sprecher.py`) |
 | `pakete_aufloesen.sh` | re-pins the client's packages (Windows and Linux, Python 3.12, with checksums) |
 
 ### Build the Setup.exe yourself
@@ -249,13 +294,17 @@ On its first run, `bauen.sh` builds a small image with `makensis` (Debian, packa
 
 ## Third-party components
 
-The setup only ships its own files. Everything else is downloaded from its source during setup:
+Setup, Linux package and app ship their own files, plus three.js for the 3D view (its licence text is included).
+Everything else is downloaded from its source during setup:
 
 - **openWakeWord** (wake word): code under Apache 2.0. The "Hey Jarvis" model and the related models are licensed
   **CC BY-NC-SA 4.0**, noncommercial use only.
 - **uv** (Astral), **Windows-MCP**, **pywebview**, **sounddevice**, **wyoming**, **onnxruntime** and other Python
   packages: each under its own license, listed in `vorlagen/pc/pakete.txt`.
 - **Claude Code** by Anthropic, via its official installer and under its terms.
+- **three.js** (3D house view, included): MIT licence, see `vorlagen/grundriss/three.LICENSE.txt`.
+- **sherpa-onnx** (speaker recognition): Apache 2.0. The ERes2Net speaker model comes from **3D-Speaker**
+  (Apache 2.0) and is downloaded during setup, not shipped.
 
 ## License
 

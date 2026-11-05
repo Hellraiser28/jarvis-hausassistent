@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- Vorschau der 3D-Hausansicht (haus3d.js), zum Entwickeln und fuer Bildschirmfotos; ausgeliefert wird haus3d.js in
+     HUD, App und Web-App. Standarddaten: beispiel-haus3d.json (erfundenes Beispielhaus aus beispielhaus_erzeugen.py),
+     Format wie /v1/grundriss: {ok, haus3d, zustaende, sauger}. Parameter:
+       ?daten=<datei>     andere Daten, z. B. dein eigenes Haus
+       ?etage=<id>        Startetage (eg, og, ...)      ?zeit=tag|nacht   Tageszeit statt Uhrzeit
+       ?stil=bild         Stil einer gezeichneten Hausansicht         ?sprache=en   englische Beschriftung
+       ?menue=1           Schein-Steuern: zeigt nur an, was geschaltet wuerde (Geraete-Menue pruefen)
+       ?geraet=<id>       oeffnet das Menue dieses Geraets
+       ?projektion=<datei> optionale Foto-Projektion {etage: [{bild, kamera}]}, Bilder aus vorschau-fotos/ -->
+<title>Haus 3D Vorschau</title>
+<style>html,body{margin:0;height:100%;background:#05070b}#g{position:absolute;inset:0}</style>
+<script src="three.min.js"></script><script src="haus3d.js"></script>
+</head><body><div id="g"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const pjDatei = q.get("projektion");
+  Promise.all([fetch(q.get("daten") || "beispiel-haus3d.json").then((r) => r.json()),
+               pjDatei ? fetch(pjDatei).then((r) => r.json()) : null]).then(([d, pj]) => {
+    if (pj) d.projektion = pj;
+    const o = { daten: d, sprache: q.get("sprache") || "de", zeit: q.get("zeit") || "", stil: q.get("stil") || undefined, schliessen: () => {} };
+    if (pj) o.bild = async (n) => "vorschau-fotos/" + n;
+    if (q.get("pjstaerke")) o.projektion_staerke = +q.get("pjstaerke");
+    if (q.get("menue")) {
+      o.steuern = async (e, dienst, daten) => ({ ok: true, meldung: "[Vorschau] " + dienst + " → " + e + (daten ? " " + JSON.stringify(daten) : "") });
+      o.bild = o.bild || (async (n) => "vorschau-fotos/" + n);
+      o.szenen = { liste: async () => [{ id: "s1", name: q.get("sprache") === "en" ? "Movie night" : "Kinoabend" },
+                                       { id: "s2", name: q.get("sprache") === "en" ? "Good night" : "Gute Nacht" },
+                                       { id: "s3", name: q.get("sprache") === "en" ? "Dinner" : "Essen fertig" }],
+                   starten: async (id) => ({ ok: true, meldung: "[Vorschau] Szene " + id }) };
+    }
+    window.ansicht = Haus3D.oeffnen(document.getElementById("g"), o);
+    if (q.get("etage")) ansicht.waehlen(q.get("etage"));
+    if (q.get("geraet")) setTimeout(() => ansicht.geraet(q.get("geraet")), 1500);
+  });
+</script></body></html>

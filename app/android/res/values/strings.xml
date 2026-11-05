@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Handy-Steuerung Stufe 2 (Prototyp, 29.10.2026) -->
+    <string name="bedienung_name">Jarvis Handy-Bedienung</string>
+    <string name="bedienung_beschreibung">Lässt Jarvis dein Handy bedienen, wenn du ihn in der Jarvis-App darum bittest: Bildschirm lesen, Elemente antippen, Text eingeben, zurück und Startbildschirm. Vor jeder Aufgabe fragt die App nach, oben steht ein STOPP-Knopf. Jarvis tippt nie auf Senden, Bezahlen, Löschen oder Bestätigen; Banking-, Passwort- und Authenticator-Apps und die Einstellungen sind gesperrt. Der Bildschirminhalt geht dabei an deinen Jarvis und an das Sprachmodell dahinter.</string>
+</resources>

@@ -94,7 +94,7 @@ schreiben("index.html", seite)
 # CSP: Skripte nur genau diese beiden (Hash), Stile inline erlaubt (die Seite setzt style-Attribute), Schrift von Google
 hashes = " ".join("'sha256-%s'" % base64.b64encode(hashlib.sha256(s.encode("utf-8")).digest()).decode()
                   for s in inline_skripte(seite))
-schreiben("csp.txt", ("default-src 'none'; script-src %s; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+schreiben("csp.txt", ("default-src 'none'; script-src %s 'strict-dynamic'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                       "font-src https://fonts.gstatic.com; connect-src 'self'; img-src 'self' data: blob:; "
                       "media-src 'self' blob: data:; manifest-src 'self'; frame-ancestors 'none'; base-uri 'none'; "
                       "form-action 'none'\n") % hashes)
@@ -104,4 +104,16 @@ schreiben("manifest.json", json.dumps({
     "icons": [{"src": "/app/jarvis.png", "sizes": "256x256", "type": "image/png"}]}, ensure_ascii=False, indent=1))
 if os.path.exists(SYMBOL):
     schreiben("jarvis.png", open(SYMBOL, "rb").read())
+# Seit 0.6: Grundriss. app.html laedt die Skripte erst beim Oeffnen nach (/app/three.min.js, /app/haus3d.js, Bildansicht
+# /app/grundrissfoto.js); dieselben Pfade holt der PC-Client fuers HUD. Die CSP erlaubt das mit 'strict-dynamic': nur die
+# beiden gehashten Skripte duerfen weitere nachladen, eingeschleustes Markup weiterhin nicht. three.js r160 (MIT, Lizenz
+# in three.LICENSE.txt neben der Quelle). Gesucht wird neben diesem Skript, in spiegel/grundriss (Repo), grundriss/
+# neben vorlagen/webapp (Release-Aufbau) und neben app.html (die App bringt alle drei mit).
+for name in ("three.min.js", "haus3d.js", "grundrissfoto.js"):
+    q = finden(name, HIER, os.path.join(HIER, "grundriss"), os.path.join(J, "spiegel", "grundriss"),
+               os.path.join(J, "grundriss"), os.path.dirname(APP))
+    if os.path.exists(q):
+        schreiben(name, open(q, "rb").read())
+    else:
+        print("Hinweis: %s fehlt, der Grundriss geht in der Web-App dann nicht" % name)
 print("Web-App gebaut: %s (%d KB)" % (ZIEL, len(seite) // 1024))

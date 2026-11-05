@@ -50,6 +50,19 @@ jobs:
           python3 -B vorlagen/bruecke/test_funde_040.py
           python3 -B vorlagen/bruecke/test_kern.py
           python3 -B vorlagen/bruecke/test_lage.py
+          python3 -B vorlagen/bruecke/test_ankunft.py
+          python3 -B vorlagen/bruecke/test_anruf.py
+          python3 -B vorlagen/bruecke/test_faeden.py
+          python3 -B vorlagen/bruecke/test_fremdtext.py
+          python3 -B vorlagen/bruecke/test_gaeste.py
+          python3 -B vorlagen/bruecke/test_grundriss.py
+          python3 -B vorlagen/bruecke/test_handy.py
+          python3 -B vorlagen/bruecke/test_leinwand.py
+          python3 -B vorlagen/bruecke/test_nas_gesundheit.py
+          python3 -B vorlagen/bruecke/test_quiz.py
+          python3 -B vorlagen/bruecke/test_raeume.py
+          python3 -B vorlagen/bruecke/test_sprecher.py
+          python3 -B vorlagen/bruecke/test_updates.py
           python3 -B vorlagen/pc/test_echtzeit_befehl.py
           python3 -B vorlagen/pc/test_fenster_schutz.py
           python3 -B vorlagen/pc/test_neuigkeiten.py

@@ -8,26 +8,53 @@
 
 English version: [README.en.md](README.en.md)
 
-**Sprachen:** Jarvis spricht Deutsch oder Englisch (Wahl im Setup). Setup, App, Web-App, Wandbildschirm und
-PC-Fenster sowie der Linux-Installer gibt es auf Deutsch und Englisch; die App folgt der Sprache des Handys und lässt
-sich im Zahnrad umstellen. Bauanleitung für Claude: [EINRICHTUNG.md](EINRICHTUNG.md) (Deutsch) bzw.
-[EINRICHTUNG.en.md](EINRICHTUNG.en.md) (Englisch).
-
 Jarvis ist ein Hausassistent mit eigener Stimme und Persönlichkeit, inspiriert vom KI-Butler aus den Iron-Man-Filmen.
 Er kennt deinen Kalender, dein Zuhause und die Welt, merkt sich, was du ihm sagst, und tut nur, was du erlaubst.
+Seit 0.6 zeigt er dein Zuhause als 3D-Modell, in dem du Geräte antippst und schaltest, erkennt am Lautsprecher, wer
+gerade spricht, und erledigt auf Zuruf Dinge auf deinem Handy.
 
 Das hier ist **kein fertiges Programm**, sondern eine Bauanleitung, nach der **Claude Code** dir deinen eigenen
 Jarvis baut. Jede Umgebung ist anders: Rechner, Smart Home, Kalender, Wünsche. Claude fragt nach, schlägt vor, baut
 und prüft jede Stufe, bevor es weitergeht. Eine Setup.exe für Windows nimmt dir den Anfang ab.
 
+**Sprachen:** Jarvis spricht Deutsch oder Englisch (Wahl im Setup). Setup, App, Web-App, Wandbildschirm und
+PC-Fenster sowie der Linux-Installer gibt es auf Deutsch und Englisch; die App folgt der Sprache des Handys und lässt
+sich im Zahnrad umstellen. Bauanleitung für Claude: [EINRICHTUNG.md](EINRICHTUNG.md) (Deutsch) bzw.
+[EINRICHTUNG.en.md](EINRICHTUNG.en.md) (Englisch).
+
 Ein privates Fanprojekt. Nicht verbunden mit Marvel, Disney, Anthropic oder Google.
 
-![Das Jarvis-Fenster am PC und auf dem Wandbildschirm, mit erfundenen Beispieldaten](docs/bilder/jarvis-hud.jpg)
+![Dein Zuhause in 3D: Räume, Möbel und Geräte mit ihrem Zustand, ein Tippen öffnet das Gerätemenü. Erfundenes Beispielhaus](docs/bilder/jarvis-haus3d.jpg)
 
 <p>
-  <img src="docs/bilder/jarvis-app.jpg" width="260" alt="Die Android-App mit Reaktor, Lagekarten und Schnellzugriff">
-  <img src="docs/bilder/jarvis-zahnrad.jpg" width="260" alt="Das Zahnrad-Menü der App: Aussehen, Verhalten, Diese App, Verbindung, Info und Update">
+  <img src="docs/bilder/jarvis-haus3d-handy.jpg" width="260" alt="Das 3D-Haus am Handy, unten Szenen und laufende Geräte">
+  <img src="docs/bilder/jarvis-sternbild.jpg" width="260" alt="Das Gedächtnis als Sternbild: jeder Stern ist etwas, das Jarvis sich gemerkt hat">
 </p>
+
+## Neu in 0.6
+
+- **Dein Zuhause in 3D.** Claude baut nach deiner Beschreibung ein Modell mit Räumen, Türen, Fenstern, Treppen und
+  Möbeln. Du drehst und zoomst, tippst ein Gerät an und schaltest es. Fernseher und Leinwand zeigen, was gerade
+  läuft, Lampen leuchten. Im PC-Fenster, auf dem Wandbildschirm, in App und Web-App.
+- **Er erkennt, wer spricht.** Drei kurze Sätze in der App, dann weiß Jarvis am Lautsprecher, wer fragt. Die Stimme
+  kann Rechte nur senken, nie anheben, und ist kein Kennwort. Stimmprofile bleiben auf deinem Rechner, angelernt wird
+  nur mit Zustimmung jeder Person.
+- **Er bedient dein Handy.** „Öffne Spotify“, „Stell einen Wecker auf 6:30“ oder „Taschenlampe an“ erledigt er
+  sofort. Anrufe und WhatsApp bereitet er als Karte vor und startet sie erst nach deinem gesprochenen Ja, eine SMS
+  legt er dir als Entwurf hin. Banking-, Kennwort- und Mail-Apps bedient er nie.
+- **Dein Gedächtnis als Sternbild.** Jeder Stern ist etwas, das Jarvis sich gemerkt hat, heller, je öfter er es
+  braucht. Antippen, ändern, vergessen lassen.
+- **Er fasst nach und richtet aus.** Offene Vorhaben spricht er einmal locker wieder an. „Sag Mia, wenn sie
+  heimkommt, dass das Essen im Ofen steht“ richtet er aus, sobald ihr Handy wieder im WLAN ist. Gäste bekommen einen
+  befristeten Zugang mit eigenen Regeln und auf Wunsch den QR-Code fürs Gäste-WLAN.
+- **Durchsagen im richtigen Raum** und auf Wunsch **ein Anruf** auf dein Handy: Weckanruf, schweres Unwetter oder ein
+  kritischer Plattenfehler, mit festen Regeln für Nachtruhe und Häufigkeit.
+- **Fernsehen, Leinwand und Familien-Quiz**, wenn du die Geräte hast: Fernseher und Apps per Zuruf, Rezept und
+  Einkaufsliste auf dem Beamer, ein Quiz mit Moderatorenstimme für die ganze Familie.
+- **Schutz vor fremdem Text.** Hat Jarvis in einer Frage eine Mail, eine Webseite oder ein Dokument gelesen, schaltet
+  er in derselben Frage nichts mehr und schickt nichts weg, sondern fragt nach.
+- Dazu App 4.14, PC-Client 22 und für jeden neuen Baustein eine Vorlage mit Tests. Alles im Einzelnen steht im
+  [CHANGELOG](CHANGELOG.md).
 
 **Design „Observatorium“** (seit 0.5, im Setup, per Zuruf oder im Zahnrad wählbar):
 
@@ -36,6 +63,15 @@ Ein privates Fanprojekt. Nicht verbunden mit Marvel, Disney, Anthropic oder Goog
 <p>
   <img src="docs/bilder/jarvis-app-observatorium.jpg" width="260" alt="Die App im Design Observatorium: Antwort mit Karte zum Nachlesen und dem Hinweis, was gerade nicht geht">
   <img src="docs/bilder/jarvis-app-faehigkeiten.jpg" width="260" alt="Die Fähigkeiten in der App: eingeschränkte Werkzeuge stehen in Bernstein beim jeweiligen Bereich">
+</p>
+
+**Design „Reaktor“** (Standard) und das Zahnrad-Menü der App:
+
+![Das Jarvis-Fenster am PC und auf dem Wandbildschirm](docs/bilder/jarvis-hud.jpg)
+
+<p>
+  <img src="docs/bilder/jarvis-app.jpg" width="260" alt="Die Android-App mit Reaktor, Lagekarten und Schnellzugriff">
+  <img src="docs/bilder/jarvis-zahnrad.jpg" width="260" alt="Das Zahnrad-Menü der App: Aussehen, Verhalten, Diese App, Verbindung, Info und Update">
 </p>
 
 ![Setup-Seite „Deine Oberfläche“: Design, Zeile unter dem Logo, Bereiche der Hauptseite](docs/bilder/setup-oberflaeche.png)
@@ -124,7 +160,12 @@ Gelesen im Oktober 2026. Maßgeblich ist die jeweils aktuelle Fassung beim Anbie
       kostenlose Kontingent. Anderswo darf Google Eingaben im kostenlosen Kontingent zur Verbesserung nutzen.
 - **Nachrichten an andere:** Jarvis kennzeichnet Nachrichten, die er in deinem Auftrag verschickt, als von einer KI
   verschickt.
-- **Jarvis unterscheidet keine Stimmen.** Rechte gelten je Gerät und Zugang, nicht je Sprecher.
+- **Stimmerkennung (seit 0.6, optional):** Stimmprofile sind biometrische Daten (DSGVO Art. 9). Angelernt
+  wird nur mit ausdrücklicher Einwilligung jeder Person, für Kinder mit der der Eltern. Die Profile bleiben
+  auf deinem Rechner. Die Stimme senkt Rechte nur, sie ist kein Kennwort; ohne Stimmerkennung gelten Rechte
+  je Gerät und Zugang.
+- **Handy-Bedienung (seit 0.6, optional):** Bedient Jarvis dein Handy über die Bedienungshilfe, gehen die
+  Inhalte des Bildschirms an Claude. Gesperrte Apps (Banking, Kennwörter, Mail, Nachrichten) bedient er nie.
 
 ## Einrichten
 
@@ -243,8 +284,11 @@ Was Jarvis nie tut: [NEVER.md](NEVER.md). Wie Jarvis aufgebaut ist, wo die Grenz
 | `app/` | Quellen der Android-App und ihr Bauskript (mit eigenem Signaturschlüssel) |
 | `vorlagen/pc/` | der PC-Client für Windows und Linux (Weckwort, Jarvis-Fenster, Stimme) und seine Pakete mit Prüfsummen |
 | `vorlagen/hud/` | die Oberfläche, für alle gleich. Ihre Einstellungen kommen von der Brücke |
-| `vorlagen/bruecke/` | fertige Bausteine der Brücke mit Einheitentests: Aussehen und Verhalten (`oberflaeche.py`, `verhalten.py`), Dateien (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), Update-Signatur (`ed25519.py`), seit 0.4 Personen, Gedächtnis, Szenen, Postfach und Briefe (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`) |
+| `vorlagen/bruecke/` | fertige Bausteine der Brücke mit Einheitentests: Aussehen und Verhalten (`oberflaeche.py`, `verhalten.py`), Dateien (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), Update-Signatur (`ed25519.py`), seit 0.4 Personen, Gedächtnis, Szenen, Postfach und Briefe (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`), seit 0.6 3D-Haus, Stimmerkennung, Handy-Steuerung, Fremdtext-Sperre, offene Fäden, Ankunft, Gäste, Räume, Anrufe, Leinwand, Quiz, Update-Zentrale und Plattengesundheit (`grundriss.py`, `sprecher.py`, `handy.py`, `fremdtext.py`, `faeden.py`, `ankunft.py`, `gaeste.py`, `raeume.py`, `anruf.py`, `leinwand.py`, `quiz.py`, `updates.py`, `nas_gesundheit.py`) |
 | `vorlagen/webapp/` | Web-App für iPhone und Browser: Schicht `jarvis-web.js` und Bauskript (Oberfläche aus `app/`) |
+| `vorlagen/grundriss/` | seit 0.6: die 3D-Hausansicht (`haus3d.js` mit `three.min.js`), ein erfundenes Beispielhaus samt Erzeuger und eine Vorschauseite |
+| `vorlagen/gemeinsam/` | seit 0.6: das Gedächtnis als Sternbild (`sternbild.js`, `sternbild.css`) für Fenster, App und Web-App |
+| `vorlagen/sprecher/` | seit 0.6: der Dienst der Stimmerkennung (`jarvis_sprecher.py`) |
 | `pakete_aufloesen.sh` | legt die Pakete des Clients neu fest (Windows und Linux, Python 3.12, mit Prüfsummen) |
 
 ### Setup.exe selbst bauen
@@ -259,13 +303,17 @@ installer/bauen.sh 0.3.1     # -> installer/dist/Jarvis-Setup.exe
 
 ## Fremde Bestandteile
 
-Das Setup liefert nur eigene Dateien aus. Alles andere lädt es bei der Einrichtung von der Quelle:
+Setup, Linux-Paket und App liefern eigene Dateien aus, dazu three.js für die 3D-Ansicht (der Lizenztext liegt bei).
+Alles andere lädt die Einrichtung von der Quelle:
 
 - **openWakeWord** (Weckwort): Code unter Apache 2.0. Das Modell „Hey Jarvis“ und die zugehörigen Modelle stehen
   unter **CC BY-NC-SA 4.0**, also nur für nicht kommerzielle Nutzung.
 - **uv** (Astral), **Windows-MCP**, **pywebview**, **sounddevice**, **wyoming**, **onnxruntime** und weitere
   Python-Pakete: jeweils ihre eigene Lizenz, die Liste steht in `vorlagen/pc/pakete.txt`.
 - **Claude Code** von Anthropic, über dessen offiziellen Installer und unter dessen Bedingungen.
+- **three.js** (3D-Hausansicht, liegt bei): MIT-Lizenz, siehe `vorlagen/grundriss/three.LICENSE.txt`.
+- **sherpa-onnx** (Stimmerkennung): Apache 2.0. Das Sprechermodell ERes2Net stammt aus **3D-Speaker**
+  (Apache 2.0) und wird bei der Einrichtung geladen, nicht mitgeliefert.
 
 ## Lizenz
 

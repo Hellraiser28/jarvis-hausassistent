@@ -13,13 +13,13 @@
    prueft jeden Wert). Ein Update dieser Seite laesst die Einstellungen deshalb stehen.
    Die Seite prueft beim Anwenden noch einmal (der Glance-Ordner ist fuer mehrere Konten beschreibbar) und merkt sich
    den letzten Stand im Browser, damit beim Laden nicht die Grundfarbe aufblitzt. */
-const STANDARD = {"name": "J.A.R.V.I.S.", "untertitel": "Just A Rather Very Intelligent System", "person": "", "farbe": "rot", "farben": null, "design": "klassisch", "bereiche": ["wetter", "systeme", "kalender", "welt", "verbindungen", "laufband", "gespraech", "aktionen", "begruessung"], "begruessungen": [[5, "Noch wach{, person}?"], [11, "Guten Morgen{, person}."], [18, "Hallo{, person}. Was liegt an?"], [24, "Guten Abend{, person}."]], "start": [["J.A.R.V.I.S.", ""], ["Arc-Reaktor", "STABIL"], ["Gehirn", "CLAUDE"], ["Stimme", "BEREIT"]], "aktionen": [{"text": "Briefing", "frage": "Gib mir ein Briefing.", "symbol": "briefing"}, {"text": "Termine", "frage": "Was steht heute an?", "symbol": "kalender"}, {"text": "Wetter", "frage": "Wie wird das Wetter heute?", "symbol": "wetter"}, {"text": "News", "frage": "Was gibt's Neues in der Welt?", "symbol": "news"}], "app_aktionen": [], "app_bereiche": ["werte", "wetter", "strom", "termine", "haus", "server", "radio", "nachrichten", "schnellzugriff", "begruessung"], "nachtmodus": "aus", "bewegung": "voll", "werte_namen": {"strom": "STROM", "euro": "HEUTE", "last": "LAST"}, "pc_name": "PC", "verbindungen_extra": []};
+const STANDARD = {"name": "J.A.R.V.I.S.", "untertitel": "Just A Rather Very Intelligent System", "person": "", "haus": "", "farbe": "rot", "farben": null, "design": "klassisch", "bereiche": ["wetter", "systeme", "kalender", "welt", "verbindungen", "laufband", "gespraech", "aktionen", "begruessung"], "begruessungen": [[5, "Noch wach{, person}?"], [11, "Guten Morgen{, person}."], [18, "Hallo{, person}. Was liegt an?"], [24, "Guten Abend{, person}."]], "start": [["J.A.R.V.I.S.", ""], ["Arc-Reaktor", "STABIL"], ["Gehirn", "CLAUDE"], ["Stimme", "BEREIT"]], "aktionen": [{"text": "Briefing", "frage": "Gib mir ein Briefing.", "symbol": "briefing"}, {"text": "Termine", "frage": "Was steht heute an?", "symbol": "kalender"}, {"text": "Wetter", "frage": "Wie wird das Wetter heute?", "symbol": "wetter"}, {"text": "News", "frage": "Was gibt's Neues in der Welt?", "symbol": "news"}], "app_aktionen": [], "app_bereiche": ["werte", "wetter", "strom", "termine", "haus", "server", "radio", "nachrichten", "schnellzugriff", "begruessung"], "nachtmodus": "aus", "bewegung": "voll", "werte_namen": {"strom": "STROM", "euro": "HEUTE", "last": "LAST"}, "pc_name": "PC", "verbindungen_extra": []};
 // Sprache (0.3.0): ?sprache=de|en in der Adresse, sonst die Wahl im Browser (localStorage "jarvis-sprache"), sonst
 // (seit 0.3.1) die Sprache der Einrichtung, die die Bruecke im Zustand mitschickt ("sprache", gemerkt unter
 // "jarvis-sprache-bruecke"), sonst die Sprache des Browsers bzw. von Windows im PC-Fenster. Neue Texte immer in beide
 // Sprachen.
-const TEXTE = { de: {"lage_gross": "LAGE", "lage": "Lage", "l_termine": "Termine", "l_nas": "NAS", "l_container": "Container", "l_sicherung": "Sicherung", "l_pc": "PC", "l_jarvis": "Jarvis", "l_keine_termine": "Keine Termine", "l_laufen": "{0} von {1} laufen", "l_alle_gesund": "alle gesund", "l_ungesund": "ungesund", "l_neustart": "startet neu", "l_tot": "tot", "l_gestoppt": "gestoppt", "l_verbunden": "verbunden", "l_getrennt": "nicht verbunden", "l_steuerung": "Steuerung", "l_bereit_s": "bereit", "l_haengt": "hängt", "l_vor_h": "vor {0} h", "l_fehler": "Fehler", "l_ok": "ok", "l_alles_bereit": "Alle Werkzeuge bereit", "l_werkzeuge": "{0} von {1} Werkzeugen bereit", "l_laufzeit": "Laufzeit", "l_stand": "Stand {0}", "l_gpu": "Grafikkarte", "l_grad": "{0} °C", "l_speicher": "Speicher {0} %", "faehigkeiten_gross": "FÄHIGKEITEN", "einstellungen": "Einstellungen", "systeme": "Systeme", "haus": "Haus", "kalender": "Kalender", "welt": "Welt", "verbindungen": "Verbindungen", "gespraech": "Gespräch", "st_bereit": "Bereit", "st_hoert": "Höre zu", "st_denkt": "Denke nach", "st_spricht": "Spreche", "st_fehler": "Störung", "echtzeit_titel": "Gespräch in Echtzeit (Gemini Live): einfach reden, reinreden erlaubt", "echtzeit": "Echtzeit", "autostart": "Mit Windows starten", "autostart_k": "Jarvis läuft im Hintergrund und hört auf „Hey Jarvis“", "desktop": "Desktop-Symbol", "desktop_k": "zum Öffnen von Hand", "pc_client": "PC-Client", "pc_client_v": "PC-Client {0}", "nach_updates": "Nach Updates suchen", "jetzt_aktualisieren": "Jetzt aktualisieren", "lade_faehigkeiten": "Lade Fähigkeiten …", "nachrichten": "NACHRICHTEN", "lade_meldungen": "Lade Meldungen …", "frag": "Frag Jarvis …", "senden": "Senden", "neu_titel": "Neu in {0}", "neu_ok": "Verstanden", "aria_anhang": "Datei anhängen", "datei_oeffnen": "Öffnen", "datei_speichern": "Speichern unter …", "datei_gespeichert": "Gespeichert: {0}", "datei_alt": "Zum Öffnen bitte den PC-Client aktualisieren.", "datei_fehler": "Mit der Datei hat es nicht geklappt: {0}", "anhang_weg": "Anhang entfernen", "anhang_laedt": "bereite vor …", "anhang_wartet": "Die Datei wird noch vorbereitet …", "anhang_gross": "Die Datei ist zu groß (höchstens {0} MB).", "anhang_original": "Original {0} MB dabei", "anhang_original_gross": "Original über {0} MB, nur aufbereitet", "anhang_ton_lang": "Die Aufnahme ist {0} Minuten lang, höchstens {1} gehen.", "anhang_fehler": "Mit der Datei hat es nicht geklappt: {0}", "anhang_alt": "Dieser PC-Client kann noch keine Dateien, bitte aktualisieren.", "q_app_extern": "App unterwegs", "q_echtzeit_pc": "Echtzeit PC", "q_echtzeit_app": "Echtzeit App", "q_echtzeit_extern": "Echtzeit unterwegs", "q_echtzeit": "Echtzeit", "keine_verbindung": "Keine Verbindung", "freigabe_offen": "Freigabe offen: {0} · Kennwort sagen und Push bestätigen", "admin": "Admin-Modus · noch {0}", "pc_aus": "aus", "pc_haengt": "Steuerung hängt", "pc_du": "du bist dran", "pc_verbunden": "verbunden", "gehirn": "Gehirn", "stimme": "Stimme", "noch_nichts": "Noch nichts gesagt. Ungewöhnlich ruhig hier.", "verlauf_geschuetzt": "Das Gespräch steht im PC-Fenster und in der App (mit Anmeldung), nicht offen im Heimnetz.", "keine_termine": "Keine Termine. Genieß es.", "bis": "{0} bis {1} °C", "mediathek": "Neu in der Mediathek", "faehigkeiten": "Fähigkeiten", "werkzeuge": "Werkzeuge", "bereiche": "Bereiche", "an_gross": "AN", "aus_gross": "AUS", "erinnerungen": "Erinnerungen", "naechste": " · nächste {0}", "nur": "nur {0}", "fuss": "Eingänge: {0}   ·   Stand {1}", "fuss_pc": "   ·   Beispiel antippen = an Jarvis schicken", "pruefung_fehl": "Prüfung fehlgeschlagen: {0}", "version_da": "Version {0} verfügbar · {1}", "aktuell": "aktuell · geprüft {0} · {1}", "lade_neu": "Lade die neue Version, Jarvis startet gleich neu …", "suche": "Suche …", "et_startet": "⚡ Echtzeit startet …", "et_geht_nicht": "Echtzeit geht gerade nicht: {0}", "keine_antwort": "keine Antwort", "mikrofon": "Mikrofon", "tonverarbeitung": "Tonverarbeitung", "wiedergabe": "Wiedergabe", "et_schritt": "Echtzeit: {0} nicht verfügbar ({1}).", "et_klick": "⚡ Einmal ins Fenster klicken, dann geht's los", "et_weg": "Echtzeit-Verbindung weg ({0}).", "et_laeuft": "⚡ Echtzeit · einfach reden, reinreden geht", "et_gruss": "(Die Sitzung beginnt. Begrüß die Person in einem kurzen Satz.)", "hausgehirn": "▸ Hausgehirn", "hausgehirn_weg": "Das Hausgehirn ist gerade nicht erreichbar.", "et_ende_hey": "Echtzeit beendet. „Hey Jarvis“ geht wieder.", "et_still": "Zwei Minuten Stille, Echtzeit beendet.", "et_ende": "Echtzeit beendet.", "arc": "Arc-Reaktor", "stabil": "STABIL", "w_sunny": "Sonnig", "w_clear-night": "Klare Nacht", "w_partlycloudy": "Wolkig", "w_cloudy": "Bedeckt", "w_rainy": "Regen", "w_pouring": "Starkregen", "w_snowy": "Schnee", "w_snowy-rainy": "Schneeregen", "w_fog": "Nebel", "w_lightning": "Gewitter", "w_lightning-rainy": "Gewitter", "w_windy": "Windig", "w_windy-variant": "Windig", "w_hail": "Hagel", "z_stil_kurz": "kurz", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "ausführlich", "z_farbe_rot": "Rot-Gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blau", "z_farbe_gruen": "Grün", "z_hb_wetter": "Wetter", "z_hb_systeme": "Systeme", "z_hb_haus": "Haus", "z_hb_kalender": "Kalender", "z_hb_welt": "Weltlage", "z_hb_verbindungen": "Verbindungen", "z_hb_laufband": "Laufband", "z_hb_gespraech": "Gespräch", "z_hb_aktionen": "Knöpfe", "z_hb_begruessung": "Begrüßung", "z_hb_werte": "Werte", "z_sy_briefing": "Bericht", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Kopfhörer", "z_sy_news": "Zeitung", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Spiel", "z_sy_monitor": "Bildschirm", "z_sy_liste": "Liste", "z_sy_kalender": "Kalender", "z_sy_licht": "Licht", "z_sy_wetter": "Sonne", "z_sy_haus": "Haus", "z_sy_stern": "Stern", "z_sy_film": "Film", "z_aussehen": "AUSSEHEN", "z_aussehen_hinweis": "Gilt für Wandbildschirm, PC-Fenster und App und bleibt bei Updates erhalten. Sagen geht auch: „Jarvis, mach dich grün.“", "z_farbe": "Farbe", "z_eigene_farbe": "Eigene Farbe", "z_eigene_farbe_k": "Hauptfarbe, der Rest wird daraus berechnet", "z_eigene_farbe_titel": "eigene Farbe", "z_name_assistent": "Name des Assistenten", "z_so_nennt": "So nennt er dich", "z_untertitel": "Zeile unter dem Logo", "z_nachtmodus": "Nachtmodus", "z_nachtmodus_k": "22 bis 6 Uhr gedimmt", "z_ruhig": "Ruhige Bewegung", "z_ruhig_k": "langsamer, ohne Pulsieren", "z_kern": "Design Observatorium", "z_kern_k": "neuronaler Kern statt Reaktor", "z_knoepfe_titel": "KNÖPFE IM SCHNELLZUGRIFF", "z_k_text_ph": "Beschriftung, z. B. Licht", "z_k_frage_ph": "Was Jarvis tun soll, z. B. Mach das Licht im Wohnzimmer an.", "z_symbol": "Symbol", "z_knopf_dazu": "KNOPF DAZU", "z_wand_zeigen": "AM WANDBILDSCHIRM UND PC ZEIGEN", "z_rueckgaengig": "RÜCKGÄNGIG", "z_grundeinstellung": "GRUNDEINSTELLUNG", "z_grund_frage": "Aussehen auf die Grundeinstellung zurücksetzen (Stand nach der Einrichtung)?", "z_verhalten": "VERHALTEN", "z_verhalten_hinweis": "Gilt für Jarvis überall, auch am PC und an den Lautsprechern.", "z_zwischensaetze": "Zwischensätze", "z_zwischensaetze_k": "„Ich schau kurz in den Kalender …“", "z_antworten": "Antworten", "z_nachtruhe": "Nachtruhe", "z_nachtruhe_k": "keine Durchsagen, kein Vorlesen", "z_von_bis": "von … bis", "z_jarvis_antwortet_nicht": "Jarvis antwortet nicht.", "z_gespeichert": "✓ Gespeichert", "z_nach_oben": "nach oben", "z_entfernen": "entfernen", "z_uhr": "{0} Uhr", "z_beschriftung_fehlt": "Beschriftung und Auftrag ausfüllen.", "z_von": "von", "z_bis": "bis", "z_dieser_pc": "DIESER PC", "z_knoepfe_hinweis": "Gelten für PC-Fenster und Wandbildschirm. Die App kann eigene haben.", "k_rolle": "Hausassistent", "k_haus": "HAUS {0}", "k_spricht": "Spricht · Stimme {0}", "k_nicht": "{0} Dienste nicht verfügbar", "k_nicht1": "1 Dienst nicht verfügbar", "k_kapsel": "{0} Dienste eingeschränkt", "k_kapsel1": "1 Dienst eingeschränkt", "k_ehrlich": "EHRLICH GESAGT", "k_ehrlich_satz": "Das kann ich gerade nicht. Ich sage es dir, statt so zu tun, als ginge es:", "k_bereit": "{0} / {1} bereit", "k_nachlesen": "ZUM NACHLESEN", "k_bleibt": "Bleibt bis zu deiner nächsten Frage.", "k_schliessen": "Schließen", "k_sprich": "Sprich oder schreib …", "k_ki": "{0} ist eine KI. Wichtiges bitte selbst prüfen.", "k_kern_aria": "Neuronaler Kern"},
-  en: {"lage_gross": "STATUS", "lage": "Status", "l_termine": "Calendar", "l_nas": "Server", "l_container": "Containers", "l_sicherung": "Backup", "l_pc": "PC", "l_jarvis": "Jarvis", "l_keine_termine": "No events", "l_laufen": "{0} of {1} running", "l_alle_gesund": "all healthy", "l_ungesund": "unhealthy", "l_neustart": "restarting", "l_tot": "dead", "l_gestoppt": "stopped", "l_verbunden": "connected", "l_getrennt": "not connected", "l_steuerung": "Control", "l_bereit_s": "ready", "l_haengt": "stuck", "l_vor_h": "{0} h ago", "l_fehler": "failed", "l_ok": "ok", "l_alles_bereit": "All tools ready", "l_werkzeuge": "{0} of {1} tools ready", "l_laufzeit": "Uptime", "l_stand": "as of {0}", "l_gpu": "Graphics", "l_grad": "{0} °C", "l_speicher": "memory {0} %", "faehigkeiten_gross": "SKILLS", "einstellungen": "Settings", "systeme": "Systems", "haus": "Home", "kalender": "Calendar", "welt": "World", "verbindungen": "Connections", "gespraech": "Conversation", "st_bereit": "Ready", "st_hoert": "Listening", "st_denkt": "Thinking", "st_spricht": "Speaking", "st_fehler": "Fault", "echtzeit_titel": "Real-time conversation (Gemini Live): just talk, interrupting is fine", "echtzeit": "Real-time", "autostart": "Start when you sign in", "autostart_k": "Jarvis runs in the background and listens for “Hey Jarvis”", "desktop": "Desktop icon", "desktop_k": "to open it by hand", "pc_client": "PC client", "pc_client_v": "PC client {0}", "nach_updates": "Check for updates", "jetzt_aktualisieren": "Update now", "lade_faehigkeiten": "Loading skills …", "nachrichten": "NEWS", "lade_meldungen": "Loading news …", "frag": "Ask Jarvis …", "senden": "Send", "neu_titel": "New in {0}", "neu_ok": "Got it", "aria_anhang": "Attach file", "datei_oeffnen": "Open", "datei_speichern": "Save as …", "datei_gespeichert": "Saved: {0}", "datei_alt": "Please update the PC client to open files.", "datei_fehler": "That didn't work with the file: {0}", "anhang_weg": "Remove attachment", "anhang_laedt": "preparing …", "anhang_wartet": "The file is still being prepared …", "anhang_gross": "The file is too large (at most {0} MB).", "anhang_original": "original {0} MB included", "anhang_original_gross": "original over {0} MB, prepared only", "anhang_ton_lang": "The recording is {0} minutes long, at most {1} work.", "anhang_fehler": "That file didn't work: {0}", "anhang_alt": "This PC client can't handle files yet, please update.", "q_app_extern": "App on the go", "q_echtzeit_pc": "Real-time PC", "q_echtzeit_app": "Real-time app", "q_echtzeit_extern": "Real-time on the go", "q_echtzeit": "Real-time", "keine_verbindung": "No connection", "freigabe_offen": "Approval pending: {0} · say the password and confirm the push", "admin": "Admin mode · {0} left", "pc_aus": "off", "pc_haengt": "control stuck", "pc_du": "your turn", "pc_verbunden": "connected", "gehirn": "Brain", "stimme": "Voice", "noch_nichts": "Nothing said yet. Unusually quiet here.", "verlauf_geschuetzt": "The conversation is shown in the PC window and the app (signed in), not openly on the home network.", "keine_termine": "No appointments. Enjoy it.", "bis": "{0} to {1} °C", "mediathek": "New in the media library", "faehigkeiten": "Skills", "werkzeuge": "Tools", "bereiche": "Areas", "an_gross": "ON", "aus_gross": "OFF", "erinnerungen": "Reminders", "naechste": " · next {0}", "nur": "only {0}", "fuss": "Inputs: {0}   ·   As of {1}", "fuss_pc": "   ·   Tap an example = send it to Jarvis", "pruefung_fehl": "Check failed: {0}", "version_da": "Version {0} available · {1}", "aktuell": "up to date · checked {0} · {1}", "lade_neu": "Downloading the new version, Jarvis restarts in a moment …", "suche": "Searching …", "et_startet": "⚡ Real-time starting …", "et_geht_nicht": "Real-time isn't available right now: {0}", "keine_antwort": "no answer", "mikrofon": "Microphone", "tonverarbeitung": "Audio processing", "wiedergabe": "Playback", "et_schritt": "Real-time: {0} not available ({1}).", "et_klick": "⚡ Click into the window once, then off we go", "et_weg": "Real-time connection lost ({0}).", "et_laeuft": "⚡ Real-time · just talk, interrupting works", "et_gruss": "(The session starts. Greet the person in one short sentence.)", "hausgehirn": "▸ Home brain", "hausgehirn_weg": "The home brain can't be reached right now.", "et_ende_hey": "Real-time ended. “Hey Jarvis” works again.", "et_still": "Two minutes of silence, real-time ended.", "et_ende": "Real-time ended.", "arc": "Arc reactor", "stabil": "STABLE", "w_sunny": "Sunny", "w_clear-night": "Clear night", "w_partlycloudy": "Partly cloudy", "w_cloudy": "Cloudy", "w_rainy": "Rain", "w_pouring": "Heavy rain", "w_snowy": "Snow", "w_snowy-rainy": "Sleet", "w_fog": "Fog", "w_lightning": "Thunderstorm", "w_lightning-rainy": "Thunderstorm", "w_windy": "Windy", "w_windy-variant": "Windy", "w_hail": "Hail", "z_stil_kurz": "short", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "detailed", "z_farbe_rot": "Red-gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blue", "z_farbe_gruen": "Green", "z_hb_wetter": "Weather", "z_hb_systeme": "Systems", "z_hb_haus": "Home", "z_hb_kalender": "Calendar", "z_hb_welt": "World", "z_hb_verbindungen": "Connections", "z_hb_laufband": "Ticker", "z_hb_gespraech": "Conversation", "z_hb_aktionen": "Buttons", "z_hb_begruessung": "Greeting", "z_hb_werte": "Values", "z_sy_briefing": "Report", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Headphones", "z_sy_news": "Newspaper", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Game", "z_sy_monitor": "Screen", "z_sy_liste": "List", "z_sy_kalender": "Calendar", "z_sy_licht": "Light", "z_sy_wetter": "Sun", "z_sy_haus": "House", "z_sy_stern": "Star", "z_sy_film": "Film", "z_aussehen": "APPEARANCE", "z_aussehen_hinweis": "Applies to the wall display, PC window and app, and survives updates. You can also just say: “Jarvis, turn green.”", "z_farbe": "Color", "z_eigene_farbe": "Custom color", "z_eigene_farbe_k": "Main color, the rest is derived from it", "z_eigene_farbe_titel": "custom color", "z_name_assistent": "Assistant's name", "z_so_nennt": "What he calls you", "z_untertitel": "Line under the logo", "z_nachtmodus": "Night mode", "z_nachtmodus_k": "dimmed from 10 pm to 6 am", "z_ruhig": "Calm motion", "z_ruhig_k": "slower, no pulsing", "z_kern": "Observatory design", "z_kern_k": "neural core instead of the reactor", "z_knoepfe_titel": "QUICK ACCESS BUTTONS", "z_k_text_ph": "Label, e.g. Light", "z_k_frage_ph": "What Jarvis should do, e.g. Turn on the living room light.", "z_symbol": "Icon", "z_knopf_dazu": "ADD BUTTON", "z_wand_zeigen": "SHOW ON WALL DISPLAY AND PC", "z_rueckgaengig": "UNDO", "z_grundeinstellung": "RESET", "z_grund_frage": "Reset the appearance to the default (as after setup)?", "z_verhalten": "BEHAVIOR", "z_verhalten_hinweis": "Applies to Jarvis everywhere, including the PC and speakers.", "z_zwischensaetze": "Interim phrases", "z_zwischensaetze_k": "“Let me check the calendar …”", "z_antworten": "Answers", "z_nachtruhe": "Quiet hours", "z_nachtruhe_k": "no announcements, no reading aloud", "z_von_bis": "from … to", "z_jarvis_antwortet_nicht": "Jarvis isn't answering.", "z_gespeichert": "✓ Saved", "z_nach_oben": "move up", "z_entfernen": "remove", "z_uhr": "{0}:00", "z_beschriftung_fehlt": "Fill in the label and the task.", "z_von": "from", "z_bis": "to", "z_dieser_pc": "THIS PC", "z_knoepfe_hinweis": "Apply to the PC window and wall display. The app can have its own.", "k_rolle": "Home assistant", "k_haus": "HOME · {0}", "k_spricht": "Speaking · voice {0}", "k_nicht": "{0} services unavailable", "k_nicht1": "1 service unavailable", "k_kapsel": "{0} services limited", "k_kapsel1": "1 service limited", "k_ehrlich": "HONESTLY", "k_ehrlich_satz": "This isn't working right now. I'd rather tell you than pretend it is:", "k_bereit": "{0} / {1} ready", "k_nachlesen": "TO READ BACK", "k_bleibt": "Stays until your next question.", "k_schliessen": "Close", "k_sprich": "Speak or type …", "k_ki": "{0} is an AI. Please double-check anything important.", "k_kern_aria": "Neural core"} };
+const TEXTE = { de: {"lage_gross": "LAGE", "lage": "Lage", "l_termine": "Termine", "l_nas": "NAS", "l_container": "Container", "l_sicherung": "Sicherung", "l_pc": "PC", "l_jarvis": "Jarvis", "l_keine_termine": "Keine Termine", "l_laufen": "{0} von {1} laufen", "l_alle_gesund": "alle gesund", "l_ungesund": "ungesund", "l_neustart": "startet neu", "l_tot": "tot", "l_gestoppt": "gestoppt", "l_verbunden": "verbunden", "l_getrennt": "nicht verbunden", "l_steuerung": "Steuerung", "l_bereit_s": "bereit", "l_haengt": "hängt", "l_vor_h": "vor {0} h", "l_fehler": "Fehler", "l_ok": "ok", "l_alles_bereit": "Alle Werkzeuge bereit", "l_werkzeuge": "{0} von {1} Werkzeugen bereit", "l_laufzeit": "Laufzeit", "l_stand": "Stand {0}", "l_gpu": "Grafikkarte", "l_grad": "{0} °C", "l_speicher": "Speicher {0} %", "faehigkeiten_gross": "FÄHIGKEITEN", "einstellungen": "Einstellungen", "systeme": "Systeme", "haus": "Haus", "kalender": "Kalender", "welt": "Welt", "verbindungen": "Verbindungen", "gespraech": "Gespräch", "st_bereit": "Bereit", "st_hoert": "Höre zu", "st_denkt": "Denke nach", "st_spricht": "Spreche", "st_fehler": "Störung", "echtzeit_titel": "Gespräch in Echtzeit (Gemini Live): einfach reden, reinreden erlaubt", "echtzeit": "Echtzeit", "autostart": "Mit Windows starten", "autostart_k": "Jarvis läuft im Hintergrund und hört auf „Hey Jarvis“", "desktop": "Desktop-Symbol", "desktop_k": "zum Öffnen von Hand", "pc_client": "PC-Client", "pc_client_v": "PC-Client {0}", "nach_updates": "Nach Updates suchen", "jetzt_aktualisieren": "Jetzt aktualisieren", "lade_faehigkeiten": "Lade Fähigkeiten …", "nachrichten": "NACHRICHTEN", "lade_meldungen": "Lade Meldungen …", "frag": "Frag Jarvis …", "senden": "Senden", "neu_titel": "Neu in {0}", "neu_ok": "Verstanden", "aria_anhang": "Datei anhängen", "datei_oeffnen": "Öffnen", "datei_speichern": "Speichern unter …", "datei_gespeichert": "Gespeichert: {0}", "datei_alt": "Zum Öffnen bitte den PC-Client aktualisieren.", "datei_fehler": "Mit der Datei hat es nicht geklappt: {0}", "anhang_weg": "Anhang entfernen", "anhang_laedt": "bereite vor …", "anhang_wartet": "Die Datei wird noch vorbereitet …", "anhang_gross": "Die Datei ist zu groß (höchstens {0} MB).", "anhang_original": "Original {0} MB dabei", "anhang_original_gross": "Original über {0} MB, nur aufbereitet", "anhang_ton_lang": "Die Aufnahme ist {0} Minuten lang, höchstens {1} gehen.", "anhang_fehler": "Mit der Datei hat es nicht geklappt: {0}", "anhang_alt": "Dieser PC-Client kann noch keine Dateien, bitte aktualisieren.", "q_app_extern": "App unterwegs", "q_echtzeit_pc": "Echtzeit PC", "q_echtzeit_app": "Echtzeit App", "q_echtzeit_extern": "Echtzeit unterwegs", "q_echtzeit": "Echtzeit", "keine_verbindung": "Keine Verbindung", "freigabe_offen": "Freigabe offen: {0} · Kennwort sagen und Push bestätigen", "admin": "Admin-Modus · noch {0}", "pc_aus": "aus", "pc_haengt": "Steuerung hängt", "pc_du": "du bist dran", "pc_verbunden": "verbunden", "gehirn": "Gehirn", "stimme": "Stimme", "noch_nichts": "Noch nichts gesagt. Ungewöhnlich ruhig hier.", "verlauf_geschuetzt": "Das Gespräch steht im PC-Fenster und in der App (mit Anmeldung), nicht offen im Heimnetz.", "keine_termine": "Keine Termine. Genieß es.", "bis": "{0} bis {1} °C", "mediathek": "Neu in der Mediathek", "faehigkeiten": "Fähigkeiten", "werkzeuge": "Werkzeuge", "bereiche": "Bereiche", "an_gross": "AN", "aus_gross": "AUS", "erinnerungen": "Erinnerungen", "naechste": " · nächste {0}", "nur": "nur {0}", "fuss": "Eingänge: {0}   ·   Stand {1}", "fuss_pc": "   ·   Beispiel antippen = an Jarvis schicken", "pruefung_fehl": "Prüfung fehlgeschlagen: {0}", "version_da": "Version {0} verfügbar · {1}", "aktuell": "aktuell · geprüft {0} · {1}", "lade_neu": "Lade die neue Version, Jarvis startet gleich neu …", "suche": "Suche …", "et_startet": "⚡ Echtzeit startet …", "et_geht_nicht": "Echtzeit geht gerade nicht: {0}", "keine_antwort": "keine Antwort", "mikrofon": "Mikrofon", "tonverarbeitung": "Tonverarbeitung", "wiedergabe": "Wiedergabe", "et_schritt": "Echtzeit: {0} nicht verfügbar ({1}).", "et_klick": "⚡ Einmal ins Fenster klicken, dann geht's los", "et_weg": "Echtzeit-Verbindung weg ({0}).", "et_laeuft": "⚡ Echtzeit · einfach reden, reinreden geht", "et_gruss": "(Die Sitzung beginnt. Begrüß die Person in einem kurzen Satz.)", "hausgehirn": "▸ Hausgehirn", "hausgehirn_weg": "Das Hausgehirn ist gerade nicht erreichbar.", "et_ende_hey": "Echtzeit beendet. „Hey Jarvis“ geht wieder.", "et_still": "Zwei Minuten Stille, Echtzeit beendet.", "et_ende": "Echtzeit beendet.", "arc": "Arc-Reaktor", "stabil": "STABIL", "w_sunny": "Sonnig", "w_clear-night": "Klare Nacht", "w_partlycloudy": "Wolkig", "w_cloudy": "Bedeckt", "w_rainy": "Regen", "w_pouring": "Starkregen", "w_snowy": "Schnee", "w_snowy-rainy": "Schneeregen", "w_fog": "Nebel", "w_lightning": "Gewitter", "w_lightning-rainy": "Gewitter", "w_windy": "Windig", "w_windy-variant": "Windig", "w_hail": "Hagel", "z_stil_kurz": "kurz", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "ausführlich", "z_farbe_rot": "Rot-Gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blau", "z_farbe_gruen": "Grün", "z_hb_wetter": "Wetter", "z_hb_systeme": "Systeme", "z_hb_haus": "Haus", "z_hb_kalender": "Kalender", "z_hb_welt": "Weltlage", "z_hb_verbindungen": "Verbindungen", "z_hb_laufband": "Laufband", "z_hb_gespraech": "Gespräch", "z_hb_aktionen": "Knöpfe", "z_hb_begruessung": "Begrüßung", "z_hb_werte": "Werte", "z_sy_briefing": "Bericht", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Kopfhörer", "z_sy_news": "Zeitung", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Spiel", "z_sy_monitor": "Bildschirm", "z_sy_liste": "Liste", "z_sy_kalender": "Kalender", "z_sy_licht": "Licht", "z_sy_wetter": "Sonne", "z_sy_haus": "Haus", "z_sy_stern": "Stern", "z_sy_film": "Film", "z_aussehen": "AUSSEHEN", "z_aussehen_hinweis": "Gilt für Wandbildschirm, PC-Fenster und App und bleibt bei Updates erhalten. Sagen geht auch: „Jarvis, mach dich grün.“", "z_farbe": "Farbe", "z_eigene_farbe": "Eigene Farbe", "z_eigene_farbe_k": "Hauptfarbe, der Rest wird daraus berechnet", "z_eigene_farbe_titel": "eigene Farbe", "z_name_assistent": "Name des Assistenten", "z_so_nennt": "So nennt er dich", "z_untertitel": "Zeile unter dem Logo", "z_nachtmodus": "Nachtmodus", "z_nachtmodus_k": "22 bis 6 Uhr gedimmt", "z_ruhig": "Ruhige Bewegung", "z_ruhig_k": "langsamer, ohne Pulsieren", "z_kern": "Design Observatorium", "z_kern_k": "neuronaler Kern statt Reaktor", "z_knoepfe_titel": "KNÖPFE IM SCHNELLZUGRIFF", "z_k_text_ph": "Beschriftung, z. B. Licht", "z_k_frage_ph": "Was Jarvis tun soll, z. B. Mach das Licht im Wohnzimmer an.", "z_symbol": "Symbol", "z_knopf_dazu": "KNOPF DAZU", "z_wand_zeigen": "AM WANDBILDSCHIRM UND PC ZEIGEN", "z_rueckgaengig": "RÜCKGÄNGIG", "z_grundeinstellung": "GRUNDEINSTELLUNG", "z_grund_frage": "Aussehen auf die Grundeinstellung zurücksetzen (Stand nach der Einrichtung)?", "z_verhalten": "VERHALTEN", "z_verhalten_hinweis": "Gilt für Jarvis überall, auch am PC und an den Lautsprechern.", "z_zwischensaetze": "Zwischensätze", "z_zwischensaetze_k": "„Ich schau kurz in den Kalender …“", "z_antworten": "Antworten", "z_nachtruhe": "Nachtruhe", "z_nachtruhe_k": "keine Durchsagen, kein Vorlesen", "z_von_bis": "von … bis", "z_jarvis_antwortet_nicht": "Jarvis antwortet nicht.", "z_gespeichert": "✓ Gespeichert", "z_nach_oben": "nach oben", "z_entfernen": "entfernen", "z_uhr": "{0} Uhr", "z_beschriftung_fehlt": "Beschriftung und Auftrag ausfüllen.", "z_von": "von", "z_bis": "bis", "z_dieser_pc": "DIESER PC", "z_knoepfe_hinweis": "Gelten für PC-Fenster und Wandbildschirm. Die App kann eigene haben.", "k_rolle": "Hausassistent", "k_haus": "HAUS {0}", "k_spricht": "Spricht · Stimme {0}", "k_nicht": "{0} Dienste nicht verfügbar", "k_nicht1": "1 Dienst nicht verfügbar", "k_kapsel": "{0} Dienste eingeschränkt", "k_kapsel1": "1 Dienst eingeschränkt", "k_ehrlich": "EHRLICH GESAGT", "k_ehrlich_satz": "Das kann ich gerade nicht. Ich sage es dir, statt so zu tun, als ginge es:", "k_bereit": "{0} / {1} bereit", "k_nachlesen": "ZUM NACHLESEN", "k_bleibt": "Bleibt bis zu deiner nächsten Frage.", "k_schliessen": "Schließen", "k_sprich": "Sprich oder schreib …", "k_ki": "{0} ist eine KI. Wichtiges bitte selbst prüfen.", "k_kern_aria": "Neuronaler Kern", "gedaechtnis_gross": "GEDÄCHTNIS", "gedaechtnis": "Gedächtnis", "sb_titel": "GEDÄCHTNIS", "sb_suche": "Im Gedächtnis suchen …", "sb_haus": "Haus", "sb_privat": "Nur für dich", "sb_alles": "alles", "sb_seit": "seit {0}", "sb_woche": "Diese Woche", "sb_sterne": "{0} Sterne", "sb_sterne1": "1 Stern", "sb_treffer": "{0} Treffer", "sb_von": "{0} von {1}", "sb_leer": "Noch nichts gemerkt. Sag Jarvis zum Beispiel: „Merk dir, dass …“", "sb_laden": "Lade das Gedächtnis …", "sb_datum": "Gemerkt", "sb_quelle": "Quelle", "sb_bereich": "Gilt für", "sb_bereich_haus": "alle im Haus", "sb_bereich_haus_von": "alle im Haus (von {0})", "sb_bereich_privat": "nur dich", "sb_frueher": "Vorher", "sb_aendern": "Ändern", "sb_vergessen": "Vergessen", "sb_speichern": "Speichern", "sb_abbrechen": "Abbrechen", "sb_sicher": "Wirklich vergessen?", "sb_sicher_haus": "Wirklich vergessen? Das gilt für alle im Haus.", "sb_ja": "Ja, vergessen", "sb_nein": "Nein", "sb_schliessen": "Schließen", "sb_vor_tagen": "vor {0} Tagen", "sb_heute": "heute", "sb_gestern": "gestern", "sb_mehr": "Gezeigt werden die neuesten {0} von {1}.", "sb_aria": "Sternbild des Gedächtnisses", "sb_zeitleiste": "Zeitleiste", "sb_fehler": "Das Gedächtnis ist gerade nicht erreichbar.", "sb_alt": "Diese Brücke kennt das Gedächtnis noch nicht.", "sb_q_merken": "gemerkt", "sb_q_gelernt": "nachts gelernt", "sb_q_import": "per Liste", "sb_q_uebernommen": "übernommen", "sb_q_app": "in der App geändert", "sb_gebraucht": "Zuletzt gebraucht", "sb_gebraucht_wert": "{0} · {1}×", "sb_nie": "noch nie gebraucht", "sb_nur_urheber": "Gemerkt von {0}. Ändern oder vergessen können nur {0} und die Hauptperson.", "sb_nur_haupt": "Ändern oder vergessen kann nur die Hauptperson.", "sb_nur_urheber_haupt": "Gemerkt von {0} (Hauptperson). Ändern oder vergessen kann nur {0}.", "grundriss": "Grundriss", "gast_wlan": "GÄSTE-WLAN", "gast_qr": "QR-Code Gäste-WLAN", "gast_scannen": "Mit der Handykamera scannen · bis {0}"},
+  en: {"lage_gross": "STATUS", "lage": "Status", "l_termine": "Calendar", "l_nas": "Server", "l_container": "Containers", "l_sicherung": "Backup", "l_pc": "PC", "l_jarvis": "Jarvis", "l_keine_termine": "No events", "l_laufen": "{0} of {1} running", "l_alle_gesund": "all healthy", "l_ungesund": "unhealthy", "l_neustart": "restarting", "l_tot": "dead", "l_gestoppt": "stopped", "l_verbunden": "connected", "l_getrennt": "not connected", "l_steuerung": "Control", "l_bereit_s": "ready", "l_haengt": "stuck", "l_vor_h": "{0} h ago", "l_fehler": "failed", "l_ok": "ok", "l_alles_bereit": "All tools ready", "l_werkzeuge": "{0} of {1} tools ready", "l_laufzeit": "Uptime", "l_stand": "as of {0}", "l_gpu": "Graphics", "l_grad": "{0} °C", "l_speicher": "memory {0} %", "faehigkeiten_gross": "SKILLS", "einstellungen": "Settings", "systeme": "Systems", "haus": "Home", "kalender": "Calendar", "welt": "World", "verbindungen": "Connections", "gespraech": "Conversation", "st_bereit": "Ready", "st_hoert": "Listening", "st_denkt": "Thinking", "st_spricht": "Speaking", "st_fehler": "Fault", "echtzeit_titel": "Real-time conversation (Gemini Live): just talk, interrupting is fine", "echtzeit": "Real-time", "autostart": "Start when you sign in", "autostart_k": "Jarvis runs in the background and listens for “Hey Jarvis”", "desktop": "Desktop icon", "desktop_k": "to open it by hand", "pc_client": "PC client", "pc_client_v": "PC client {0}", "nach_updates": "Check for updates", "jetzt_aktualisieren": "Update now", "lade_faehigkeiten": "Loading skills …", "nachrichten": "NEWS", "lade_meldungen": "Loading news …", "frag": "Ask Jarvis …", "senden": "Send", "neu_titel": "New in {0}", "neu_ok": "Got it", "aria_anhang": "Attach file", "datei_oeffnen": "Open", "datei_speichern": "Save as …", "datei_gespeichert": "Saved: {0}", "datei_alt": "Please update the PC client to open files.", "datei_fehler": "That didn't work with the file: {0}", "anhang_weg": "Remove attachment", "anhang_laedt": "preparing …", "anhang_wartet": "The file is still being prepared …", "anhang_gross": "The file is too large (at most {0} MB).", "anhang_original": "original {0} MB included", "anhang_original_gross": "original over {0} MB, prepared only", "anhang_ton_lang": "The recording is {0} minutes long, at most {1} work.", "anhang_fehler": "That file didn't work: {0}", "anhang_alt": "This PC client can't handle files yet, please update.", "q_app_extern": "App on the go", "q_echtzeit_pc": "Real-time PC", "q_echtzeit_app": "Real-time app", "q_echtzeit_extern": "Real-time on the go", "q_echtzeit": "Real-time", "keine_verbindung": "No connection", "freigabe_offen": "Approval pending: {0} · say the password and confirm the push", "admin": "Admin mode · {0} left", "pc_aus": "off", "pc_haengt": "control stuck", "pc_du": "your turn", "pc_verbunden": "connected", "gehirn": "Brain", "stimme": "Voice", "noch_nichts": "Nothing said yet. Unusually quiet here.", "verlauf_geschuetzt": "The conversation is shown in the PC window and the app (signed in), not openly on the home network.", "keine_termine": "No appointments. Enjoy it.", "bis": "{0} to {1} °C", "mediathek": "New in the media library", "faehigkeiten": "Skills", "werkzeuge": "Tools", "bereiche": "Areas", "an_gross": "ON", "aus_gross": "OFF", "erinnerungen": "Reminders", "naechste": " · next {0}", "nur": "only {0}", "fuss": "Inputs: {0}   ·   As of {1}", "fuss_pc": "   ·   Tap an example = send it to Jarvis", "pruefung_fehl": "Check failed: {0}", "version_da": "Version {0} available · {1}", "aktuell": "up to date · checked {0} · {1}", "lade_neu": "Downloading the new version, Jarvis restarts in a moment …", "suche": "Searching …", "et_startet": "⚡ Real-time starting …", "et_geht_nicht": "Real-time isn't available right now: {0}", "keine_antwort": "no answer", "mikrofon": "Microphone", "tonverarbeitung": "Audio processing", "wiedergabe": "Playback", "et_schritt": "Real-time: {0} not available ({1}).", "et_klick": "⚡ Click into the window once, then off we go", "et_weg": "Real-time connection lost ({0}).", "et_laeuft": "⚡ Real-time · just talk, interrupting works", "et_gruss": "(The session starts. Greet the person in one short sentence.)", "hausgehirn": "▸ Home brain", "hausgehirn_weg": "The home brain can't be reached right now.", "et_ende_hey": "Real-time ended. “Hey Jarvis” works again.", "et_still": "Two minutes of silence, real-time ended.", "et_ende": "Real-time ended.", "arc": "Arc reactor", "stabil": "STABLE", "w_sunny": "Sunny", "w_clear-night": "Clear night", "w_partlycloudy": "Partly cloudy", "w_cloudy": "Cloudy", "w_rainy": "Rain", "w_pouring": "Heavy rain", "w_snowy": "Snow", "w_snowy-rainy": "Sleet", "w_fog": "Fog", "w_lightning": "Thunderstorm", "w_lightning-rainy": "Thunderstorm", "w_windy": "Windy", "w_windy-variant": "Windy", "w_hail": "Hail", "z_stil_kurz": "short", "z_stil_normal": "normal", "z_stil_ausfuehrlich": "detailed", "z_farbe_rot": "Red-gold", "z_farbe_cyan": "Cyan", "z_farbe_blau": "Blue", "z_farbe_gruen": "Green", "z_hb_wetter": "Weather", "z_hb_systeme": "Systems", "z_hb_haus": "Home", "z_hb_kalender": "Calendar", "z_hb_welt": "World", "z_hb_verbindungen": "Connections", "z_hb_laufband": "Ticker", "z_hb_gespraech": "Conversation", "z_hb_aktionen": "Buttons", "z_hb_begruessung": "Greeting", "z_hb_werte": "Values", "z_sy_briefing": "Report", "z_sy_radio": "Radio", "z_sy_kopfhoerer": "Headphones", "z_sy_news": "Newspaper", "z_sy_chip": "Chip", "z_sy_ball": "Ball", "z_sy_gamepad": "Game", "z_sy_monitor": "Screen", "z_sy_liste": "List", "z_sy_kalender": "Calendar", "z_sy_licht": "Light", "z_sy_wetter": "Sun", "z_sy_haus": "House", "z_sy_stern": "Star", "z_sy_film": "Film", "z_aussehen": "APPEARANCE", "z_aussehen_hinweis": "Applies to the wall display, PC window and app, and survives updates. You can also just say: “Jarvis, turn green.”", "z_farbe": "Color", "z_eigene_farbe": "Custom color", "z_eigene_farbe_k": "Main color, the rest is derived from it", "z_eigene_farbe_titel": "custom color", "z_name_assistent": "Assistant's name", "z_so_nennt": "What he calls you", "z_untertitel": "Line under the logo", "z_nachtmodus": "Night mode", "z_nachtmodus_k": "dimmed from 10 pm to 6 am", "z_ruhig": "Calm motion", "z_ruhig_k": "slower, no pulsing", "z_kern": "Observatory design", "z_kern_k": "neural core instead of the reactor", "z_knoepfe_titel": "QUICK ACCESS BUTTONS", "z_k_text_ph": "Label, e.g. Light", "z_k_frage_ph": "What Jarvis should do, e.g. Turn on the living room light.", "z_symbol": "Icon", "z_knopf_dazu": "ADD BUTTON", "z_wand_zeigen": "SHOW ON WALL DISPLAY AND PC", "z_rueckgaengig": "UNDO", "z_grundeinstellung": "RESET", "z_grund_frage": "Reset the appearance to the default (as after setup)?", "z_verhalten": "BEHAVIOR", "z_verhalten_hinweis": "Applies to Jarvis everywhere, including the PC and speakers.", "z_zwischensaetze": "Interim phrases", "z_zwischensaetze_k": "“Let me check the calendar …”", "z_antworten": "Answers", "z_nachtruhe": "Quiet hours", "z_nachtruhe_k": "no announcements, no reading aloud", "z_von_bis": "from … to", "z_jarvis_antwortet_nicht": "Jarvis isn't answering.", "z_gespeichert": "✓ Saved", "z_nach_oben": "move up", "z_entfernen": "remove", "z_uhr": "{0}:00", "z_beschriftung_fehlt": "Fill in the label and the task.", "z_von": "from", "z_bis": "to", "z_dieser_pc": "THIS PC", "z_knoepfe_hinweis": "Apply to the PC window and wall display. The app can have its own.", "k_rolle": "Home assistant", "k_haus": "HOME · {0}", "k_spricht": "Speaking · voice {0}", "k_nicht": "{0} services unavailable", "k_nicht1": "1 service unavailable", "k_kapsel": "{0} services limited", "k_kapsel1": "1 service limited", "k_ehrlich": "HONESTLY", "k_ehrlich_satz": "This isn't working right now. I'd rather tell you than pretend it is:", "k_bereit": "{0} / {1} ready", "k_nachlesen": "TO READ BACK", "k_bleibt": "Stays until your next question.", "k_schliessen": "Close", "k_sprich": "Speak or type …", "k_ki": "{0} is an AI. Please double-check anything important.", "k_kern_aria": "Neural core", "gedaechtnis_gross": "MEMORY", "gedaechtnis": "Memory", "sb_titel": "MEMORY", "sb_suche": "Search memory …", "sb_haus": "Home", "sb_privat": "Only you", "sb_alles": "all", "sb_seit": "since {0}", "sb_woche": "This week", "sb_sterne": "{0} stars", "sb_sterne1": "1 star", "sb_treffer": "{0} matches", "sb_von": "{0} of {1}", "sb_leer": "Nothing remembered yet. Tell Jarvis, for example: “Remember that …”", "sb_laden": "Loading memory …", "sb_datum": "Remembered", "sb_quelle": "Source", "sb_bereich": "Applies to", "sb_bereich_haus": "everyone at home", "sb_bereich_haus_von": "everyone at home (by {0})", "sb_bereich_privat": "only you", "sb_frueher": "Before", "sb_aendern": "Edit", "sb_vergessen": "Forget", "sb_speichern": "Save", "sb_abbrechen": "Cancel", "sb_sicher": "Really forget it?", "sb_sicher_haus": "Really forget it? This applies to everyone at home.", "sb_ja": "Yes, forget", "sb_nein": "No", "sb_schliessen": "Close", "sb_vor_tagen": "{0} days ago", "sb_heute": "today", "sb_gestern": "yesterday", "sb_mehr": "Showing the newest {0} of {1}.", "sb_aria": "Constellation of the memory", "sb_zeitleiste": "Timeline", "sb_fehler": "The memory can't be reached right now.", "sb_alt": "This bridge doesn't know the memory view yet.", "sb_q_merken": "remembered", "sb_q_gelernt": "learned overnight", "sb_q_import": "via list", "sb_q_uebernommen": "carried over", "sb_q_app": "edited in the app", "sb_gebraucht": "Last used", "sb_gebraucht_wert": "{0} · {1}×", "sb_nie": "never used", "sb_nur_urheber": "Remembered by {0}. Only {0} and the main person can edit or forget it.", "sb_nur_haupt": "Only the main person can edit or forget it.", "sb_nur_urheber_haupt": "Remembered by {0} (main person). Only {0} can edit or forget it.", "grundriss": "Floor plan", "gast_wlan": "GUEST WI-FI", "gast_qr": "Guest Wi-Fi QR code", "gast_scannen": "Scan with your phone camera · until {0}"} };
 const STANDARD_EN = {"begruessungen": [[5, "Still up{, person}?"], [11, "Good morning{, person}."], [18, "Hello{, person}. What's up?"], [24, "Good evening{, person}."]], "start": [["J.A.R.V.I.S.", ""], ["Arc reactor", "STABLE"], ["Brain", "CLAUDE"], ["Voice", "READY"]], "aktionen": [{"text": "Briefing", "frage": "Give me a briefing.", "symbol": "briefing"}, {"text": "Calendar", "frage": "What's on today?", "symbol": "kalender"}, {"text": "Weather", "frage": "What's the weather today?", "symbol": "wetter"}, {"text": "News", "frage": "What's new in the world?", "symbol": "news"}], "werte_namen": {"strom": "POWER", "euro": "TODAY", "last": "LOAD"}};
 const SP = (() => {
   const m = /[?&]sprache=(de|en)\b/.exec(location.search);
@@ -51,7 +51,7 @@ function oberflaecheSauber(o) {
   if (!o || typeof o !== "object") return e;
   const txt = (v, n) => (typeof v === "string" ? v.slice(0, n) : null);
   const paar = (z, a, b) => Array.isArray(z) && z.length === 2 && [String(z[0]).slice(0, a), String(z[1]).slice(0, b)];
-  for (const [k, n] of [["name", 30], ["untertitel", 80], ["person", 30], ["pc_name", 30]]) { const v = txt(o[k], n); if (v !== null) e[k] = v; }
+  for (const [k, n] of [["name", 30], ["untertitel", 80], ["person", 30], ["haus", 40], ["pc_name", 30]]) { const v = txt(o[k], n); if (v !== null) e[k] = v; }
   if (FARBEN.includes(o.farbe)) e.farbe = o.farbe;
   if (e.farbe === "eigene") {
     const f = o.farben || {}; e.farben = {};
@@ -397,15 +397,26 @@ html.design-kern body { background: #070a12; font-family: 'IBM Plex Sans', syste
 html.design-kern h1, html.design-kern h2, html.design-kern .einst h2, html.design-kern .neu h2, html.design-kern .neu button { font-family: 'IBM Plex Sans Condensed', sans-serif; }
 html.design-kern #start { display: none !important; }
 html.design-kern body::before { display: none; }
-html.design-kern .raster > :not(#neu):not(#einst):not(#seite2):not(#seite3):not(header) { display: none !important; }
-html.design-kern body:not(.skills):not(.lage) .raster > header { display: none; }
-html.design-kern body:not(.skills):not(.lage) #kern { display: flex; }
+html.design-kern .raster > :not(#neu):not(#einst):not(#seite2):not(#seite3):not(#seite4):not(header) { display: none !important; }
+html.design-kern body:not(.skills):not(.lage):not(.gedaechtnis) .raster > header { display: none; }
+html.design-kern body:not(.skills):not(.lage):not(.gedaechtnis) #kern { display: flex; }
 /* Reiter "Lage" (seit 29.10.2026): nur im Design Kern, das klassische Design zeigt diese Daten auf der Hauptseite */
 .seite3, #reiter [data-seite="lage"] { display: none; }
 html.design-kern #reiter [data-seite="lage"] { display: inline-block; }
 html.design-kern body.lage .seite3 { display: grid; grid-column: 1 / -1; grid-row: 2 / -1; min-height: 0; overflow-y: auto; align-content: start;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 4px 2px 20px; }
 body.lage .links, body.lage .mitte, body.lage .rechts, body.lage .ticker, body.lage footer, body.lage .seite2 { display: none; }
+/* Reiter "Gedaechtnis" (seit 29.10.2026, Sternbild): nur im Design Kern und nur im PC-Fenster (mit Token), nie auf dem Wandbildschirm */
+.seite4, #reiter [data-seite="gedaechtnis"], .k-knopf#k-gedaechtnis { display: none; }
+html.pc-gedaechtnis #reiter [data-seite="gedaechtnis"] { display: inline-block; }      /* in jedem Design */
+html.design-kern.pc-gedaechtnis .k-knopf#k-gedaechtnis { display: inline-flex; align-items: center; justify-content: center; }
+body.gedaechtnis .seite4 { display: block; grid-column: 1 / -1; grid-row: 2 / -1; min-height: 0; overflow-y: auto; padding: 4px 2px 20px; --sb-h: clamp(320px, calc(100vh - 360px), 640px); }
+body.gedaechtnis .seite4 .sb { max-width: 1100px; margin: 0 auto; }
+/* Sternbild-Farben fuers klassische Design (Observatorium nimmt die Vorgaben aus sternbild.css); neue Designs setzen --sb-* hier */
+html:not(.design-kern) .sb { --sb-haus: var(--c); --sb-privat: var(--amber); --sb-text: var(--text); --sb-text2: var(--text); --sb-dim: var(--dim);
+  --sb-akz: var(--c); --sb-rgb: var(--c-rgb); --sb-dim-rgb: var(--c-rgb); --sb-akz-rgb: var(--c-rgb); --sb-bg-rgb: var(--f3-rgb);
+  --sb-karte: rgba(var(--f2-rgb),.92); --sb-warn: var(--amber); }
+body.gedaechtnis .links, body.gedaechtnis .mitte, body.gedaechtnis .rechts, body.gedaechtnis .ticker, body.gedaechtnis footer, body.gedaechtnis .seite2, body.gedaechtnis .seite3 { display: none; }
 .l-karte { padding: 18px 20px 14px; background: rgba(14,19,32,.88); border: 1px solid rgba(196,210,236,.16); border-radius: 4px; color: #e6ebf5; }
 .l-karte h2 { margin: 0 0 12px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; color: #a9c4ff;
   font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; }
@@ -451,6 +462,17 @@ body.lage .links, body.lage .mitte, body.lage .rechts, body.lage .ticker, body.l
 .k-knopf { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 1px solid rgba(196,210,236,.22); background: transparent;
   color: #c9d1e0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
 .k-knopf[hidden] { display: none; }
+/* 3D-Grundriss (seit 29.10.2026): nur im PC-Fenster (die Daten kommen mit Token ueber die Durchreiche des PC-Clients,
+   am Wandbildschirm ohne Anmeldung gibt es sie nicht) */
+#grundriss { position: fixed; inset: 0; z-index: 60; display: none; background: #070a12; }
+#grundriss.zeigen { display: block; }
+#grundriss > div#gr-buehne { position: absolute; inset: 0; }
+/* Umschalter Foto/3D (seit 30.10.2026), nur wenn es Bilder gibt */
+#gr-umschalter { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 8; display: flex; border-radius: 999px;
+  border: 1px solid rgba(169,196,255,.3); background: rgba(12,17,29,.85); overflow: hidden; font: 12px 'IBM Plex Sans Condensed', sans-serif; letter-spacing: .2em; }
+#gr-umschalter[hidden] { display: none; }
+#gr-umschalter span { padding: 7px 16px; color: #9aa6bc; cursor: pointer; }
+#gr-umschalter span.aktiv { background: #a9c4ff; color: #070a12; }
 .k-knopf svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .k-knopf:focus-visible, .k-kapsel:focus-visible, .k-zu:focus-visible, #k-frage:focus-visible { outline: 2px solid #a9c4ff; outline-offset: 2px; }
 .k-uhr { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
@@ -520,20 +542,101 @@ html.k-denkt .k-dreh { animation-duration: 14s; }
 @keyframes k-atem { 0%, 100% { transform: scale(1); opacity: .92; } 50% { transform: scale(1.05); opacity: 1; } }
 @keyframes k-pegel { from { transform: scaleY(.4); } to { transform: scaleY(1); } }
 @keyframes k-ring { to { stroke-dashoffset: -18; } }
-html.ruhig #kern, html.ruhig #kern * { animation: none !important; }
-@media (prefers-reduced-motion: reduce) { #kern, #kern * { animation: none !important; transition: none !important; } }
+/* Kern-Animation (seit 29.10.2026): Leinwand ueber dem SVG; laeuft sie, zeichnet sie Kugel und Herz selbst */
+.k-svg { position: relative; }
+.k-leinwand { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; will-change: transform; }
+html.k-anim .k-dreh, html.k-anim #k-herzg { display: none; }
+html:not(.k-anim) .k-leinwand { display: none; }   /* still: das statische SVG zeigt den Kern, kein Rest der Leinwand */
+html.k-anim .k-dreh, html.k-anim .k-atem, html.k-anim .k-pegel { animation: none !important; }
+/* Sterne in zwei Ebenen; Treiben (Parallaxe) und leises Funkeln setzt die Kern-Animation im eigenen Takt */
+.k-sterne .k-ebene { position: absolute; inset: -12px; }
+/* Aufbau beim Start: der Ring zieht sich, die Skala blendet ein (Knoten und Linien zeichnet die Leinwand) */
+html.k-aufbau #k-ring { stroke-dasharray: 1182; animation: k-ringauf 1.6s cubic-bezier(.2,.7,.2,1) both; }
+html.k-aufbau #k-skala { animation: k-ein 1.2s .5s ease-out both; }
+@keyframes k-ringauf { from { stroke-dashoffset: 1182; } to { stroke-dashoffset: 0; } }
+@keyframes k-ein { from { opacity: 0; } to { opacity: 1; } }
+/* Neue Antwort, Karten und Reiter: weich statt hart */
+#k-text.k-neu { animation: k-auf .6s ease-out both; }
+.k-karte:not([hidden]):not(.leer) { animation: k-auf .5s ease-out both; }
+html.design-kern body.skills .seite2, html.design-kern body.lage .seite3 { animation: k-gleit .35s ease-out both; }
+html.design-kern body:not(.skills):not(.lage) #kern { animation: k-ein .4s ease-out both; }
+@keyframes k-auf { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes k-gleit { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+html.ruhig #kern, html.ruhig #kern *, html.ruhig .seite2, html.ruhig .seite3 { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { #kern, #kern *, .seite2, .seite3 { animation: none !important; transition: none !important; } }
 @media (max-width: 640px) { .k-kopf { padding: 16px; } .k-mitte { padding: 0 16px 16px; gap: 20px; } #k-name { font-size: 40px; }
   #k-text { font-size: 17px; } .k-fuss { padding: 0 16px 16px; } .k-karte { min-width: 0; flex-basis: 100%; } }
+/*STERNBILD-CSS-START*/
+/* Gedaechtnis als Sternbild: gemeinsam fuer HUD und App, in jedem Design. Alle Farben kommen aus Variablen; Vorgabe ist die
+   Farbwelt Observatorium, jede Seite setzt fuer das klassische Design (und kuenftige) eigene Werte (--sb-*), ohne diese Datei
+   anzufassen. Die Leinwand liest --sb-haus, --sb-privat, --sb-rgb, --sb-dim-rgb, --sb-akz-rgb, --sb-bg-rgb aus. */
+.sb { --sb-haus: #a9c4ff; --sb-privat: #e3b866; --sb-text: #e8ecf4; --sb-text2: #c9d1e0; --sb-dim: #9aa6bc; --sb-akz: #a9c4ff;
+  --sb-rgb: 196,210,236; --sb-dim-rgb: 168,180,202; --sb-akz-rgb: 169,196,255; --sb-bg-rgb: 7,10,18; --sb-karte: rgba(14,19,32,.9); --sb-warn: #e3b866; }
+.sb { display: flex; flex-direction: column; gap: 12px; color: var(--sb-text); font-family: 'IBM Plex Sans', system-ui, sans-serif; min-width: 0; }
+.sb-kopf { display: flex; justify-content: space-between; align-items: baseline; }
+.sb-kopf h2 { margin: 0; font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 20px; font-weight: 600; letter-spacing: .26em; color: var(--sb-text); }
+.sb-zahl { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--sb-dim); }
+.sb-suche { width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid rgba(var(--sb-rgb),.22);
+  background: var(--sb-karte); color: var(--sb-text); font: 15px 'IBM Plex Sans', sans-serif; outline: none; }
+.sb-suche:focus { border-color: var(--sb-akz); }
+.sb-bild { position: relative; width: 100%; height: var(--sb-h, min(100vw - 24px, 62vh, 460px)); min-height: 280px; border-radius: 6px; overflow: hidden;
+  background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(var(--sb-akz-rgb),.08), rgba(var(--sb-bg-rgb),0) 72%); }
+.sb-bild canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+.sb-leer { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 36px; pointer-events: none;
+  color: var(--sb-dim); font-size: 14px; line-height: 1.5; }
+.sb-leer[hidden] { display: none; }
+.sb-zeit { display: flex; flex-direction: column; gap: 4px; }
+.sb-zeit input[type=range] { width: 100%; height: 32px; margin: 0; accent-color: var(--sb-akz); background: transparent; }
+.sb-zeit-zeile { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 12px 'IBM Plex Mono', monospace; color: var(--sb-dim); }
+.sb-woche, .sb-chip, .sb-knopf { min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid rgba(var(--sb-rgb),.22); background: transparent; color: var(--sb-text2);
+  font: 13px 'IBM Plex Sans Condensed', sans-serif; cursor: pointer; }
+.sb-woche.an, .sb-chip.an, .sb-knopf.an { border-color: var(--sb-akz); color: #fff; background: rgba(var(--sb-akz-rgb),.16); }
+.sb-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sb-chip small { margin-left: 6px; font: 11px 'IBM Plex Mono', monospace; color: var(--sb-dim); }
+.sb-legende { display: flex; gap: 18px; font-size: 12px; color: var(--sb-dim); }
+.sb-legende i, .sb-blatt-kopf i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: baseline; }
+i.haus { background: var(--sb-haus); box-shadow: 0 0 8px var(--sb-haus); } i.privat { background: var(--sb-privat); box-shadow: 0 0 8px var(--sb-privat); }
+.sb-hinweis { min-height: 16px; font-size: 12px; color: var(--sb-dim); }
+.sb-blatt { position: sticky; bottom: 6px; z-index: 5; box-shadow: 0 -8px 18px rgba(var(--sb-bg-rgb),.8); padding: 14px 16px; background: var(--sb-karte); border: 1px solid rgba(var(--sb-rgb),.22); border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
+.sb-blatt[hidden] { display: none; }
+.sb-blatt-kopf { display: flex; align-items: center; font: 600 12px 'IBM Plex Sans Condensed', sans-serif; letter-spacing: .2em; text-transform: uppercase; color: var(--sb-dim); }
+.sb-blatt-kopf span { flex: 1; }
+.sb-zu { width: 44px; height: 44px; margin: -12px -12px -12px 0; border: none; background: transparent; color: var(--sb-dim); font-size: 24px; cursor: pointer; }
+.sb-text { margin: 2px 0 4px; font-size: 17px; line-height: 1.45; color: #fff; overflow-wrap: anywhere; }
+.sb-z { display: flex; justify-content: space-between; gap: 14px; font-size: 13px; color: var(--sb-dim); }
+.sb-z b { font-weight: 400; color: var(--sb-text2); text-align: right; overflow-wrap: anywhere; }
+.sb-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+.sb-knopf.warn { border-color: var(--sb-warn); color: var(--sb-warn); }
+.sb-sicher span { flex: 1 1 100%; font-size: 13px; color: var(--sb-warn); }
+.sb-feld { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(var(--sb-rgb),.3); background: rgba(var(--sb-bg-rgb),.9); color: #fff;
+  font: 16px/1.4 'IBM Plex Sans', sans-serif; resize: vertical; }
+
+.sb-feld:focus { outline: none; border-color: var(--sb-akz); }
+.sb-nur { font-size: 12px; line-height: 1.4; color: var(--sb-dim); }
+/*STERNBILD-CSS-ENDE*/
+
+
+/* Gaeste-WLAN (seit 0.6): QR-Code, solange ein Gastzugang laeuft (zustand.json, Feld gast). Nur das Bild, das die
+   Bruecke vom Router holt (z. B. FRITZ!Box-Integration), kein Netzname und kein Kennwort im Text. */
+#gast-wlan { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: none; background: rgba(8,12,24,.88);
+  border: 1px solid rgba(var(--c-rgb),.35); border-radius: 14px; padding: 12px; text-align: center; max-width: 220px; }
+#gast-wlan.zeigen { display: block; }
+#gast-wlan img { width: 180px; height: 180px; background: #fff; border-radius: 8px; padding: 6px; display: block; margin: 0 auto 8px; }
+#gast-wlan b { display: block; font-size: 14px; letter-spacing: .08em; }
+#gast-wlan span { display: block; font-size: 12px; opacity: .75; margin-top: 2px; }
 </style>
 </head>
 <body>
+<div id="gast-wlan" aria-live="polite"><img id="gast-qr" alt=""><b data-t="gast_wlan">GÄSTE-WLAN</b><span id="gast-text"></span></div>
 <div id="kern">
   <div class="k-sterne" id="k-sterne" aria-hidden="true"></div>
   <header class="k-kopf">
     <div class="k-ort"><b id="k-ort"></b><span id="k-rolle"></span></div>
     <button type="button" class="k-kapsel" id="k-kapsel" hidden><i></i><span id="k-kapsel-text"></span></button>
     <div class="k-rechts">
+      <button type="button" class="k-knopf" id="k-grundriss" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 8l9 5 9-5zM3 13l9 5 9-5M3 17.5l9 4.5 9-4.5"/></svg></button>
       <button type="button" class="k-knopf" id="k-lage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></button>
+      <button type="button" class="k-knopf" id="k-gedaechtnis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="16" r="1.6"/><circle cx="12" cy="7" r="1.6"/><circle cx="19" cy="13" r="1.6"/><circle cx="14" cy="19" r="1.2"/><path d="M6 16 12 7l7 6-5 6"/></svg></button>
       <button type="button" class="k-knopf" id="k-faeh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
       <button type="button" class="k-knopf" id="k-zahnrad" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button>
       <div class="k-uhr"><b id="k-uhr">--:--</b><span id="k-datum"></span></div>
@@ -585,7 +688,7 @@ html.ruhig #kern, html.ruhig #kern * { animation: none !important; }
   <header>
     <div><h1 id="titel">J.A.R.V.I.S.</h1><div class="unter" id="untertitel"></div></div>
     <div class="kopfrechts">
-      <div class="reiter" id="reiter"><span class="aktiv" data-seite="hud">HUD</span><span data-seite="lage" data-t="lage_gross">LAGE</span><span data-seite="skills" data-t="faehigkeiten_gross">FÄHIGKEITEN</span></div>
+      <div class="reiter" id="reiter"><span class="aktiv" data-seite="hud">HUD</span><span data-seite="lage" data-t="lage_gross">LAGE</span><span data-seite="gedaechtnis" data-t="gedaechtnis_gross">GEDÄCHTNIS</span><span data-seite="skills" data-t="faehigkeiten_gross">FÄHIGKEITEN</span></div>
       <div class="zahnrad" id="zahnrad" title="Einstellungen" data-t-title="einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></div>
       <div class="wetter" id="wetter"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg><b>–</b><span></span></div>
       <div class="uhr" id="uhr">--:--<small id="datum">&nbsp;</small></div>
@@ -684,6 +787,7 @@ html.ruhig #kern, html.ruhig #kern * { animation: none !important; }
   </div>
 
   <section class="seite3" id="seite3" aria-live="polite"></section>
+  <section class="seite4" id="seite4"></section>
   <section class="seite2" id="seite2">
     <div class="kennzahlen" id="kennzahlen"></div>
     <div class="bereiche" id="bereiche"><div class="panel" data-t="lade_faehigkeiten">Lade Fähigkeiten …</div></div>
@@ -818,9 +922,27 @@ function begruessung() {
   $("gruss").textContent = g ? PERSON(g[1]) : "";
 }
 
+// Gaeste-WLAN-Karte: nur Bilddateiname der Bruecke (gast_wlan.png?v=...) und das Ende; im PC-Fenster gibt es das Bild
+// nicht (dort fehlt die Datei), dann bleibt die Karte aus
+let gastQrStand = "";
+function gastWlan(g) {
+  const k = $("gast-wlan"), qr = g && typeof g.qr === "string" && /^gast_wlan\.png\?v=\d+$/.test(g.qr) ? g.qr : "";
+  if (!qr || PC()) { k.classList.remove("zeigen"); gastQrStand = ""; return; }
+  if (qr !== gastQrStand) {
+    gastQrStand = qr;
+    const img = $("gast-qr");
+    img.alt = tx("gast_qr");
+    img.onload = () => k.classList.add("zeigen");
+    img.onerror = () => k.classList.remove("zeigen");
+    img.src = qr;
+  }
+  const bis = new Date((+g.bis || 0) * 1000);
+  $("gast-text").textContent = tx("gast_scannen", bis.toLocaleString(LOC, { weekday: "short", hour: "2-digit", minute: "2-digit" }));
+}
+
 async function zustand() {
   const z = await lade("zustand.json");
-  if (!z) { document.body.className = "fehler" + (PC() ? " mit-eingabe" : "") + (SEITE === "skills" ? " skills" : "") + (SEITE === "lage" ? " lage" : ""); $("zustand").textContent = tx("keine_verbindung"); kernAktualisieren(null, "fehler"); return; }
+  if (!z) { document.body.className = "fehler" + (PC() ? " mit-eingabe" : "") + (SEITE === "skills" ? " skills" : "") + (SEITE === "lage" ? " lage" : "") + (SEITE === "gedaechtnis" ? " gedaechtnis" : ""); $("zustand").textContent = tx("keine_verbindung"); kernAktualisieren(null, "fehler"); return; }
   spracheDerBruecke(z.sprache);
   if (z.oberflaeche && z.oberflaeche_stand !== OB_STAND) {      // Jarvis hat sein Aussehen geaendert (oder erster Abruf)
     OB_STAND = z.oberflaeche_stand; OBERFLAECHE = oberflaecheSauber(z.oberflaeche);
@@ -828,11 +950,13 @@ async function zustand() {
     oberflaecheAnwenden(); begruessung();
   }
   const jetzt = Date.now() / 1000;
+  gastWlan(z.gast);
   const admin = z.admin_bis > jetzt;
   const st = et ? et.status : z.status;
   LETZTER_Z = z;
   if (SEITE === "lage" && !KERN()) seite("hud");                 // Design gewechselt: "Lage" gibt es nur im Kern
-  document.body.className = [st, admin ? "admin" : "", PC() ? "mit-eingabe" : "", SEITE === "skills" ? "skills" : "", SEITE === "lage" ? "lage" : ""].join(" ");
+  if (SEITE === "gedaechtnis" && !gedaechtnisApi()) seite("hud");
+  document.body.className = [st, admin ? "admin" : "", PC() ? "mit-eingabe" : "", SEITE === "skills" ? "skills" : "", SEITE === "lage" ? "lage" : "", SEITE === "gedaechtnis" ? "gedaechtnis" : ""].join(" ");
   $("zustand").textContent = (et ? "⚡ " : "") + (TEXT[st] || st);
   const h = $("hinweis");
   if (et) { h.className = "hinweis"; h.textContent = et.hinweis; }
@@ -1113,6 +1237,7 @@ $("eingabe").addEventListener("submit", (ev) => {
   ev.preventDefault();
   const t = $("frage").value.trim();
   if (!PC()) return;
+  if (GR_FRAGE.test(t) && !$("k-grundriss").hidden) grundrissAuf();      // "Zeig mir den Grundriss", geht trotzdem an Jarvis
   if (anhang === "laedt") { anhangZeigen(tx("anhang_wartet")); return; }
   if (anhang) {
     const a = anhang;
@@ -1147,13 +1272,31 @@ const BEREICH_SYMBOL = {
   gehirn: '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3h1V4zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3h-1V4z"/>' };
 function seite(name) {
   if (name === "lage" && !KERN()) name = "hud";            // "Lage" gibt es nur im Design Kern
+  if (name === "gedaechtnis" && !gedaechtnisApi()) name = "hud";   // Sternbild: in jedem Design, aber nur im PC-Fenster mit Token
   SEITE = name;
   document.body.classList.toggle("skills", name === "skills");
   document.body.classList.toggle("lage", name === "lage");
+  document.body.classList.toggle("gedaechtnis", name === "gedaechtnis");
   document.querySelectorAll("#reiter span").forEach((s) => s.classList.toggle("aktiv", s.dataset.seite === name));
   if (name === "skills") faehigkeiten();
   if (name === "lage") lageZeigen();
+  if (name === "gedaechtnis") gedaechtnisZeigen();
 }
+// ---------- Reiter "Gedaechtnis" (seit 29.10.2026): Sternbild aus gemeinsam/sternbild.js. Die Daten holt das PC-Fenster mit
+// seinem Token ueber die js_api (Client ab 22); die Bruecke liefert nur Haus und das Eigene der Person hinter dem Token.
+// Auf dem Wandbildschirm (Glance, ohne Token) gibt es den Reiter nicht.
+const gedaechtnisApi = () => (window.pywebview && window.pywebview.api && window.pywebview.api.bruecke_gedaechtnis) ? window.pywebview.api : null;
+var STERNBILD = null;
+function gedaechtnisZeigen() {
+  const a = gedaechtnisApi();
+  if (!a) return;
+  if (!STERNBILD) STERNBILD = Sternbild.erzeuge($("seite4"), { tx, loc: LOC, ruhig: () => document.documentElement.classList.contains("ruhig"),
+    rufen: (auftrag) => gedaechtnisApi().bruecke_gedaechtnis(auftrag).catch(() => ({ fehler: tx("sb_fehler") })) });
+  STERNBILD.zeigen();
+}
+function gedaechtnisPruefen() { document.documentElement.classList.toggle("pc-gedaechtnis", !!gedaechtnisApi()); if (STERNBILD) STERNBILD.texte(); }
+window.addEventListener("pywebviewready", gedaechtnisPruefen);
+gedaechtnisPruefen();
 // ---------- Reiter "Lage" (seit 29.10.2026): Termine, NAS, Container, Sicherung, PC, Jarvis; alles aus vorhandenen
 // Dateien (system.json, kalender.json) und dem Zustand. Fehlt eine Quelle, entfaellt ihre Karte.
 var LETZTER_Z = null;
@@ -1564,6 +1707,11 @@ function echtzeitSpielen(daten) {
   q.buffer = buf; q.connect(et.aus.destination);
   const ab = Math.max(et.aus.currentTime + 0.05, et.naechste);
   q.start(ab); et.naechste = ab + buf.duration; et.quellen.push(q);
+  if (kernAni) {                              // Huelle zur Wiedergabe: 50-ms-Fenster, ab dem Startzeitpunkt im Ton
+    const w = [], fen = 1200;
+    for (let i = 0; i < n; i += fen) { let q2 = 0, z = 0; for (let j = i; j < Math.min(n, i + fen); j += 3) { q2 += f[j] * f[j]; z++; } w.push(Math.min(1, Math.sqrt(Math.sqrt(q2 / Math.max(1, z)) * 32768 / 9000))); }
+    kernAni.huelle(w, 50, performance.now() + (ab - et.aus.currentTime) * 1000);
+  }
   q.onended = () => { if (!et) return; et.quellen = et.quellen.filter((x) => x !== q); if (!et.quellen.length && et.status === "spricht") etStatus("hoert"); };
   if (et.status !== "spricht") etStatus("spricht");
 }
@@ -1574,6 +1722,7 @@ function echtzeitMikro(buf) {
   let summe = 0; for (let i = 0; i < a.length; i += 4) summe += a[i] * a[i];
   const pegel = Math.sqrt(summe / (a.length / 4));
   if (pegel > 900) et.letzteStimme = Date.now();
+  kernPegel(Math.min(1, Math.sqrt(pegel / 9000)));
   // Waehrend Jarvis spricht nur laute Stimme durchlassen (Reinreden); das Echo des Lautsprechers bleibt nach der
   // Echounterdrueckung meist darunter. Pause meldet Google per audioStreamEnd.
   if (et.aus.currentTime < et.naechste && pegel < 2500) {
@@ -1637,24 +1786,368 @@ window.addEventListener("pywebviewready", echtzeitKnopfPruefen);
 setTimeout(echtzeitKnopfPruefen, 2000);
 
 
+/* ---------- Kern-Animation (seit 29.10.2026). Eine Leinwand (Canvas 2D) ueber dem SVG-Kern zeichnet Knoten, Linien und
+   Herz in Bewegung; Ring, Skala und Bernstein-Punkt bleiben im SVG (Zustaende per CSS). Gleiche Fassung in
+   spiegel/hud/index.html (HUD, PC-Fenster, Glance) und android/assets/app.html (App und Web-App) - bei Aenderungen beide.
+   - Bereit: Herz atmet (5 s), Kugel dreht sich in 120 s, Knoten treiben minimal; selten ein leiser Impuls zum Kern.
+   - Hoert: der Rand antwortet auf den Mikrofonpegel (Band am Ring, Kugel weitet sich leicht); ohne Pegel simuliert.
+   - Denkt: Drehung 14 s, Lichtimpulse laufen ueber die Linien von aussen zum Kern, das Herz glimmt bei jeder Ankunft.
+   - Spricht: das Herz folgt dem Pegel der Stimme, Wellen laufen nach aussen und lassen die Knoten aufleuchten.
+   Hoeren gehoert dem Rand, Sprechen dem Koerper - so sieht man, wer gerade dran ist.
+   Ruhige Bewegung: langsam, ohne Atmen, Impulse und Wellen, 15 Bilder/s. prefers-reduced-motion: Leinwand aus, das
+   statische SVG bleibt. Bildrate 15 (bereit, seit 30.10.) bzw. 30, Pause bei verborgener Seite, verdecktem Kern oder kernPause(true).
+   Pegel: kernPegel(0..1) fuer laufende Werte (Mikrofon), kernHuelle(werte, schrittMs, startMs) fuer eine Huelle, die
+   zur Wiedergabe gehoert (Stimme). */
+function KernAnimation(rahmen, o) {
+  const TAU = Math.PI * 2, n = o.punkte.length;
+  let s = 7;
+  const zufall = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  const cv = document.createElement("canvas");
+  cv.className = "k-leinwand"; cv.setAttribute("aria-hidden", "true");
+  rahmen.appendChild(cv);
+  const ctx = cv.getContext("2d");
+  const P = o.punkte.map((p) => ({ x: p.x - 200, y: p.y - 200, vorn: p.z > 0, r: Math.hypot(p.x - 200, p.y - 200),
+    ph: zufall() * TAU, w: 0.04 + zufall() * 0.06, b: 0, auf: 0 }));
+  const X = new Float32Array(n + 1), Y = new Float32Array(n + 1);          // Index n = Mitte
+  const K = o.kanten.map(([a, b]) => ({ a, b, vorn: P[a].vorn || P[b].vorn, auf: 0 }));
+  const SP = o.speichen || [];                                              // sichtbare Speichen (nur HUD)
+  // Weg jedes Knotens zur Mitte (kuerzester Weg ueber Linien, dann eine Speiche: jeder 4. Knoten)
+  const nb = P.map(() => []);
+  K.forEach((k) => { const d = Math.hypot(P[k.a].x - P[k.b].x, P[k.a].y - P[k.b].y); nb[k.a].push([k.b, d]); nb[k.b].push([k.a, d]); });
+  const dist = P.map((p, i) => (i % 4 === 0 ? p.r : Infinity)), weiter = P.map((p, i) => (i % 4 === 0 ? n : -1));
+  for (let runde = 0; runde < n; runde++) {
+    let neu = false;
+    for (let i = 0; i < n; i++) for (const [j, d] of nb[i]) if (dist[j] + d < dist[i] - 0.01) { dist[i] = dist[j] + d; weiter[i] = j; neu = true; }
+    if (!neu) break;
+  }
+  const startKnoten = P.map((p, i) => i).filter((i) => P[i].r > 95 && weiter[i] >= 0 && weiter[i] !== n);
+  // Aufbau: Knoten erscheinen im Uhrzeigersinn, Linien ziehen sich vom frueheren zum spaeteren Knoten
+  P.forEach((p) => { p.auf = 0.1 + 1.0 * (((Math.atan2(p.y, p.x) + Math.PI * 2.5) % TAU) / TAU) + zufall() * 0.12; });
+  K.forEach((k) => { k.auf = Math.max(P[k.a].auf, P[k.b].auf); k.von = P[k.a].auf <= P[k.b].auf ? k.a : k.b; });
+
+  let glut = "", rgb = "169,196,255", herzBild = null, haloBild = null;
+  function farben() {
+    const g = (o.glut && o.glut()) || "#a9c4ff";
+    if (g === glut) return;
+    glut = g;
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(g);
+    rgb = m ? [1, 2, 3].map((i) => parseInt(m[i], 16)).join(",") : "169,196,255";
+    herzBild = document.createElement("canvas"); herzBild.width = herzBild.height = 256;
+    const h = herzBild.getContext("2d"), v = h.createRadialGradient(128, 128, 0, 128, 128, 128);
+    (o.herzStopps || [[0, "255,255,255", 1], [0.22, "238,243,255", 0.95], [0.55, null, 0.35], [1, null, 0]])
+      .forEach(([at, c, a]) => v.addColorStop(at, `rgba(${c || rgb},${a})`));
+    h.fillStyle = v; h.fillRect(0, 0, 256, 256);
+    haloBild = document.createElement("canvas"); haloBild.width = haloBild.height = 32;
+    const k = haloBild.getContext("2d"), w = k.createRadialGradient(16, 16, 0, 16, 16, 16);
+    w.addColorStop(0, "rgba(255,255,255,1)"); w.addColorStop(0.25, `rgba(${rgb},.55)`); w.addColorStop(1, `rgba(${rgb},0)`);
+    k.fillStyle = w; k.fillRect(0, 0, 32, 32);
+  }
+
+  // Zielwerte je Zustand; die echten Werte folgen weich (Feder), Wechsel springen also nie
+  const ZIEL = {
+    bereit:  { skala: 0.8,   alpha: 0.78, umlauf: 120, kanten: 1,    pegel: 0,    atem: 1, band: 0 },
+    hoert:   { skala: 1.086, alpha: 1,    umlauf: 90,  kanten: 1.1,  pegel: 0.1,  atem: 0.3, band: 1 },
+    denkt:   { skala: 0.9,   alpha: 0.9,  umlauf: 14,  kanten: 1.15, pegel: 0,    atem: 0.3, band: 0 },
+    spricht: { skala: 0.95,  alpha: 0.92, umlauf: 60,  kanten: 1.05, pegel: 0.38, atem: 0, band: 0 },
+    fehler:  { skala: 0.7,   alpha: 0.45, umlauf: 240, kanten: 0.7,  pegel: 0,    atem: 0.5, band: 0 } };
+  const V = Object.assign({}, ZIEL.bereit, { omega: TAU / 120 });
+  let zustand = "bereit", winkel = 0, L = 0, flash = 0, sim = 0, energie = 0, letzteWelle = 0, naechsterImpuls = 2;
+  const impulse = [], wellen = [];
+  let extern = { v: 0, t: -1e9 }, spuren = [];
+  let laeuft = false, raf = 0, letzte = 0, sichtbar = true, pause = false, start = -1, aufbau = o.aufbau !== false;
+  let ruhig = false, nacht = false, still = false, groesse = 0, dpr = 1, pruefZeit = 0;
+  const mess = { bilder: 0, ms: 0, seit: performance.now() };
+
+  function einstellungenLesen() {
+    const H = document.documentElement;
+    ruhig = H.classList.contains("ruhig") || H.classList.contains("bewegung-ruhig");
+    nacht = H.classList.contains("nacht");
+    const vorher = still;
+    still = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) || (o.aus && o.aus());
+    if (still !== vorher) pruefen();
+    farben();
+  }
+  function fps() { return ruhig ? 15 : nacht ? 20 : zustand === "bereit" ? 15 : zustand === "fehler" ? 24 : 30; }   // Bereit 15 (30.10., Akku)
+
+  function pegelZiel(t, jetzt) {
+    if (zustand === "spricht") {
+      for (const sp of spuren) {
+        const i = Math.floor((jetzt - sp.start) / sp.schritt);
+        if (i >= 0 && i < sp.werte.length) return sp.werte[i];
+      }
+      if (jetzt - extern.t < 400) return extern.v;
+      // ohne Huelle: Silben (~4/s) in Phrasen mit kurzen Pausen
+      const silbe = 0.5 + 0.5 * Math.sin(TAU * 3.7 * t + 1.3 * Math.sin(TAU * 0.9 * t));
+      const phrase = Math.max(0, Math.min(1, (Math.sin(TAU * 0.23 * t) + 0.75) * 2));
+      return (0.22 + 0.5 * silbe) * phrase;
+    }
+    if (zustand === "hoert") {
+      if (jetzt - extern.t < 400) return extern.v;
+      return 0.12 + 0.08 * (Math.sin(TAU * 0.7 * t) + Math.sin(TAU * 1.9 * t + 1)) / 2;
+    }
+    return 0;
+  }
+
+  function schritt(dt, t, jetzt) {
+    const Z = ZIEL[zustand] || ZIEL.bereit, k = 1 - Math.exp(-dt / 0.6);
+    for (const x of ["skala", "alpha", "kanten", "pegel", "atem", "band"]) V[x] += (Z[x] - V[x]) * k;
+    const omegaZiel = TAU / (Z.umlauf * (ruhig ? 2 : 1));
+    V.omega += (omegaZiel - V.omega) * (1 - Math.exp(-dt / 1.2));
+    winkel = (winkel + V.omega * dt) % TAU;
+    const ziel = ruhig ? 0 : Math.max(0, Math.min(1, pegelZiel(t, jetzt)));
+    L += (ziel - L) * (1 - Math.exp(-dt / (ziel > L ? 0.05 : 0.18)));
+    flash *= Math.exp(-dt / 0.35);
+    for (const p of P) p.b *= Math.exp(-dt / 0.5);
+    spuren = spuren.filter((sp) => jetzt < sp.start + sp.schritt * sp.werte.length + 1000);
+    if (!ruhig) {
+      // Impulse: beim Nachdenken dicht, sonst selten und leise
+      naechsterImpuls -= dt;
+      if (naechsterImpuls <= 0 && startKnoten.length) {
+        const denkt = zustand === "denkt";
+        if (denkt || zustand === "bereit") {
+          if (impulse.length < 18) impulse.push({ knoten: startKnoten[Math.floor(Math.random() * startKnoten.length)], d: 0, hell: denkt ? 1 : 0.45 });
+        }
+        naechsterImpuls = denkt ? 0.09 + Math.random() * 0.08 : 6 + Math.random() * 5;   // Denken dichter (30.10.)
+      }
+      if (zustand === "spricht") {
+        energie += L * dt;
+        if (energie > 0.18 && t - letzteWelle > 0.24 && L > 0.12) { wellen.push({ r: 30, amp: Math.min(1, L * 1.25) }); energie = 0; letzteWelle = t; }
+      } else energie = 0;
+    }
+    for (const w of wellen) w.r += dt * (150 + 40 * w.amp);
+    while (wellen.length && wellen[0].r > 200) wellen.shift();
+  }
+
+  function positionen(t) {
+    const c = Math.cos(winkel), si = Math.sin(winkel), weit = 1 + 0.03 * (zustand === "hoert" ? L : 0), drift = ruhig ? 0 : 1.3;
+    for (let i = 0; i < n; i++) {
+      const p = P[i], dx = drift * Math.sin(t * p.w * TAU + p.ph), dy = drift * Math.cos(t * p.w * 0.8 * TAU + p.ph * 1.3);
+      X[i] = (p.x * c - p.y * si) * weit + dx; Y[i] = (p.x * si + p.y * c) * weit + dy;
+    }
+    X[n] = 0; Y[n] = 0;
+  }
+
+  function zeichnen(t, a) {             // a = Sekunden seit dem Start (Aufbau)
+    const sk = cv.width / 400;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(sk, 0, 0, sk, 200 * sk, 200 * sk);
+    positionen(t);
+    const imAufbau = aufbau && a < 2.2, lw = o.linie || 0.6, ka = Math.min(1.4, V.kanten + (zustand === "hoert" ? 0.4 * L : 0));
+    ctx.lineWidth = lw; ctx.strokeStyle = `rgb(${rgb})`; ctx.lineCap = "round";
+    // Linien: vorne 0,6, hinten 0,2 (wie der Entwurf), Speichen 0,18
+    for (const [vorn, alpha] of [[true, 0.6], [false, 0.2]]) {
+      ctx.globalAlpha = Math.min(1, alpha * ka);
+      ctx.beginPath();
+      for (const k of K) {
+        if (k.vorn !== vorn) continue;
+        if (imAufbau) {
+          const f = Math.max(0, Math.min(1, (a - k.auf) / 0.45));
+          if (!f) continue;
+          const v = k.von, b = v === k.a ? k.b : k.a, e = 1 - Math.pow(1 - f, 3);
+          ctx.moveTo(X[v], Y[v]); ctx.lineTo(X[v] + (X[b] - X[v]) * e, Y[v] + (Y[b] - Y[v]) * e);
+        } else { ctx.moveTo(X[k.a], Y[k.a]); ctx.lineTo(X[k.b], Y[k.b]); }
+      }
+      ctx.stroke();
+    }
+    if (SP.length) {
+      ctx.globalAlpha = 0.18 * Math.min(1, ka) * (imAufbau ? Math.max(0, Math.min(1, (a - 1.2) / 0.6)) : 1);
+      ctx.beginPath();
+      for (const i of SP) { ctx.moveTo(X[i], Y[i]); ctx.lineTo(0, 0); }
+      ctx.stroke();
+    }
+    // Impulse: Kopf mit kurzer Spur, folgen der drehenden Kugel
+    if (impulse.length) {
+      ctx.lineWidth = lw * 2.2;
+      for (let i = impulse.length - 1; i >= 0; i--) {
+        const m = impulse[i], ziel = weiter[m.knoten];
+        const ax = X[m.knoten], ay = Y[m.knoten], bx = X[ziel], by = Y[ziel], len = Math.hypot(bx - ax, by - ay) || 1;
+        m.d += (impulse.dt || 0) * 140;
+        if (m.d >= len) {
+          if (ziel === n) { flash = Math.min(0.45, flash + 0.15 * m.hell); impulse.splice(i, 1); continue; }
+          P[ziel].b = Math.max(P[ziel].b, 0.7 * m.hell); m.knoten = ziel; m.d = 0; continue;
+        }
+        const f = m.d / len, f0 = Math.max(0, (m.d - 36) / len), hx = ax + (bx - ax) * f, hy = ay + (by - ay) * f;
+        const g = ctx.createLinearGradient(ax + (bx - ax) * f0, ay + (by - ay) * f0, hx, hy);
+        g.addColorStop(0, `rgba(${rgb},0)`); g.addColorStop(1, `rgba(${rgb},${Math.min(1, 1.1 * m.hell)})`);
+        ctx.globalAlpha = 1; ctx.strokeStyle = g;
+        ctx.beginPath(); ctx.moveTo(ax + (bx - ax) * f0, ay + (by - ay) * f0); ctx.lineTo(hx, hy); ctx.stroke();
+        ctx.globalAlpha = Math.min(1, m.hell); ctx.drawImage(haloBild, hx - 9, hy - 9, 18, 18);
+      }
+      ctx.strokeStyle = `rgb(${rgb})`;
+    }
+    // Wellen der Stimme: Ringe nach aussen, Knoten leuchten auf, wenn eine Welle sie erreicht
+    for (const w of wellen) {
+      for (let i = 0; i < n; i++) {
+        const d = (P[i].r - w.r) / 16;
+        if (d > -3 && d < 3) P[i].b = Math.max(P[i].b, w.amp * Math.exp(-d * d));
+      }
+      const p = (w.r - 30) / 170;
+      ctx.globalAlpha = Math.min(1, 0.45 * w.amp * Math.pow(1 - p, 1.4));
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(0, 0, w.r, 0, TAU); ctx.stroke();
+    }
+    // Knoten: vorne 2,4 / 0,95, hinten 1,3 / 0,4 (Entwurf); aufleuchtende mit Hof
+    const rv = o.knotenVorn || 2.4, rh = o.knotenHinten || 1.3;
+    ctx.fillStyle = "#f4f7ff";
+    for (const [vorn, alpha, rad] of [[false, 0.4, rh], [true, 0.95, rv]]) {
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const p = P[i];
+        if (p.vorn !== vorn) continue;
+        let r = rad;
+        if (imAufbau) { const f = Math.max(0, Math.min(1, (a - p.auf) / 0.35)); if (!f) continue; r *= 1 - Math.pow(1 - f, 3); }
+        r *= 1 + 0.5 * p.b;
+        ctx.moveTo(X[i] + r, Y[i]); ctx.arc(X[i], Y[i], r, 0, TAU);
+      }
+      ctx.fill();
+    }
+    for (let i = 0; i < n; i++) {
+      if (P[i].b < 0.04) continue;
+      const h = 10 + 10 * P[i].b;
+      ctx.globalAlpha = Math.min(1, P[i].b); ctx.drawImage(haloBild, X[i] - h / 2, Y[i] - h / 2, h, h);
+    }
+    // Hoeren: ein feines Band innen am Ring zeigt den Pegel
+    if (V.band > 0.02) {
+      ctx.globalAlpha = V.band * Math.min(1, 0.12 + 0.55 * L);
+      ctx.lineWidth = 1 + 9 * L;
+      ctx.beginPath(); ctx.arc(0, 0, 180 - 4 * L, 0, TAU); ctx.stroke();
+    }
+    // Herz: atmet in Ruhe, folgt beim Sprechen dem Pegel, glimmt bei ankommenden Impulsen
+    const atem = ruhig ? 0.5 : (1 - Math.cos(TAU * t / 5)) / 2;
+    let hs = V.skala * (1 + 0.05 * atem * V.atem) * (1 + V.pegel * L * (zustand === "spricht" ? 1 : 0.6)) + flash * 0.12;
+    let ha = Math.min(1, V.alpha * (0.92 + 0.08 * atem) + flash * 0.25 + (zustand === "spricht" ? 0.15 * L : 0));
+    if (imAufbau) { const f = Math.max(0, Math.min(1, a / 1.4)); ha *= f; hs *= 0.6 + 0.4 * f; }
+    const R = (o.herzR || 70) * hs;
+    // Spricht: weicher Hof um das Herz, der mit der Stimme atmet (30.10.: Kern beim Sprechen deutlicher)
+    if (zustand === "spricht" && L > 0.05 && !ruhig) { const H = R * (1.5 + 0.4 * L); ctx.globalAlpha = 0.3 * L * ha; ctx.drawImage(herzBild, -H, -H, 2 * H, 2 * H); }
+    ctx.globalAlpha = ha; ctx.drawImage(herzBild, -R, -R, 2 * R, 2 * R);
+    ctx.globalAlpha = 1;
+  }
+
+  // Sterne: zwei Ebenen treiben sehr langsam gegeneinander (Parallaxe), mit Maus am PC folgen sie ihr um wenige Pixel;
+  // jeder 7. Stern funkelt kaum merklich. Alle 3 Bilder genuegt, die Wege sind winzig.
+  const ebenen = o.sterne ? [...o.sterne.querySelectorAll(".k-ebene")] : [], funkler = o.sterne ? [...o.sterne.querySelectorAll("span.f")] : [];
+  let sternTakt = 0, mx = 0, my = 0, zx = 0, zy = 0;
+  if (ebenen.length && window.matchMedia && matchMedia("(pointer: fine)").matches)
+    window.addEventListener("pointermove", (e) => { zx = (e.clientX / innerWidth - 0.5) * 2; zy = (e.clientY / innerHeight - 0.5) * 2; }, { passive: true });
+  function sterne(t, dt) {
+    if (!ebenen.length || ruhig || ++sternTakt % 3) return;
+    mx += (zx - mx) * Math.min(1, dt * 6); my += (zy - my) * Math.min(1, dt * 6);
+    [[3, 2, 140, 2], [8, 5, 90, 6]].forEach(([ax, ay, per, maus], i) => {
+      const w = Math.sin((TAU * t) / per + i);
+      if (ebenen[i]) ebenen[i].style.transform = `translate(${(ax * w - maus * mx).toFixed(2)}px,${(-ay * w - maus * my).toFixed(2)}px)`;
+    });
+    funkler.forEach((f, i) => { f.style.opacity = (+f.dataset.o * (0.72 + 0.28 * Math.cos((TAU * t) / 9 + i * 1.7))).toFixed(3); });
+  }
+
+  // Pegelbalken neben "Spricht": folgen dem echten (oder simulierten) Pegel statt einer festen CSS-Schleife
+  const stab = o.balken ? [...o.balken] : [];
+  let stabAn = true;
+  function balken(t) {
+    if (!stab.length) return;
+    const an = zustand === "spricht" && !ruhig;
+    if (!an && !stabAn) return;
+    stabAn = an;
+    stab.forEach((r, i) => { r.style.transform = an ? `scaleY(${(0.3 + 0.7 * Math.min(1, L * (0.75 + 0.45 * Math.sin(t * (7 + i * 2.3) + i * 1.9)))).toFixed(3)})` : ""; });
+  }
+
+  function bild(jetzt) {
+    raf = requestAnimationFrame(bild);
+    const iv = 1000 / fps(), seit = letzte ? jetzt - letzte : iv;
+    if (seit < iv - 2) return;
+    const dt = Math.min(0.1, seit / 1000);
+    letzte = seit < 2 * iv ? letzte + iv : jetzt;     // fester Takt, sonst landet man bei 60 Hz auf 20 statt 24
+    sterne(jetzt / 1000, dt);
+    balken(jetzt / 1000);
+    if (jetzt - pruefZeit > 1000) { pruefZeit = jetzt; einstellungenLesen(); groesseSetzen(); if (!laeuft) return; }
+    if (start < 0) { start = jetzt; if (ruhig) aufbau = false; }
+    const t0 = performance.now(), t = jetzt / 1000;
+    schritt(dt, t, jetzt);
+    impulse.dt = dt;
+    zeichnen(t, (jetzt - start) / 1000);
+    mess.bilder++; mess.ms += performance.now() - t0;
+  }
+  function groesseSetzen() {
+    const w = rahmen.clientWidth, d = Math.min(2, window.devicePixelRatio || 1);
+    if (!w || (w === groesse && d === dpr)) return;
+    groesse = w; dpr = d;
+    cv.width = cv.height = Math.round(w * d);
+  }
+  function pruefen() {
+    const soll = !still && sichtbar && !pause && !document.hidden;
+    document.documentElement.classList.toggle("k-anim", !still);
+    if (soll === laeuft) return;
+    laeuft = soll;
+    if (soll) { letzte = 0; groesseSetzen(); raf = requestAnimationFrame(bild); }
+    else cancelAnimationFrame(raf);
+  }
+  document.addEventListener("visibilitychange", pruefen);
+  if (window.IntersectionObserver) new IntersectionObserver((e) => { sichtbar = e[e.length - 1].isIntersecting; pruefen(); }).observe(rahmen);
+  if (window.ResizeObserver) new ResizeObserver(groesseSetzen).observe(rahmen);
+  if (window.matchMedia) { const mq = matchMedia("(prefers-reduced-motion: reduce)"); (mq.addEventListener ? mq.addEventListener("change", einstellungenLesen) : mq.addListener(einstellungenLesen)); }
+  farben(); einstellungenLesen(); pruefen();
+
+  return {
+    zustand(z) { if (ZIEL[z] && z !== zustand) { zustand = z; if (z !== "denkt") impulse.length = Math.min(impulse.length, 3); if (z === "denkt") naechsterImpuls = 0; } },
+    pegel(v) { extern = { v: Math.max(0, Math.min(1, +v || 0)), t: performance.now() }; },
+    huelle(werte, schrittMs, startMs) {
+      if (!Array.isArray(werte) || !werte.length) return;
+      spuren.push({ werte: werte.map((x) => Math.max(0, Math.min(1, +x || 0))), schritt: schrittMs || 50, start: startMs == null ? performance.now() : startMs });
+      if (spuren.length > 40) spuren.shift();
+    },
+    pause(an) { pause = !!an; pruefen(); },
+    aufbauNeu() { einstellungenLesen(); if (!ruhig && !still) { aufbau = true; start = -1; } },   // z. B. wenn ein Startbild den Kern verdeckt hat
+    einstellen() { einstellungenLesen(); pruefen(); },
+    messung() { const s = (performance.now() - mess.seit) / 1000, r = { fps: +(mess.bilder / s).toFixed(1), msProBild: +(mess.ms / Math.max(1, mess.bilder)).toFixed(2), laeuft, zustand, groesse: cv.width }; mess.bilder = 0; mess.ms = 0; mess.seit = performance.now(); return r; },
+  };
+}
+// Huelle aus einer WAV-Datei (16 Bit PCM): Pegel je 50 ms, 0..1 (Wurzel des RMS, damit leise Silben sichtbar bleiben)
+function kernWavHuelle(buf, schrittMs) {
+  try {
+    const d = new DataView(buf), schritt = schrittMs || 50;
+    let pos = 12, rate = 0, kanaele = 1, bits = 16, daten = -1, laenge = 0;
+    while (pos + 8 <= d.byteLength) {
+      const id = String.fromCharCode(d.getUint8(pos), d.getUint8(pos + 1), d.getUint8(pos + 2), d.getUint8(pos + 3)), gr = d.getUint32(pos + 4, true);
+      if (id === "fmt ") { kanaele = d.getUint16(pos + 10, true); rate = d.getUint32(pos + 12, true); bits = d.getUint16(pos + 22, true); }
+      if (id === "data") { daten = pos + 8; laenge = Math.min(gr, d.byteLength - daten); break; }
+      pos += 8 + gr + (gr & 1);
+    }
+    if (daten < 0 || bits !== 16 || !rate) return null;
+    const proFenster = Math.max(1, Math.round((rate * schritt) / 1000)) * kanaele, werte = [];
+    for (let a = 0; a + 2 <= laenge; a += proFenster * 2) {
+      let summe = 0, z = 0;
+      for (let i = a; i < Math.min(laenge, a + proFenster * 2); i += 2 * kanaele * 2) { const v = d.getInt16(daten + i, true); summe += v * v; z++; }
+      werte.push(+Math.min(1, Math.sqrt(Math.sqrt(summe / Math.max(1, z)) / 9000)).toFixed(2));
+    }
+    return werte;
+  } catch (e) { return null; }
+}
+// Haken fuer Pegel von aussen: PC-Client (evaluate_js), Echtzeit-Modus
+function kernPegel(v) { if (kernAni) kernAni.pegel(v); }
+function kernHuelle(werte, schrittMs, startMs) { if (kernAni) kernAni.huelle(werte, schrittMs, startMs); }
+function kernPause(an) { if (kernAni) kernAni.pause(an); }
+
 /* ---------- Design "Kern" (seit 28.10.2026, Entwurf "Observatorium"). Waehlbar ueber die
    Oberflaeche (design: kern) oder ?design=kern in der Adresse; das bisherige Design bleibt. Daten: Zustand (Status,
    Werkzeug, ehrlich), im PC-Fenster dazu der Verlauf (Untertitel, nachlesen). Glance zeigt keine Gespraechsinhalte. */
 // Funktionen und var statt const/let: oberflaecheAnwenden() laeuft beim Laden schon, bevor dieser Block erreicht ist
 function KERN() { const m = /[?&]design=(kern|klassisch)\b/.exec(location.search); return (m ? m[1] : OBERFLAECHE.design) === "kern"; }
 function KERN_GLUT() { return (OBERFLAECHE.farbe === "eigene" && OBERFLAECHE.farben && OBERFLAECHE.farben.c) || "#a9c4ff"; }
-var kernGebaut = false, kernTextSchluessel, kernWorte = [], kernTakt = null, kernZu = null, kernNl = false, kernErster = true;
+var kernAni, kernGebaut = false, kernTextSchluessel,   // kernAni ohne Startwert: kernBauen kann vor dieser Zeile laufen
+  kernWorte = [], kernTakt = null, kernZu = null, kernNl = false, kernErster = true;
 function kernBauen() {
   if (kernGebaut) return;
   kernGebaut = true;
   let s = 11;
   const zufall = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
-  let h = "";
+  const ebenen = ["", ""];
   for (let i = 0; i < 60; i++) {
     const x = (zufall() * 100).toFixed(2), y = (zufall() * 100).toFixed(2), g = zufall() < 0.9 ? 1 : 1.5, o = (0.12 + zufall() * 0.35).toFixed(2);
-    h += `<span style="left:${x}%;top:${y}%;width:${g}px;height:${g}px;opacity:${o}"></span>`;
+    ebenen[g > 1 ? 1 : i % 3 === 0 ? 1 : 0] += `<span${i % 7 === 3 ? ' class="f"' : ""} style="left:${x}%;top:${y}%;width:${g}px;height:${g}px;opacity:${o}" data-o="${o}"></span>`;
   }
-  $("k-sterne").innerHTML = h;
+  $("k-sterne").innerHTML = `<div class="k-ebene k-ebene1">${ebenen[0]}</div><div class="k-ebene k-ebene2">${ebenen[1]}</div>`;
   let skala = "";
   for (let i = 0; i < 72; i++) {
     const w = (i / 72) * 2 * Math.PI, l = i % 6 === 0 ? 10 : 4;
@@ -1668,17 +2161,28 @@ function kernBauen() {
   }
   $("k-knoten").innerHTML = p.map((a) => `<circle cx="${a.x.toFixed(1)}" cy="${a.y.toFixed(1)}" r="${a.z > 0 ? 2.4 : 1.3}" fill="#f4f7ff" fill-opacity="${a.z > 0 ? 0.95 : 0.4}"/>`).join("");
   let k = "";
+  const paare = [], speichen = [];
   for (let i = 0; i < n; i++) {
+    if (i % 4 === 0) speichen.push(i);
     for (let j = i + 1; j < n; j++) {
       const a = p[i], b = p[j];
+      if (Math.hypot(a.x - b.x, a.y - b.y) < 58) paare.push([i, j]);
       if (Math.hypot(a.x - b.x, a.y - b.y) < 58) k += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke-opacity="${a.z + b.z > 0 ? 0.6 : 0.2}"/>`;
     }
     if (i % 4 === 0) k += `<line x1="${p[i].x.toFixed(1)}" y1="${p[i].y.toFixed(1)}" x2="200" y2="200" stroke-opacity="0.18"/>`;
   }
   $("k-kanten").innerHTML = k;
+  if (!kernAni) try {
+    kernAni = KernAnimation(document.querySelector("#kern .k-svg"), { punkte: p, kanten: paare, speichen, herzR: 70, linie: 0.6, sterne: $("k-sterne"), balken: document.querySelectorAll("#kern .k-pegel"),
+      glut: () => getComputedStyle($("kern")).getPropertyValue("--glut").trim() });
+    document.documentElement.classList.add("k-aufbau"); setTimeout(() => document.documentElement.classList.remove("k-aufbau"), 2400);
+  } catch (e) { kernAni = null; document.documentElement.classList.remove("k-anim"); }
   $("k-kapsel").addEventListener("click", () => $("k-ehrlich").scrollIntoView({ behavior: "smooth", block: "center" }));
   $("k-faeh").addEventListener("click", () => seite("skills"));
   $("k-lage").addEventListener("click", () => seite("lage"));
+  $("k-gedaechtnis").addEventListener("click", () => seite("gedaechtnis"));
+  $("k-gedaechtnis").title = tx("gedaechtnis"); $("k-gedaechtnis").setAttribute("aria-label", tx("gedaechtnis"));
+  $("k-grundriss").addEventListener("click", grundrissAuf);
   $("k-zahnrad").addEventListener("click", () => $("zahnrad").click());
   $("k-zu").addEventListener("click", () => { kernZu = kernTextSchluessel; $("k-nachlesen").classList.add("leer"); $("k-faden-r").classList.add("leer"); });
   $("k-mic").addEventListener("click", () => $("echtzeit-knopf").click());
@@ -1697,7 +2201,7 @@ function kernAnwenden() {
   const O = OBERFLAECHE, name = String(O.name || "JARVIS").replace(/\./g, "").toUpperCase();
   $("kern").style.setProperty("--glut", KERN_GLUT());
   $("k-name").textContent = name; $("k-bild").setAttribute("aria-label", tx("k_kern_aria"));
-  $("k-ort").textContent = O.person ? tx("k_haus", O.person.toUpperCase()) : name;
+  $("k-ort").textContent = O.haus ? O.haus.toUpperCase() : O.person ? tx("k_haus", O.person.toUpperCase()) : name;
   $("k-rolle").textContent = tx("k_rolle");
   $("k-ehrlich-titel").textContent = tx("k_ehrlich"); $("k-ehrlich-satz").textContent = tx("k_ehrlich_satz");
   $("k-nl-titel").textContent = tx("k_nachlesen"); $("k-bleibt").textContent = tx("k_bleibt");
@@ -1741,6 +2245,7 @@ function kernAktualisieren(z, st) {
   if (!KERN()) return;
   const H = document.documentElement, s = z ? (["bereit", "hoert", "denkt", "spricht"].includes(st) ? st : "bereit") : "fehler";
   ["k-bereit", "k-hoert", "k-denkt", "k-spricht", "k-fehler"].forEach((c) => H.classList.toggle(c, c === "k-" + s));
+  if (kernAni) kernAni.zustand(s);
   const e = z && z.ehrlich && Array.isArray(z.ehrlich.liste) && z.ehrlich.liste.length ? z.ehrlich : null;
   H.classList.toggle("k-eingeschraenkt", !!e);
   const n = e ? e.liste.length : 0;
@@ -1770,6 +2275,7 @@ function kernAktualisieren(z, st) {
     kernWorte = letzte ? String(letzte.antwort || "").split(/\s+/).filter(Boolean) : [];
     if (!kernWorte.length) $("k-text").textContent = v ? "" : ($("gruss") ? $("gruss").textContent : "");
     else kernTextZeigen(kernErster ? null : -1);
+    if (!kernErster) { const el = $("k-text"); el.classList.remove("k-neu"); void el.offsetWidth; el.classList.add("k-neu"); }
     const nl = letzte && Array.isArray(letzte.nachlesen) ? letzte.nachlesen.slice(0, 4) : [];
     $("k-nl-liste").innerHTML = nl.map((x) => `<li>${esc(x)}</li>`).join("");
     kernNl = nl.length > 0;
@@ -1793,6 +2299,384 @@ Promise.race([zustand().catch(() => {}), new Promise((r) => setTimeout(r, 1200))
 setInterval(zustand, 1000);
 daten(); setInterval(daten, 10000);
 welt(); setInterval(welt, 30000);
+/*STERNBILD-START*/
+/* Gedaechtnis als Sternbild (29.10.2026). Eine Quelle fuer HUD (PC-Fenster) und App; werkzeuge/sternbild_einbetten.py
+   kopiert diese Datei samt sternbild.css zwischen die Marken STERNBILD-START/-ENDE beider Seiten.
+   Canvas 2D, ruhig: hoechstens 10 Bilder je Sekunde beim Flimmern (33 ms bei Bewegung), Pause bei verborgener Seite, kein Dauerzeichnen ohne Grund.
+   Alles Persoenliche geht nur mit textContent ins DOM (Eintraege sind Nutzertext, nie innerHTML). */
+const Sternbild = (function () {
+  const GOLD = 2.399963;                       // goldener Winkel
+  const hash = (n) => { let h = (n * 2654435761) >>> 0; h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; return (h >>> 0) / 4294967295; };
+  const el = (tag, klasse, text) => { const e = document.createElement(tag); if (klasse) e.className = klasse; if (text != null) e.textContent = text; return e; };
+
+  function erzeuge(wurzel, o) {
+    const tx = o.tx;
+    let F = { haus: "#a9c4ff", privat: "#e3b866" }, RGB = "196,210,236", DIM = "168,180,202", AKZ = "169,196,255", BG = "7,10,18";
+    let daten = null, ausgewaehlt = null, fokus = null, suche = "", seitTage = null, geladen = 0, lade = false, bearbeiten = false, sicher = false;
+    let zahlText = "", sterne = [], haufen = [], breite = 0, hoehe = 0, dpr = 1;
+    // Ruhe zuerst: Im Ruhezustand wird nur bei Aenderung gezeichnet (kein Dauerflimmern, Messung am NAS-Chromium: 60 Sterne
+    // mit Flimmern kosteten dort ~0,5 s CPU je Sekunde). Nur ein gewaehlter Stern oder Suchtreffer pulsiert, mit 10 Bildern/s.
+    const still = () => (o.ruhig && o.ruhig()) || !(ausgewaehlt || (suche && woerter().length && sterne.some(treffer)));
+    const ansicht = { x: 0, y: 0, z: 1, zx: 0, zy: 0, zz: 1 };      // aktuelle und Ziel-Ansicht
+    wurzel.textContent = "";
+    const huelle = el("div", "sb");
+    const kopf = el("div", "sb-kopf"), titel = el("h2", null, tx("sb_titel")), zahl = el("span", "sb-zahl");
+    kopf.append(titel, zahl);
+    const suchfeld = el("input", "sb-suche"); suchfeld.type = "search"; suchfeld.maxLength = 60; suchfeld.placeholder = tx("sb_suche");
+    suchfeld.setAttribute("aria-label", tx("sb_suche")); suchfeld.autocomplete = "off"; suchfeld.enterKeyHint = "search";
+    const bild = el("div", "sb-bild"), leinwand = el("canvas"), leer = el("div", "sb-leer");
+    leinwand.setAttribute("role", "img"); leinwand.setAttribute("aria-label", tx("sb_aria"));
+    bild.append(leinwand, leer);
+    const zeit = el("div", "sb-zeit"), zeitText = el("span", "sb-zeit-text"), regler = el("input"), woche = el("button", "sb-woche", tx("sb_woche"));
+    regler.type = "range"; regler.min = 0; regler.max = 30; regler.value = 30; regler.step = 1; regler.setAttribute("aria-label", tx("sb_zeitleiste"));
+    woche.type = "button";
+    zeit.append(regler, el("div", "sb-zeit-zeile")); zeit.lastChild.append(zeitText, woche);
+    const chips = el("div", "sb-chips");
+    const legende = el("div", "sb-legende");
+    const li1 = el("span"), li2 = el("span"); li1.append(el("i", "haus"), tx("sb_haus")); li2.append(el("i", "privat"), tx("sb_privat"));
+    legende.append(li1, li2);
+    const hinweis = el("div", "sb-hinweis");
+    const blatt = el("div", "sb-blatt"); blatt.hidden = true;
+    huelle.append(kopf, suchfeld, bild, blatt, zeit, chips, legende, hinweis);
+    wurzel.append(huelle);
+    const g = leinwand.getContext("2d");
+    // Farben kommen aus den CSS-Variablen der Seite (jedes Design setzt eigene, siehe sternbild.css); bei jedem Zeigen neu gelesen
+    function farben() {
+      const cs = getComputedStyle(huelle), v = (n) => (cs.getPropertyValue(n) || "").trim();
+      const hex = (wert, fb) => { g.fillStyle = "#000000"; g.fillStyle = wert || fb; const a = g.fillStyle; g.fillStyle = "#ffffff"; g.fillStyle = wert || fb; return a === g.fillStyle && /^#[0-9a-f]{6}$/i.test(a) ? a : fb; };
+      const rgb = (n, fb) => (/^\d{1,3},\s*\d{1,3},\s*\d{1,3}$/.test(v(n)) ? v(n).replace(/\s+/g, "") : fb);
+      F = { haus: hex(v("--sb-haus"), F.haus), privat: hex(v("--sb-privat"), F.privat) };
+      RGB = rgb("--sb-rgb", RGB); DIM = rgb("--sb-dim-rgb", DIM); AKZ = rgb("--sb-akz-rgb", AKZ); BG = rgb("--sb-bg-rgb", BG); schmutzig = true;
+    }
+
+    // ---------------------------------------------------------------- Layout (Einheitskreis, Kern in der Mitte)
+    function layout() {
+      sterne = (daten && daten.sterne) || [];
+      const nach = {};
+      sterne.forEach((s) => { (nach[s.thema] = nach[s.thema] || []).push(s); });
+      const namen = ((daten && daten.themen) || []).map((t) => t.name).filter((n) => nach[n]);
+      const gew = namen.map((n) => Math.sqrt(nach[n].length) + 0.9), summe = gew.reduce((a, b) => a + b, 0) || 1;
+      haufen = []; let lauf = 0;
+      namen.forEach((n, i) => {
+        const w = gew[i], winkel = -Math.PI / 2 + 2 * Math.PI * (lauf + w / 2) / summe; lauf += w;
+        const liste = nach[n].slice().sort((a, b) => a.id - b.id), k = liste.length;
+        const bogen = 2 * Math.PI * 0.6 * w / summe;
+        let r = Math.min(0.1 + 0.07 * Math.sqrt(k), bogen * 0.46, 0.3);
+        const ring = namen.length === 1 ? 0 : 0.6 + (i % 2 ? 0.08 : -0.06);
+        const cx = Math.cos(winkel) * ring, cy = Math.sin(winkel) * ring;
+        liste.forEach((s, j) => {
+          const a = j * GOLD + hash(s.id) * 0.5, rr = k === 1 ? 0 : r * Math.sqrt((j + 0.5) / k) * (0.88 + 0.24 * hash(s.id + 7));
+          s.x = cx + Math.cos(a) * rr; s.y = cy + Math.sin(a) * rr;
+        });
+        const kanten = [];
+        liste.forEach((s, j) => {
+          if (!j) return;
+          const nah = liste.slice(0, j).map((t) => [Math.hypot(t.x - s.x, t.y - s.y), t]).sort((a, b) => a[0] - b[0]);
+          kanten.push([nah[0][1], s]);
+          if (j > 2 && j % 3 === 0 && nah[1]) kanten.push([nah[1][1], s]);
+        });
+        haufen.push({ name: n, sterne: liste, kanten, cx, cy, r, winkel });
+      });
+    }
+
+    // ---------------------------------------------------------------- Zustand: gefiltert, gedimmt
+    const woerter = () => suche.toLowerCase().split(/\s+/).filter((w) => w.length >= 2);
+    function filterAlpha(s) {                  // nur Zeitleiste und Suche machen einen Stern unantastbar, der Fokus nur dunkler
+      let a = 1;
+      if (seitTage != null && s.tage > seitTage) a *= 0.12;
+      const w = woerter();
+      if (w.length && !w.some((x) => s.text.toLowerCase().includes(x))) a *= 0.15;
+      return a;
+    }
+    function sichtbarAlpha(s) {
+      let a = filterAlpha(s);
+      if (ausgewaehlt && s.thema !== ausgewaehlt.thema) a *= 0.28;
+      else if (fokus && s.thema !== fokus) a *= 0.2;
+      return a;
+    }
+    const treffer = (s) => { const w = woerter(); return w.length && w.some((x) => s.text.toLowerCase().includes(x)); };
+
+    // ---------------------------------------------------------------- Zeichnen
+    const sprites = {};
+    function sprite(farbe) {
+      if (sprites[farbe]) return sprites[farbe];
+      const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d");
+      const v = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+      v.addColorStop(0, farbe + "ff"); v.addColorStop(0.18, farbe + "aa"); v.addColorStop(0.5, farbe + "28"); v.addColorStop(1, farbe + "00");
+      x.fillStyle = v; x.fillRect(0, 0, 64, 64);
+      return (sprites[farbe] = c);
+    }
+    const maß = () => Math.min(breite, hoehe) * 0.46;
+    const zuBild = (px, py) => [breite / 2 + (px - ansicht.x) * maß() * ansicht.z, hoehe / 2 + (py - ansicht.y) * maß() * ansicht.z];
+    function zeichnen(t) {
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, breite, hoehe);
+      const m = maß() * ansicht.z, [kx, ky] = zuBild(0, 0), ruhig = still();
+      // Kern: weicher Schein und der Ring wie im Gespraechs-Reiter
+      const rk = Math.min(m * 0.2, Math.min(breite, hoehe) * 0.2);       // beim Hineinzoomen waechst der Kern nicht ins Bild
+      const s0 = g.createRadialGradient(kx, ky, 0, kx, ky, rk);
+      s0.addColorStop(0, "rgba(255,255,255,.95)"); s0.addColorStop(0.25, "rgba(" + AKZ + ",.5)"); s0.addColorStop(1, "rgba(" + AKZ + ",0)");
+      g.fillStyle = s0; g.beginPath(); g.arc(kx, ky, rk, 0, 7); g.fill();
+      g.strokeStyle = "rgba(" + RGB + ",.22)"; g.lineWidth = 1; g.beginPath(); g.arc(kx, ky, m * 1.06, 0, 7); g.stroke();
+      // Linien je Sternbild und Bereich in einem Strich (wenige Zeichenaufrufe)
+      haufen.forEach((h) => {
+        ["haus", "privat"].forEach((b) => {
+          const a = h.kanten.filter((k) => k[0].bereich === b && k[1].bereich === b);
+          if (!a.length) return;
+          const dim = Math.min(...a.map((k) => Math.min(sichtbarAlpha(k[0]), sichtbarAlpha(k[1]))));
+          g.strokeStyle = F[b] + Math.round(Math.max(0.05, 0.34 * dim) * 255).toString(16).padStart(2, "0");
+          g.lineWidth = ausgewaehlt && ausgewaehlt.thema === h.name ? 1.4 : 1; g.beginPath();
+          a.forEach((k) => { const p = zuBild(k[0].x, k[0].y), q = zuBild(k[1].x, k[1].y); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); });
+          g.stroke();
+        });
+        // gemischte Kanten (Haus und Privates in einem Sternbild) gedaempft in Grau
+        const mix = h.kanten.filter((k) => k[0].bereich !== k[1].bereich);
+        if (mix.length) {
+          g.strokeStyle = "rgba(" + RGB + ",.18)"; g.lineWidth = 1; g.beginPath();
+          mix.forEach((k) => { const p = zuBild(k[0].x, k[0].y), q = zuBild(k[1].x, k[1].y); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); });
+          g.stroke();
+        }
+      });
+      // Sterne
+      sterne.forEach((s) => {
+        const a = sichtbarAlpha(s), [px, py] = zuBild(s.x, s.y), farbe = F[s.bereich];
+        const flimmer = 1;
+        const r = (1.5 + 2.4 * s.hell) * (0.8 + 0.2 * Math.min(ansicht.z, 2)) * flimmer;
+        g.globalAlpha = Math.min(1, (0.3 + 0.7 * s.hell) * a * flimmer);
+        const sp = sprite(farbe), gr = r * 5.5;
+        g.drawImage(sp, px - gr, py - gr, gr * 2, gr * 2);
+        g.globalAlpha = Math.min(1, (0.55 + 0.45 * s.hell) * a);
+        g.fillStyle = s.hell > 0.7 ? "#ffffff" : farbe; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill();
+        if (treffer(s) || s === ausgewaehlt) {
+          g.globalAlpha = 1; g.strokeStyle = s === ausgewaehlt ? "#ffffff" : farbe; g.lineWidth = 1.5;
+          g.beginPath(); g.arc(px, py, r + 5 + (ruhig ? 0 : 1.5 * Math.sin(t / 500)), 0, 7); g.stroke();
+        }
+      });
+      g.globalAlpha = 1;
+      // Namen der Sternbilder
+      g.font = "600 " + (breite < 480 ? 10 : 11) + "px 'IBM Plex Sans Condensed', sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      haufen.forEach((h) => {
+        const a = ausgewaehlt ? (ausgewaehlt.thema === h.name ? 1 : 0.25) : fokus ? (fokus === h.name ? 1 : 0.25) : 0.78;
+        const text = h.name.toUpperCase(), tb = g.measureText(text).width;
+        // Name unter dem untersten Stern des Sternbilds, mittig zur Breite der Sterne, ganz im Bild
+        let x0 = 1e9, x1 = -1e9, y1 = -1e9;
+        h.sterne.forEach((s) => { const p = zuBild(s.x, s.y); x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); });
+        const rx = (x0 + x1) / 2, ry = y1 + 20;
+        if (ansicht.z > 1.15 && (rx - tb / 2 < 0 || rx + tb / 2 > breite || ry > hoehe - 6 || ry < 8 || a < 0.3)) return;   // herangezoomt: nur, was ganz im Bild liegt
+        const px = Math.max(tb / 2 + 6, Math.min(breite - tb / 2 - 6, rx)), py = Math.min(hoehe - 10, ry);
+        g.lineWidth = 3; g.strokeStyle = "rgba(" + BG + "," + (0.85 * a) + ")"; g.lineJoin = "round"; g.strokeText(text, px, py);   // Rand gegen Linien und Sterne dahinter
+        g.fillStyle = "rgba(" + DIM + "," + a + ")"; g.fillText(text, px, py);
+      });
+    }
+
+    // ---------------------------------------------------------------- Schleife (Flimmern 10 Bilder/s, Bewegung 30, Pause wenn verborgen)
+    let schmutzig = true, schleife = 0, letzte = 0;
+    function sichtbar() { return !document.hidden && wurzel.offsetParent !== null && breite > 0; }
+    function takt(t) {
+      schleife = 0;
+      if (!sichtbar()) { schleife = setTimeout(() => (schleife = requestAnimationFrame(takt)), 600); return; }
+      const bewegt = Math.abs(ansicht.zx - ansicht.x) + Math.abs(ansicht.zy - ansicht.y) + Math.abs(ansicht.zz - ansicht.z) > 0.001;
+      if (bewegt) { const k = 0.2; ansicht.x += (ansicht.zx - ansicht.x) * k; ansicht.y += (ansicht.zy - ansicht.y) * k; ansicht.z += (ansicht.zz - ansicht.z) * k; schmutzig = true; }
+      const wartezeit = still() ? 200 : 100;
+      if ((schmutzig || !still()) && t - letzte >= (bewegt ? 33 : wartezeit)) { letzte = t; schmutzig = false; zeichnen(t); }
+      schleife = requestAnimationFrame(takt);
+    }
+    function start() { if (!schleife) schleife = requestAnimationFrame(takt); schmutzig = true; }
+    function groesse() {
+      const b = leinwand.getBoundingClientRect(); dpr = Math.min(window.devicePixelRatio || 1, 2);
+      breite = Math.round(b.width); hoehe = Math.round(b.height);
+      leinwand.width = Math.max(1, Math.round(breite * dpr)); leinwand.height = Math.max(1, Math.round(hoehe * dpr)); schmutzig = true;
+    }
+    if (window.ResizeObserver) new ResizeObserver(groesse).observe(bild); else window.addEventListener("resize", groesse);
+
+    // ---------------------------------------------------------------- Auswahl und Fokus
+    function ziel() {
+      const h = haufen.find((x) => x.name === (ausgewaehlt ? ausgewaehlt.thema : fokus));
+      if (h) { ansicht.zx = h.cx; ansicht.zy = h.cy; ansicht.zz = Math.max(1.5, Math.min(3.2, 0.62 / (h.r + 0.05))); }
+      else { ansicht.zx = ansicht.zy = 0; ansicht.zz = 1; }
+      schmutzig = true;
+    }
+    function waehlen(s) { ausgewaehlt = s; bearbeiten = false; sicher = false; fokus = s ? s.thema : fokus; if (!s) fokus = null; ziel(); blattZeigen(); chipsZeichnen(); }
+    function treffen(px, py) {
+      let best = null, bd = Math.max(16, 7 + maß() * 0.03);
+      sterne.forEach((s) => {
+        if (filterAlpha(s) < 0.25) return;
+        const [x, y] = zuBild(s.x, s.y), d = Math.hypot(x - px, y - py); if (d < bd) { bd = d; best = s; }
+      });
+      return best;
+    }
+    leinwand.addEventListener("click", (e) => {
+      const b = leinwand.getBoundingClientRect(), s = treffen(e.clientX - b.left, e.clientY - b.top);
+      if (s) waehlen(s === ausgewaehlt ? null : s); else if (ausgewaehlt || fokus) { fokus = null; waehlen(null); }
+    });
+
+    // ---------------------------------------------------------------- Bedienelemente
+    function chipsZeichnen() {
+      chips.textContent = "";
+      ((daten && daten.themen) || []).forEach((t) => {
+        const b = el("button", "sb-chip" + (fokus === t.name ? " an" : ""), t.name); b.type = "button";
+        b.append(el("small", null, String(t.anzahl)));
+        b.addEventListener("click", () => { ausgewaehlt = null; blatt.hidden = true; fokus = fokus === t.name ? null : t.name; ziel(); chipsZeichnen(); });
+        chips.append(b);
+      });
+    }
+    function zeitZeichnen() {
+      const max = +regler.max, v = +regler.value, alle = v >= max, n = sterne.filter((s) => alle || s.tage <= v).length;
+      seitTage = alle ? null : v;
+      const d = new Date(Date.now() - v * 86400000).toLocaleDateString(o.loc || "de-DE", { day: "2-digit", month: "2-digit" });
+      zeitText.textContent = (alle ? tx("sb_alles") : tx("sb_seit", d)) + " · " + (n === 1 ? tx("sb_sterne1") : tx("sb_sterne", n));
+      woche.classList.toggle("an", v === 7 && max > 7); schmutzig = true;
+    }
+    regler.addEventListener("input", zeitZeichnen);
+    woche.addEventListener("click", () => { regler.value = +regler.value === 7 ? regler.max : Math.min(7, regler.max); zeitZeichnen(); });
+    suchfeld.addEventListener("input", () => {
+      suche = suchfeld.value; schmutzig = true;
+      const w = woerter();
+      const n = w.length ? sterne.filter(treffer).length : 0;
+      hinweis.textContent = w.length ? tx("sb_treffer", n) : "";
+      zahl.textContent = w.length ? tx("sb_treffer", n) : zahlText;           // oben rechts, auch ohne Scrollen sichtbar
+    });
+
+    function zeile(k, v) { const z = el("div", "sb-z"); z.append(el("span", null, k), el("b", null, v)); return z; }
+    function vorTagen(t) { return t < 1 ? tx("sb_heute") : t < 2 ? tx("sb_gestern") : tx("sb_vor_tagen", t); }
+    function blattZeigen() {
+      blatt.textContent = "";
+      const s = ausgewaehlt; blatt.hidden = !s;
+      if (!s) return;
+      const zu = el("button", "sb-zu", "×"); zu.type = "button"; zu.setAttribute("aria-label", tx("sb_schliessen")); zu.addEventListener("click", () => waehlen(null));
+      const farbe = el("i", s.bereich); const kopfz = el("div", "sb-blatt-kopf"); kopfz.append(farbe, el("span", null, s.thema), zu);
+      blatt.append(kopfz);
+      if (bearbeiten) {
+        const f = el("textarea", "sb-feld"); f.value = s.text; f.maxLength = 500; f.rows = 4; f.setAttribute("aria-label", tx("sb_aendern"));
+        const knoepfe = el("div", "sb-knoepfe"), ok = el("button", "sb-knopf an", tx("sb_speichern")), ab = el("button", "sb-knopf", tx("sb_abbrechen"));
+        ok.type = ab.type = "button";
+        ok.addEventListener("click", () => senden({ aktion: "aendern", id: s.id, text: f.value }));
+        ab.addEventListener("click", () => { bearbeiten = false; blattZeigen(); });
+        knoepfe.append(ok, ab); blatt.append(f, knoepfe); setTimeout(() => f.focus(), 30);
+      } else {
+        blatt.append(el("p", "sb-text", s.text));
+        blatt.append(zeile(tx("sb_datum"), s.datum + " · " + vorTagen(s.tage)),
+          zeile(tx("sb_quelle"), tx("sb_q_" + s.quelle) !== "sb_q_" + s.quelle ? tx("sb_q_" + s.quelle) : (s.quelle_text || s.quelle)),
+          zeile(tx("sb_bereich"), s.bereich === "haus" ? (s.von ? tx("sb_bereich_haus_von", s.von) : tx("sb_bereich_haus")) : tx("sb_bereich_privat")));
+        blatt.append(zeile(tx("sb_gebraucht"), s.nutzung > 0 ? tx("sb_gebraucht_wert", vorTagen(s.tage_genutzt == null ? s.tage : s.tage_genutzt), s.nutzung) : tx("sb_nie")));
+        (s.frueher || []).slice(-2).forEach((f) => blatt.append(zeile(tx("sb_frueher") + " · " + f.datum, f.text)));
+        if (sicher) {
+          const k = el("div", "sb-knoepfe sb-sicher"); k.append(el("span", null, s.bereich === "haus" ? tx("sb_sicher_haus") : tx("sb_sicher")));
+          const ja = el("button", "sb-knopf warn", tx("sb_ja")), nein = el("button", "sb-knopf", tx("sb_nein")); ja.type = nein.type = "button";
+          ja.addEventListener("click", () => senden({ aktion: "vergessen", id: s.id })); nein.addEventListener("click", () => { sicher = false; blattZeigen(); });
+          k.append(ja, nein); blatt.append(k);
+        } else if (!s.aendern && !s.loeschen && s.bereich === "haus") {
+          blatt.append(el("p", "sb-nur", s.von ? tx(s.von_haupt ? "sb_nur_urheber_haupt" : "sb_nur_urheber", s.von) : tx("sb_nur_haupt")));      // sehen ja, aendern nein
+        } else if (s.aendern || s.loeschen) {
+          const k = el("div", "sb-knoepfe");
+          if (s.aendern) { const a = el("button", "sb-knopf", tx("sb_aendern")); a.type = "button"; a.addEventListener("click", () => { bearbeiten = true; blattZeigen(); }); k.append(a); }
+          if (s.loeschen) { const v = el("button", "sb-knopf warn", tx("sb_vergessen")); v.type = "button"; v.addEventListener("click", () => { sicher = true; blattZeigen(); }); k.append(v); }
+          blatt.append(k);
+        }
+      }
+    }
+
+    // ---------------------------------------------------------------- Daten
+    function anwenden(r, ausAktion) {
+      lade = false;
+      if (!r || r.fehler || !Array.isArray(r.sterne)) {
+        const t = (r && r.fehler) || tx("sb_fehler");
+        if (daten) { hinweis.textContent = t; return; }           // schon Daten da: Sternbild bleibt, Meldung darunter
+        leer.textContent = t; leer.hidden = false; return;
+      }
+      const alteId = ausgewaehlt && ausgewaehlt.id;
+      daten = r; geladen = Date.now(); leer.hidden = r.sterne.length > 0; if (!r.sterne.length) leer.textContent = tx("sb_leer");
+      layout();
+      const max = Math.max(7, Math.min(365, Math.max(0, ...r.sterne.map((s) => s.tage < 9999 ? s.tage : 0))));
+      const warAlle = +regler.value >= +regler.max; regler.max = max; if (warAlle || +regler.value > max) regler.value = max;
+      ausgewaehlt = alteId ? sterne.find((s) => s.id === alteId) || null : null;
+      if (fokus && !haufen.some((h) => h.name === fokus)) fokus = null;
+      if (!ausgewaehlt) { if (alteId) fokus = null; bearbeiten = false; sicher = false; }
+      else if (ausAktion && r.ok) { bearbeiten = false; sicher = false; }
+      zahlText = (r.gesamt > r.sterne.length ? tx("sb_von", r.sterne.length, r.gesamt) : String(r.sterne.length));
+      zahl.textContent = woerter().length ? tx("sb_treffer", sterne.filter(treffer).length) : zahlText;
+      hinweis.textContent = r.meldung && ausAktion ? r.meldung : (r.gesamt > r.sterne.length ? tx("sb_mehr", r.sterne.length, r.gesamt) : "");
+      ziel(); chipsZeichnen(); zeitZeichnen(); blattZeigen(); start();
+    }
+    function senden(a) {
+      const p = o.rufen(a);
+      if (p && p.then) p.then((r) => anwenden(r, true), () => anwenden(null, true));
+    }
+    function laden(erzwingen) {
+      if (lade || (!erzwingen && geladen && Date.now() - geladen < 20000)) { start(); return; }
+      lade = true; if (!daten) { leer.textContent = tx("sb_laden"); leer.hidden = false; }
+      const p = o.rufen({ aktion: "liste" });
+      if (p && p.then) p.then((r) => anwenden(r, false), () => anwenden(null, false));
+    }
+    farben(); groesse(); leer.textContent = tx("sb_laden");
+    const ort = (id) => { const s = sterne.find((x) => x.id === id); if (!s) return null; const [x, y] = zuBild(s.x, s.y), b = leinwand.getBoundingClientRect(); return [b.left + x, b.top + y]; };
+    return { ort, zeigen: () => { farben(); groesse(); laden(false); start(); }, ergebnis: (r) => anwenden(r, !!(r && r.meldung)), neuLaden: () => laden(true),
+             daten: () => daten, texte: () => { titel.textContent = tx("sb_titel"); suchfeld.placeholder = tx("sb_suche"); } };
+  }
+  return { erzeuge };
+})();
+/*STERNBILD-ENDE*/
+
+
+/* ---------- Grundriss (seit 0.6): das 3D-Haus (haus3d.js + three.js, MIT), die Bildansicht (grundrissfoto.js) und die
+   Daten (/v1/grundriss) kommen ueber die Durchreiche des PC-Clients (ab Version 22) neben dieser Seite; der Knopf
+   erscheint nur, wenn sie antwortet. Am Wandbildschirm (Glance, ohne Anmeldung) bleibt er weg. Nur anzeigen, nichts
+   schalten (kein steuern, keine szenen - Bedienen geht in der App). */
+let grAnsicht = null;
+// Deutsch wie bisher, seit 0.6 auch Englisch ("show me the floor plan", "open the 3D house")
+const GR_FRAGE = /^\s*(jarvis[,!]?\s*)?((zeig|öffne|oeffne|mach)\w*\s+(mir\s+)?(den|das|die)?\s*(3d[- ]?)?(grundriss|hausplan|haus in 3d)|(show|open)\s+(me\s+)?(the\s+|my\s+)?(floor\s?plan|house plan|3d[- ]?(house|home|floor\s?plan)|(house|home) in 3d))/i;
+function grSkript(name) {
+  return new Promise((ok, fehler) => {
+    if (document.querySelector('script[data-gr="' + name + '"]')) return ok();
+    const s = document.createElement("script");
+    s.src = name; s.dataset.gr = name; s.onload = () => ok(); s.onerror = () => fehler(new Error(name));
+    document.head.appendChild(s);
+  });
+}
+// Quelle: im PC-Fenster die Durchreiche (mit Token), am Wandbildschirm nur, wenn die Bruecke mit GRUNDRISS_GLANCE=1
+// ein Paket unter assets/jarvis/grundriss/ ablegt (Standard aus, dann bleibt der Knopf dort weg). Seit 30.10.2026.
+const GR = { daten: "grundriss.json", bild: (n) => "grundriss-bild/" + n };
+async function grundrissPruefen() {
+  if (!PC()) { GR.daten = "grundriss/grundriss.json"; GR.bild = (n) => "grundriss/" + n; }
+  try { const r = await fetch(GR.daten + "?t=" + Date.now(), { cache: "no-store" }); $("k-grundriss").hidden = !r.ok; }
+  catch (e) { $("k-grundriss").hidden = true; }
+  $("k-grundriss").title = tx("grundriss"); $("k-grundriss").setAttribute("aria-label", tx("grundriss"));
+}
+const grFoto = (d) => !!(d && d.foto && Object.keys(d.foto.etagen || {}).length);
+async function grundrissAuf() {
+  $("grundriss").classList.add("zeigen");
+  if (grAnsicht) return;
+  const d = await lade(GR.daten);
+  // Das 3D-Haus zuerst (echtes 3D, dreh- und zoombar), das Puppenhaus-Bild als zweite Ansicht
+  grStarten(d && d.haus3d ? "haus3d" : "foto", d);
+}
+async function grStarten(modus, d) {
+  if (grAnsicht) { grAnsicht.zu(); grAnsicht = null; }
+  const opt = { laden: () => lade(GR.daten), schliessen: grundrissZu, alle_s: 10, sprache: SP === "de" ? "de" : "en", daten: d || undefined };
+  if (d && d.haus3d && grFoto(d)) opt.wechsel = modus === "foto" ? { text: "3D", klick: () => grStarten("haus3d", d) }
+    : { text: SP === "de" ? "BILD" : "PICTURE", klick: () => grStarten("foto", d) };
+  try {
+    if (modus === "foto") {
+      if (!window.GrundrissFoto) await grSkript("grundrissfoto.js");
+      grAnsicht = window.GrundrissFoto.oeffnen($("gr-buehne"), Object.assign(opt, { bild: async (n) => GR.bild(n) }));
+    } else if (modus === "haus3d") {
+      if (!window.THREE) await grSkript("three.min.js");
+      if (!window.Haus3D) await grSkript("haus3d.js");
+      grAnsicht = window.Haus3D.oeffnen($("gr-buehne"), Object.assign(opt, { bild: async (n) => GR.bild(n) }));   // nur ansehen
+    }
+  } catch (e) {                   // 3D-Skript nicht da (z. B. aelterer PC-Client ohne Durchreiche): dann das Bild
+    if (modus === "haus3d" && grFoto(d)) return grStarten("foto", d);
+    grundrissZu();
+  }
+}
+function grundrissZu() {
+  $("grundriss").classList.remove("zeigen");
+  if (grAnsicht) { grAnsicht.zu(); grAnsicht = null; }
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && grAnsicht) grundrissZu(); });
+window.addEventListener("pywebviewready", grundrissPruefen);
+setTimeout(() => { if (!PC()) grundrissPruefen(); }, 1500);         // Wandbildschirm: Paket da?
 </script>
+<div id="grundriss" role="dialog"><div id="gr-buehne"></div></div>
 </body>
 </html>

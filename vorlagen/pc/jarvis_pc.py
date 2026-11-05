@@ -53,7 +53,7 @@ import urllib.parse
 import urllib.request
 import wave
 
-VERSION = 21
+VERSION = 22
 WINDOWS = sys.platform == "win32"
 
 # Vor den schweren Importen: auch ein Absturz beim Laden landet so in der Datei
@@ -108,6 +108,21 @@ SPRACHE = E.get("sprache") if E.get("sprache") in ("de", "en") else "de"
 # Neu in dieser Version (seit 16): Wer per Update kommt statt ueber GitHub, sieht so trotzdem,
 # was neu ist. Einmal im Fenster nach einem Update, nicht nach einer Neuinstallation (BESTAND: dieser PC lief schon).
 NEUIGKEITEN = {
+    22: {"titel": "Jarvis · Gedächtnis als Sternbild, 3D-Haus",
+         "de": ["Im Design Observatorium gibt es den Reiter „Gedächtnis“: Jeder gemerkte Punkt ist ein Stern, Themen bilden "
+                "Sternbilder. Antippen zeigt Text, Datum und Quelle, dort kannst du ihn ändern oder vergessen. Du siehst "
+                "nur das Haus und dein Eigenes.",
+                "Der Kern im Design Observatorium bewegt sich jetzt: Beim Zuhören folgt er deinem Mikrofon, beim "
+                "Nachdenken laufen Lichtimpulse, beim Sprechen pulsiert er mit der Stimme. „Ruhige Bewegung“ macht ihn langsamer.",
+                "Hat die Brücke einen 3D-Plan vom Haus, öffnet „Zeig mir den Grundriss“ (im Design Observatorium auch der "
+                "Knopf oben rechts) das Haus in 3D: drehen, zoomen, Geräte leuchten, wenn sie laufen. Hier nur zum Ansehen."],
+         "en": ["The observatory design has a new \"Memory\" tab: every remembered item is a star, topics form "
+                "constellations. Tap one to see text, date and source; you can edit or forget it there. You only see the "
+                "home and your own items.",
+                "The core in the observatory design now moves: it follows your microphone while listening, thinks with "
+                "pulses of light and speaks in time with the voice. \"Calm motion\" slows it down.",
+                "If the bridge has a 3D plan of your home, \"Show me the floor plan\" (in the observatory design also the "
+                "button at the top right) opens the house in 3D: rotate, zoom, devices glow while they run. View only here."]},
     21: {"titel": "Jarvis · Reiter „Lage“",
          "de": ["Im Design Observatorium zeigt der Reiter „Lage“ jetzt auch diesen PC: Prozessor, Arbeitsspeicher, "
                 "Laufwerke und, wenn vorhanden, die NVIDIA-Grafikkarte. Der Client schickt die Werte alle 30 Sekunden."],
@@ -256,6 +271,32 @@ def bruecke(pfad, daten, zeit=200):
         return json.loads(r.read().decode())
 
 
+def _pegel_bote():
+    """Seit 29.10.2026: Pegel von Mikrofon und Stimme an die Kern-Animation im Fenster (window.kernPegel, 0..1).
+    Eigener Faden mit "nur der neueste Wert" und hoechstens ~14 Aufrufen/s, damit evaluate_js nie Aufnahme oder
+    Wiedergabe aufhaelt. Ohne Fenster oder im klassischen Design ist es ein leerer Aufruf."""
+    while True:
+        _pegel_neu.wait()
+        _pegel_neu.clear()
+        v = _pegel_wert[0]
+        if fenster is not None and v is not None:
+            try:
+                fenster.evaluate_js("window.kernPegel && kernPegel(%.2f)" % v)
+            except Exception:
+                pass
+        time.sleep(0.07)
+
+
+_pegel_wert, _pegel_neu = [None], threading.Event()
+threading.Thread(target=_pegel_bote, daemon=True, name="pegel").start()
+
+
+def pegel_melden(rms):
+    """rms eines int16-Blocks; Wurzel-Skala wie in der Oberflaeche (9000 = voll)."""
+    _pegel_wert[0] = min(1.0, (max(0.0, float(rms)) / 9000.0) ** 0.5)
+    _pegel_neu.set()
+
+
 def status(s):
     try:
         bruecke("/v1/status", {"status": s, "quelle": "pc"}, 5)
@@ -295,7 +336,10 @@ async def _tts_abspielen(text):
                     strom.start()
                     status("spricht")
                 elif AudioChunk.is_type(e.type) and strom is not None:
-                    strom.write(np.frombuffer(AudioChunk.from_event(e).audio, dtype=np.int16).reshape(-1, 1))
+                    roh = np.frombuffer(AudioChunk.from_event(e).audio, dtype=np.int16)
+                    if roh.size:
+                        pegel_melden(np.sqrt(np.mean(roh.astype(np.float32) ** 2)))
+                    strom.write(roh.reshape(-1, 1))
     finally:
         if strom is not None:
             time.sleep(0.15)          # Ausklang nicht abschneiden
@@ -528,6 +572,7 @@ def aufnehmen(warte_s=4.0, max_s=12.0, pause_s=0.9, grund=400.0):
             continue
         teile.append(b)
         laut = float(np.sqrt(np.mean(b.astype(np.float32) ** 2)))
+        pegel_melden(laut)
         if laut > schwelle:
             gesprochen, still_seit = True, None
         elif gesprochen:
@@ -1268,6 +1313,12 @@ _HUD_ZIEL = urllib.parse.urlsplit(HUD)
 # Seit Version 13: nur unter einem zufaelligen Pfad je Start, sonst liest jedes Konto am PC den Verlauf mit
 _HUD_GEHEIM = "/" + secrets.token_urlsafe(18)
 _HUD_DATEN = ("system.json", "haus.json", "kalender.json", "lage.json", "faehigkeiten.json")
+# 3D-Grundriss (seit 29.10.2026): Daten mit Token von /v1/grundriss, Code (ohne Daten) von der Web-App-Ablage der Bruecke
+_HUD_GRUNDRISS = {"grundriss.json": ("/v1/grundriss", "application/json"),
+                  "three.min.js": ("/app/three.min.js", "text/javascript; charset=utf-8"),
+                  "grundrissfoto.js": ("/app/grundrissfoto.js", "text/javascript; charset=utf-8"),   # seit 30.10.2026
+                  "haus3d.js": ("/app/haus3d.js", "text/javascript; charset=utf-8")}   # 3D-Haus, seit 30.10.2026 nachts
+_HUD_GR_BILD = re.compile(r"grundriss-bild/((?:eg|og|kg|dg|k\d)_[a-z0-9_]{1,30}\.(jpg|png|webp))")
 
 
 class _Skripte(html.parser.HTMLParser):
@@ -1307,7 +1358,9 @@ def hud_csp(html):
     Echtzeit-Worklet. Verbindungen nur zur Durchreiche selbst und zu Gemini Live."""
     hashes = " ".join("'sha256-%s'" % base64.b64encode(hashlib.sha256(
         s.replace(b"\r\n", b"\n").replace(b"\r", b"\n")).digest()).decode() for s in _inline_skripte(html))
-    return ("default-src 'none'; script-src %s 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' "
+    # 'self' seit 29.10.2026 fuer den Grundriss (three.min.js, haus3d.js, grundrissfoto.js): die Durchreiche liefert nur
+    # die festen Pfade oben, nichts Fremdes, und immer mit nosniff (JSON und Bilder laufen nie als Skript)
+    return ("default-src 'none'; script-src %s 'self' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' "
             "https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' "
             "wss://generativelanguage.googleapis.com; img-src 'self' data:; media-src 'self' blob: data:; "
             "frame-ancestors 'none'; base-uri 'none'; form-action 'none'" % hashes)
@@ -1387,6 +1440,13 @@ class _HudDurchreiche(http.server.BaseHTTPRequestHandler):
                 daten, art, code = bruecke_holen("/v1/client/hud", 15), "text/html; charset=utf-8", 200
             elif pfad == basis + "zustand.json":
                 daten, art, code = bruecke_holen("/v1/zustand", 8), "application/json", 200
+            elif pfad.startswith(basis) and _HUD_GR_BILD.fullmatch(pfad[len(basis):]):
+                m = _HUD_GR_BILD.fullmatch(pfad[len(basis):])          # Foto-Grundriss: Bilder mit Token
+                daten, code = bruecke_holen("/v1/grundriss/bild/" + m.group(1), 30), 200
+                art = {"jpg": "image/jpeg", "png": "image/png", "webp": "image/webp"}[m.group(2)]
+            elif pfad.startswith(basis) and pfad[len(basis):] in _HUD_GRUNDRISS:
+                quelle, art = _HUD_GRUNDRISS[pfad[len(basis):]]
+                daten, code = bruecke_holen(quelle, 20), 200
             elif pfad.startswith(basis) and pfad[len(basis):] in _HUD_DATEN:
                 # Seit Version 13 mit Token ueber die Bruecke statt ungeschuetzt aus dem HUD-Ordner im Netz
                 daten, art, code = bruecke_holen("/v1/client/daten/" + pfad[len(basis):], 15), "application/json", 200
@@ -1603,6 +1663,34 @@ class Api:
             return {"fehler": tx("Brücke: HTTP %d", "Bridge: HTTP %d") % e.code}
         except Exception as e:
             log.warning("Einstellungen an die Brücke: %s", type(e).__name__)
+            return {"fehler": tx("Jarvis-Rechner nicht erreichbar (%s).", "Jarvis host not reachable (%s).") % type(e).__name__}
+
+    def bruecke_gedaechtnis(self, daten):
+        """Reiter "Gedaechtnis" (seit Version 22): Sternbild ueber /v1/gedaechtnis der Bruecke. Das Fenster kennt das Token
+        nicht. Erlaubt sind nur liste, aendern (id, text) und vergessen (id); die Person bestimmt die Bruecke aus dem
+        Token (Hauptperson), nie das Fenster. Eine manipulierte Seite kann so nichts Weiteres anstossen."""
+        if not aus_dem_fenster("bruecke_gedaechtnis"):
+            return ABGELEHNT
+        if not isinstance(daten, dict) or daten.get("aktion") not in ("liste", "aendern", "vergessen"):
+            return {"fehler": tx("Ungültige Anfrage.", "Invalid request.")}
+        d = {"aktion": daten["aktion"]}
+        if d["aktion"] != "liste":
+            nr = daten.get("id")
+            if isinstance(nr, bool) or not isinstance(nr, int):
+                return {"fehler": tx("Ungültige Anfrage.", "Invalid request.")}
+            d["id"] = nr
+        if d["aktion"] == "aendern":
+            if not isinstance(daten.get("text"), str) or len(daten["text"]) > 1000:
+                return {"fehler": tx("Ungültige Anfrage.", "Invalid request.")}
+            d["text"] = daten["text"]
+        try:
+            return bruecke("/v1/gedaechtnis", d, 20)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return {"fehler": tx("Diese Brücke kennt das Gedächtnis noch nicht.", "This bridge doesn't know the memory view yet.")}
+            return {"fehler": tx("Brücke: HTTP %d", "Bridge: HTTP %d") % e.code}
+        except Exception as e:
+            log.warning("Gedächtnis an die Brücke: %s", type(e).__name__)
             return {"fehler": tx("Jarvis-Rechner nicht erreichbar (%s).", "Jarvis host not reachable (%s).") % type(e).__name__}
 
     def datei_vorschau(self, kennung):

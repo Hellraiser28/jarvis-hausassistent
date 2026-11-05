@@ -136,15 +136,20 @@ for i in range(5):
     gd.neu(M, "Haus-Eintrag %d mit e" % i, "haus", "alex")
 pruef("Vergessen: zu kurz", "genauer" in wirft(gd.vergessen, M, "sam", "e"))
 pruef("Vergessen: zu viele Treffer", "5 Einträge" in wirft(gd.vergessen, M, "sam", "Haus-Eintrag"))
-pruef("Vergessen: genauer geht", gd.vergessen(M, "sam", "Haus-Eintrag 3") == 1 and len(gd.laden(M)["eintraege"]) == 4)
+# seit 0.6: Haus-Eintraege loeschen nur Urheber und Hauptperson (gedaechtnis.bearbeitbar)
+pruef("Vergessen: fremder Haus-Eintrag gesperrt", "nicht von dir" in wirft(gd.vergessen, M, "sam", "Haus-Eintrag 3", "alex")
+      and len(gd.laden(M)["eintraege"]) == 5)
+pruef("Vergessen: genauer geht", gd.vergessen(M, "alex", "Haus-Eintrag 3", "alex") == 1 and len(gd.laden(M)["eintraege"]) == 4)
 gd.neu(M, "Sam mag Tee", "sam", "sam")
 k = gd.fuer_kontext(M, "sam", {"alex": "Alex", "sam": "Sam"}, max_zeichen=90)
 pruef("Kontext: das Neueste (privat) bleibt bei knappem Platz", "Sam mag Tee" in k, k)
 pruef("Kontext: Haus-Eintrag anderer mit Urheber", "(Alex): Haus-Eintrag 4" in k, k)
 pruef("Kontext: eigene Haus-Eintraege ohne Urheber", "(Alex)" not in gd.fuer_kontext(M, "alex", {"alex": "Alex", "sam": "Sam"}))
 hausnr = gd.laden(M)["eintraege"][0]["id"]
-pruef("Mitlernen ersetzt keine Haus-Eintraege", gd.ersetzen(M, hausnr, "gelernt anders", "sam") is False
-      and gd.ersetzen(M, hausnr, "von Hand geaendert", "sam", quelle="import") is True)
+pruef("Mitlernen ersetzt keine Haus-Eintraege", gd.ersetzen(M, hausnr, "gelernt anders", "alex", haupt="alex") is False
+      and gd.ersetzen(M, hausnr, "von Hand geaendert", "alex", quelle="import", haupt="alex") is True)
+pruef("Fremden Haus-Eintrag aendert auch von Hand nur Urheber oder Hauptperson",
+      gd.ersetzen(M, hausnr, "von Sam geaendert", "sam", quelle="import", haupt="alex") is False)
 txt = gd.export_txt(M, "sam", {"sam": "Sam"})
 v = gd.import_vergleich(M, "sam", txt.replace("Sam mag Tee", "Sam mag Kaffee"), {"sam": "Sam"})
 nr = v["geaendert"][0]["id"]

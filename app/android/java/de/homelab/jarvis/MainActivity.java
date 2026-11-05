@@ -70,6 +70,7 @@ public class MainActivity extends Activity {
     Handler ui;
     SpeechRecognizer erkenner;
     MediaPlayer spieler;
+    long letzterPegel = 0;
     volatile boolean aufnahmeLaeuft = false;
     volatile String basis = null;            // aktuelle Adresse der Bruecke, null = offline
     volatile String art = "offline";         // heimnetz | internet | offline
@@ -80,10 +81,21 @@ public class MainActivity extends Activity {
 
     static class HttpFehler extends IOException {
         final int code;
+        String meldung = "";      // Feld "fehler" der Bruecke, seit 03.11.2026 (Pruefung, Befund 13)
 
         HttpFehler(int code) {
             super("HTTP " + code);
             this.code = code;
+        }
+
+        HttpFehler(int code, byte[] daten) {
+            this(code);
+            try {
+                String m = new JSONObject(new String(daten, StandardCharsets.UTF_8)).optString("fehler", "");
+                meldung = m.length() > 200 ? m.substring(0, 200) : m;
+            } catch (Exception ignoriert) {
+                meldung = "";
+            }
         }
     }
 
@@ -189,6 +201,13 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (web != null) js("window.onSichtbar && window.onSichtbar()");   // Netz kann gewechselt haben
+        if (web != null) js("window.kernPause && kernPause(false)");
+    }
+
+    @Override
+    protected void onPause() {          // seit 29.10.2026: Kern-Animation ruht, solange die App nicht zu sehen ist
+        if (web != null) js("window.kernPause && kernPause(true)");
+        super.onPause();
     }
 
     @Override
@@ -333,7 +352,7 @@ public class MainActivity extends Activity {
         }
         int code = c.getResponseCode();
         byte[] daten = lesen(code < 400 ? c.getInputStream() : c.getErrorStream());
-        if (code >= 400) throw new HttpFehler(code);
+        if (code >= 400) throw new HttpFehler(code, daten);
         return daten;
     }
 
@@ -459,7 +478,7 @@ public class MainActivity extends Activity {
         o.close();
         int code = c.getResponseCode();
         byte[] daten = lesen(code < 400 ? c.getInputStream() : c.getErrorStream());
-        if (code >= 400) throw new HttpFehler(code);
+        if (code >= 400) throw new HttpFehler(code, daten);
         return daten;
     }
 
@@ -720,25 +739,31 @@ public class MainActivity extends Activity {
      */
     void zwischenstand(final String kennung, final boolean[] fertig) {
         String gezeigt = "";
+        boolean satzDa = false;              // seit 29.10.2026: nach dem Zwischensatz weiter abfragen (Handy-Befehle)
         while (!fertig[0]) {
             try {
-                Thread.sleep(350);
+                Thread.sleep(satzDa ? 700 : 350);
                 if (fertig[0]) return;
                 JSONObject z = new JSONObject(new String(http("GET", "/v1/zwischen/" + kennung, null, null, 5000),
                         StandardCharsets.UTF_8));
                 if (z.optBoolean("fertig")) return;
+                JSONObject hb = z.optJSONObject("handy_befehl");
+                if (hb != null) {
+                    handyBefehl(kennung, hb);
+                    continue;
+                }
                 String w = z.isNull("werkzeug") ? "" : z.optString("werkzeug");
                 if (!w.equals(gezeigt)) {
                     gezeigt = w;
                     js("window.onWerkzeug && window.onWerkzeug(" + q(w) + ")");
                 }
                 String satz = z.isNull("satz") ? "" : z.optString("satz");
-                if (!satz.isEmpty()) {
+                if (!satz.isEmpty() && !satzDa) {
+                    satzDa = true;
                     if (einst.getBoolean("stimme", true)) {
                         byte[] wav = wavFuer(satz);
                         if (!fertig[0]) spieleZwischen(wav);
                     }
-                    return;
                 }
             } catch (Exception ignored) {
             }
@@ -1003,6 +1028,8 @@ public class MainActivity extends Activity {
                 if (jaKnopf) {               // seit 4.6: diese Frage kam vom Ja-Knopf
                     jaKnopf = false;
                     kopf.put("ja_knopf", true);
+                } else if (istGesprochen(text)) {
+                    kopf.put("gesprochen", true);   // seit 30.10.2026: nur ein gesprochenes Ja gibt Anruf/WhatsApp frei
                 }
                 byte[] roh = frageSenden(kopf, anhang, original, laenge, originalTyp);
                 JSONObject a = new JSONObject(new String(roh, StandardCharsets.UTF_8));
@@ -1022,14 +1049,363 @@ public class MainActivity extends Activity {
                 if (!vorschlag.isEmpty()) js("window.onVorschlag && window.onVorschlag(" + q(vorschlag) + ")");
                 JSONArray nachlesen = a.optJSONArray("nachlesen");     // seit 4.8 (Design Kern): "Zum Nachlesen"
                 if (nachlesen != null && nachlesen.length() > 0) js("window.onNachlesen && window.onNachlesen(" + nachlesen.toString() + ")");
+                JSONArray handy = a.optJSONArray("handy");             // Handy-Steuerung Stufe 1 (Prototyp 29.10.2026)
+                if (handy != null && handy.length() > 0) {
+                    handyLetzte = handy;                               // laeuft erst nach Tipp auf AUSFUEHREN
+                    js("window.onHandy && window.onHandy(" + handy.toString() + ")");
+                    handySofort(handy);                              // seit 03.11.2026: Harmloses ohne Tipp
+                    for (int i = 0; i < handy.length(); i++) {          // seit 30.10.: Anruf/WhatsApp mit Ja vorbereiten
+                        JSONObject h = handy.optJSONObject(i);
+                        if (h != null && h.optBoolean("ja")) jaVorbereiten(h);
+                    }
+                } else {
+                    handyLetzte = new JSONArray();                     // M4: alte Karten gelten nicht mehr
+                    js("window.onHandyAlt && window.onHandyAlt()");
+                }
+                String bericht = a.optString("handy_bericht", "");    // Stufe 2: Bericht des Bedien-Gehirns, nur Text
+                if (!bericht.isEmpty()) js("window.onHandyBericht && window.onHandyBericht(" + q(bericht) + ")");
+                kettenEnde();
                 if (stimme && !s.isEmpty()) sprichSaetze(s);
                 else js("onStatus('bereit')");
+                if (handy != null) {                                  // nach dem gesprochenen Ja: jetzt ausfuehren
+                    for (int i = 0; i < handy.length(); i++) {
+                        JSONObject h = handy.optJSONObject(i);
+                        if (h != null && h.optBoolean("direkt") && h.optString("art").endsWith("_los")) jaAusfuehren(h);
+                    }
+                }
             } catch (Exception e) {
                 fertig[0] = true;
+                kettenEnde();
                 js("window.onWerkzeug && window.onWerkzeug('')");
                 js("onFehler(" + q(fehlertext(e)) + ")");
             }
         }});
+    }
+
+    /** Seit 03.11.2026: Aufnahme fuers Stimm-Anlernen, 16 kHz mono 16 bit, als WAV. Meldet Beginn und Ende an die
+     *  Oberflaeche (onStimmeAufnahme), damit die Person weiss, wann sie sprechen soll. */
+    byte[] stimmeAufnehmen(int sekunden) throws IOException {
+        int rate = 16000;
+        int min = AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        AudioRecord ar = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION, rate, AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, Math.max(min, rate));
+        byte[] pcm = new byte[rate * 2 * sekunden];
+        int n = 0;
+        try {
+            if (ar.getState() != AudioRecord.STATE_INITIALIZED) throw new IOException("Mikrofon belegt");
+            ar.startRecording();
+            js("window.onStimmeAufnahme && onStimmeAufnahme(true," + sekunden + ")");
+            while (n < pcm.length) {
+                int r = ar.read(pcm, n, pcm.length - n);
+                if (r <= 0) break;
+                n += r;
+            }
+        } finally {
+            try {
+                ar.stop();
+            } catch (IllegalStateException ignored) {
+            }
+            ar.release();
+            js("window.onStimmeAufnahme && onStimmeAufnahme(false,0)");
+        }
+        java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream(44 + n);
+        java.nio.ByteBuffer k = java.nio.ByteBuffer.allocate(44).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        k.put("RIFF".getBytes(StandardCharsets.US_ASCII)).putInt(36 + n).put("WAVE".getBytes(StandardCharsets.US_ASCII))
+                .put("fmt ".getBytes(StandardCharsets.US_ASCII)).putInt(16).putShort((short) 1).putShort((short) 1)
+                .putInt(rate).putInt(rate * 2).putShort((short) 2).putShort((short) 16)
+                .put("data".getBytes(StandardCharsets.US_ASCII)).putInt(n);
+        o.write(k.array(), 0, 44);
+        o.write(pcm, 0, n);
+        return o.toByteArray();
+    }
+
+    // ------------------------------------------------------------ Handy-Steuerung (Prototyp, 29.10.2026)
+    // Stufe 1: Feld "handy" der Antwort (Intents, HandyAktionen), ausgefuehrt NUR nach Tipp auf AUSFUEHREN in der Karte.
+    // Stufe 2: Feld "handy_befehl" im Zwischenstand, nur mit App-Schalter (Standard aus), eingeschalteter
+    // Bedienungshilfe (JarvisBedienung), Bestaetigung JEDES Befehls auf dem Handy und Not-Aus. Die Bruecke schickt beides
+    // nur an das Geraet, das gefragt hat (Vorgaben 29.10.2026).
+    volatile JSONArray handyLetzte = new JSONArray();
+
+    /** Seit 03.11.2026 ("wie Gemini": "öffne die App ..."): Aktionen, die die Bruecke als "sofort" markiert,
+     *  fuehrt die App ohne Tipp aus, wenn der Schalter "Harmloses sofort" an ist (Standard an). Zusaetzlich zaehlt nur,
+     *  was auch hier in HandyAktionen.SOFORT steht; Anruf, SMS und WhatsApp sind nie dabei. Die Karte zeigt den Stand. */
+    /** Nonces, die schon sofort liefen: Ruft Gemini jarvis_fragen doppelt auf, kommt dieselbe Antwort mit denselben
+     *  Aktionen zweimal (Pruefung 03.11., Befund 8b). */
+    final java.util.LinkedHashSet<String> handySchonSofort = new java.util.LinkedHashSet<>();
+
+    void handySofort(JSONArray handy) {
+        if (handy == null || !einst.getBoolean("handy_sofort", true)) return;
+        for (int i = 0; i < handy.length(); i++) {
+            JSONObject h = handy.optJSONObject(i);
+            if (h == null || !h.optBoolean("sofort") || !HandyAktionen.SOFORT.contains(h.optString("art"))) continue;
+            String n = h.optString("nonce");
+            if (n.isEmpty()) continue;
+            if ("app".equals(h.optString("art"))
+                    && HandyAktionen.besteGuete(this, h.optString("app")) < HandyAktionen.SOFORT_MIN_GUETE) continue;
+            synchronized (handySchonSofort) {
+                if (!handySchonSofort.add(n)) continue;
+                while (handySchonSofort.size() > 50) handySchonSofort.remove(handySchonSofort.iterator().next());
+            }
+            handyAusfuehren(handy, n);
+        }
+    }
+
+    /** Seit 03.11.2026: Handy-Aktionen auch aus dem Echtzeit-Modus (Karte bzw. sofort). Ja-Ablaeufe gibt es dort nicht. */
+    void handyEchtzeit(JSONObject a) {
+        JSONArray handy = a.optJSONArray("handy");
+        if (handy == null || handy.length() == 0) return;
+        handyLetzte = handy;
+        js("window.onHandy && window.onHandy(" + handy.toString() + ")");
+        handySofort(handy);
+    }
+    volatile String bedienErlaubtFuer = "";
+
+    /** M4: genau die Aktion mit dieser Nonce aus der NEUESTEN Antwort, ausgeloest durch den Tipp der Person. Eine
+     *  Nonce aus einer aelteren Karte (oder eine erfundene) findet nichts. */
+    void handyAusfuehren(final JSONArray liste, final String nonce) {
+        final CountDownLatch fertig = new CountDownLatch(1);
+        ui.post(new Runnable() { public void run() {
+            try {
+                String[] nonces = new String[liste.length()];
+                for (int i = 0; i < liste.length(); i++) {
+                    JSONObject a = liste.optJSONObject(i);
+                    nonces[i] = a == null ? "" : a.optString("nonce");
+                }
+                int i = BedienRegeln.indexFuerNonce(nonces, nonce);
+                if (i < 0) {
+                    js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q("Diese Karte ist veraltet.") + ")");
+                    return;
+                }
+                JSONObject a = liste.optJSONObject(i);
+                if ("anruf".equals(a.optString("art")) && a.optString("nummer").isEmpty()) {   // Name: Telefonbuch hier
+                    Kontakte.Treffer t = Kontakte.suchen(MainActivity.this, a.optString("name"));
+                    if (t.fehler != null) {
+                        js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q(t.fehler) + ")");
+                        return;
+                    }
+                    try {
+                        a = new JSONObject(a.toString()).put("nummer", t.nummer);
+                    } catch (Exception ex) {
+                        return;
+                    }
+                }
+                String f = HandyAktionen.ausfuehren(MainActivity.this, a);
+                js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q(f == null ? "" : f) + ")");
+            } finally {
+                fertig.countDown();
+            }
+        }});
+        try {
+            fertig.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+        }
+    }
+
+    // ------------------------------------------------------------ Anruf und WhatsApp nach gesprochenem Ja (30.10.2026)
+    // Die Bruecke prueft das Ja (gesprochen, direkt danach, eigener Text, kein Fremdtext). Hier: Kontakt NUR auf dem
+    // Handy suchen, Karte zeigen, Entwurf unter seiner Nonce merken, und nach "_los" nur genau diesen Entwurf
+    // ausfuehren (hoechstens 150 s alt, App-Schalter "Anrufen und WhatsApp nach Ja" an).
+    final java.util.HashMap<String, JSONObject> jaEntwuerfe = new java.util.HashMap<String, JSONObject>();
+    volatile String gesprochenText = null;
+    volatile long gesprochenZeit = 0;
+
+    void gesprochenMerken(String t) {
+        gesprochenText = t;
+        gesprochenZeit = System.currentTimeMillis();
+    }
+
+    /** Genau dieser Text kam eben aus der Spracherkennung (Android oder Ohr der Bruecke), nicht getippt. Einmalig. */
+    boolean istGesprochen(String text) {
+        String g = gesprochenText;
+        gesprochenText = null;
+        return g != null && g.equals(text) && System.currentTimeMillis() - gesprochenZeit < 60000;
+    }
+
+    void jaVorbereiten(final JSONObject h) {
+        final String nonce = h.optString("nonce");
+        if (!nonce.matches("[0-9a-f]{16}")) return;
+        if (!einst.getBoolean("handy_ja", false)) {
+            js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q("Anrufen/Senden nach Ja ist in der App aus (Zahnrad).") + ")");
+            return;
+        }
+        if (!Kontakte.erlaubt(this) || checkSelfPermission(Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            ui.post(new Runnable() { public void run() {
+                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.CALL_PHONE}, 7);
+            }});
+        }
+        String name = h.optString("name"), nummer = h.optString("nummer"), zeile;
+        JSONObject e = new JSONObject();
+        try {
+            if (!name.isEmpty()) {
+                Kontakte.Treffer t = Kontakte.suchen(this, name);
+                if (t.fehler != null) {
+                    js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q(t.fehler) + ")");
+                    return;
+                }
+                name = t.name;
+                nummer = t.nummer;
+                zeile = t.name + " · " + t.art + " · " + t.nummer;
+            } else {
+                zeile = nummer;
+                if (!BedienRegeln.jaNummerErlaubt(nummer)) {          // M2/N2: rohe Auslands- oder Notrufnummer
+                    js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q("Diese Nummer nur übers Wählfeld.") + ")");
+                    return;
+                }
+            }
+            if (nummer.isEmpty() || !BedienRegeln.kontaktNummerErlaubt(nummer)) {
+                js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q("Diese Nummer wählt Jarvis nicht.") + ")");
+                return;
+            }
+            e.put("art", h.optString("art")).put("name", name).put("nummer", nummer).put("text", h.optString("text"))
+                    .put("zeit", System.currentTimeMillis());
+        } catch (Exception ex) {
+            return;
+        }
+        synchronized (jaEntwuerfe) {
+            jaEntwuerfe.clear();                     // immer nur der neueste Entwurf
+            jaEntwuerfe.put(nonce, e);
+        }
+        js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q(zeile + " – sag „Ja“") + ")");
+    }
+
+    void jaAusfuehren(JSONObject h) {
+        final String nonce = h.optString("nonce");
+        final JSONObject e;
+        synchronized (jaEntwuerfe) {
+            e = jaEntwuerfe.remove(nonce);
+        }
+        String meldung;
+        if (e == null || System.currentTimeMillis() - e.optLong("zeit") > 150000) meldung = "Dazu liegt hier kein gültiger Entwurf vor. Nichts ausgeführt.";
+        else if (!einst.getBoolean("handy_ja", false)) meldung = "Anrufen/Senden nach Ja ist in der App aus.";
+        else if (!BedienRegeln.kontaktNummerErlaubt(e.optString("nummer"))) meldung = "Diese Nummer wählt Jarvis nicht.";
+        else if ("anruf".equals(e.optString("art"))) {
+            final boolean darf = checkSelfPermission(Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED;
+            final Uri u = Uri.parse("tel:" + Uri.encode(e.optString("nummer")));
+            ui.post(new Runnable() { public void run() {
+                try {
+                    startActivity(new Intent(darf ? Intent.ACTION_CALL : Intent.ACTION_DIAL, u));
+                } catch (RuntimeException ignored) {
+                }
+            }});
+            meldung = darf ? "" : "Anrufen ist nicht erlaubt, das Wählfeld ist offen.";
+        } else if ("whatsapp".equals(e.optString("art"))) {
+            final String nr = HandyAktionen.international(e.optString("nummer"));
+            final Uri u = Uri.parse("https://wa.me/" + nr + "?text=" + Uri.encode(e.optString("text")));
+            ui.post(new Runnable() { public void run() {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, u).setPackage("com.whatsapp"));     // N5: nur WhatsApp
+                } catch (RuntimeException ignored) {
+                }
+            }});
+            JarvisBedienung d = JarvisBedienung.aktiv;
+            meldung = d == null ? "Chat ist offen, bitte selbst auf Senden tippen (Bedienungshilfe aus)."
+                    : d.whatsappSenden(e.optString("name"), e.optString("nummer"), e.optString("text"));
+        } else meldung = "Unbekannt.";
+        js("window.onHandyStandNonce && window.onHandyStandNonce(" + q(nonce) + "," + q(meldung) + ")");
+    }
+
+    void freischaltenMelden(final boolean an) {
+        imHintergrund(new Runnable() { public void run() {
+            try {
+                http("POST", "/v1/handy/freischalten", json(new JSONObject().put("an", an)), "application/json", 15000);
+            } catch (Exception ignored) {          // bleibt dann aus Sicht der Bruecke beim alten Stand (aus = sicher)
+            }
+        }});
+    }
+
+    void kettenEnde() {
+        JarvisBedienung d = JarvisBedienung.aktiv;
+        if (d != null) d.notAusWeg();
+        JarvisBedienung.beimStopp = null;
+        JarvisBedienung.gestoppt = true;            // N3/N2: nach dem Ende der Frage fuehrt nichts mehr aus; ketteBeginnt setzt zurueck
+        bedienErlaubtFuer = "";
+    }
+
+    static String befehlText(JSONObject b) {
+        String w = b.optString("befehl");
+        if ("tippen".equals(w)) return "„" + b.optString("ziel") + "“ antippen";
+        if ("eingeben".equals(w)) return "Text eingeben: „" + b.optString("text") + "“";
+        if ("oeffnen".equals(w)) return "App „" + b.optString("app") + "“ öffnen";
+        if ("lesen".equals(w)) return "Bildschirm lesen";
+        if ("scrollen".equals(w)) return "scrollen";
+        if ("zurueck".equals(w)) return "zurück";
+        if ("home".equals(w)) return "zum Startbildschirm";
+        return w;
+    }
+
+    /** Einmal je Aufgabe der Hinweis in der App (Regeln, Not-Aus); bestaetigt wird danach trotzdem JEDER Befehl. */
+    boolean bedienZustimmung(final JSONObject b) {
+        final CountDownLatch l = new CountDownLatch(1);
+        final boolean[] ja = {false};
+        ui.post(new Runnable() { public void run() {
+            try {
+                new android.app.AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Jarvis möchte dein Handy bedienen")
+                        .setMessage("Erster Schritt: " + befehlText(b) + "\n\nJarvis tippt nie auf Senden, Bezahlen, Löschen "
+                                + "oder Bestätigen. Banking, Passwort-Apps, Authenticator und die Einstellungen sind gesperrt. "
+                                + "Oben erscheint JARVIS STOPP, damit brichst du jederzeit ab.")
+                        .setCancelable(false)
+                        .setPositiveButton("ERLAUBEN", new android.content.DialogInterface.OnClickListener() {
+                            public void onClick(android.content.DialogInterface d, int w) { ja[0] = true; l.countDown(); }})
+                        .setNegativeButton("NEIN", new android.content.DialogInterface.OnClickListener() {
+                            public void onClick(android.content.DialogInterface d, int w) { l.countDown(); }})
+                        .show();
+            } catch (RuntimeException e) {          // App nicht im Vordergrund: dann eben nicht
+                l.countDown();
+            }
+        }});
+        try {
+            l.await(60, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+        }
+        return ja[0];
+    }
+
+    void handyErgebnis(String kennung, int nr, JSONObject erg) {
+        try {
+            http("POST", "/v1/handy/ergebnis", json(new JSONObject().put("anfrage", kennung).put("nr", nr).put("ergebnis", erg)),
+                    "application/json", 15000);
+        } catch (Exception ignored) {
+        }
+    }
+
+    void handyBefehl(final String kennung, JSONObject b) {
+        JSONObject erg;
+        try {
+            JarvisBedienung d = JarvisBedienung.aktiv;
+            if (!einst.getBoolean("handy_bedienen", false)) {
+                erg = new JSONObject().put("fehler", "Handy-Bedienung ist in der Jarvis-App ausgeschaltet (Zahnrad, DIESE APP)");
+            } else if (d == null) {
+                erg = new JSONObject().put("fehler", "Die Bedienungshilfe „Jarvis Handy-Bedienung“ ist auf diesem Handy aus");
+            } else if (Build.VERSION.SDK_INT < 34) {
+                erg = new JSONObject().put("fehler", "Handy-Bedienung braucht Android 14 (sonst lassen sich geschützte Fenster nicht erkennen)");
+            } else if (b.optLong("bis", 0) * 1000 < System.currentTimeMillis()) {      // N3: abgelaufen
+                erg = new JSONObject().put("fehler", "Befehl abgelaufen");
+            } else if (!kennung.equals(bedienErlaubtFuer) && !(b.optBoolean("erste") && bedienZustimmung(b))) {
+                erg = new JSONObject().put("abgelehnt", true);
+            } else {
+                // jeder einzelne Befehl wird in JarvisBedienung.ausfuehren per Overlay bestaetigt (nach dem Aufloesen)
+                if (!kennung.equals(bedienErlaubtFuer)) {
+                    bedienErlaubtFuer = kennung;
+                    JarvisBedienung.ketteBeginnt();                        // N2
+                    JarvisBedienung.beimStopp = new Runnable() { public void run() {
+                        try {
+                            handyErgebnis(kennung, 0, new JSONObject().put("gestoppt", true));
+                        } catch (Exception ignored) {
+                        }
+                    }};
+                    d.notAusZeigen();
+                }
+                erg = d.ausfuehren(b);
+            }
+        } catch (Exception e) {
+            try {
+                erg = new JSONObject().put("fehler", e.getClass().getSimpleName());
+            } catch (Exception e2) {
+                return;
+            }
+        }
+        handyErgebnis(kennung, b.optInt("nr"), erg);
     }
 
     /** Satzgrenzen wie die Stimme auf dem NAS; Absaetze trennen ebenfalls. */
@@ -1113,6 +1489,7 @@ public class MainActivity extends Activity {
                     spieler.prepare();
                     spieler.start();
                     js("onStatus('spricht')");
+                    js("window.onHuelle && onHuelle(" + index + "," + huelle(wav) + ")");
                     js("onSatz(" + index + "," + spieler.getDuration() + ")");
                 } catch (Exception e) {
                     fertig.countDown();
@@ -1122,6 +1499,36 @@ public class MainActivity extends Activity {
             return nr == sprechNummer;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /** Seit 29.10.2026: Lautstaerke-Huelle eines WAV (16 Bit PCM) in 50-ms-Schritten, 0..1, fuer die Kern-Animation.
+     *  Wie kernWavHuelle in app.html (Wurzel des RMS, 9000 = voll). Fehlt etwas, "[]" (dann simuliert die Oberflaeche). */
+    static String huelle(byte[] wav) {
+        try {
+            java.nio.ByteBuffer b = java.nio.ByteBuffer.wrap(wav).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+            int pos = 12, rate = 0, kanaele = 1, bits = 16, daten = -1, laenge = 0;
+            while (pos + 8 <= wav.length) {
+                String id = new String(wav, pos, 4, "US-ASCII");
+                int gr = b.getInt(pos + 4);
+                if (id.equals("fmt ")) { kanaele = b.getShort(pos + 10); rate = b.getInt(pos + 12); bits = b.getShort(pos + 22); }
+                if (id.equals("data")) { daten = pos + 8; laenge = Math.min(gr < 0 ? Integer.MAX_VALUE : gr, wav.length - daten); break; }
+                if (gr < 0) break;
+                pos += 8 + gr + (gr & 1);
+            }
+            if (daten < 0 || bits != 16 || rate <= 0 || kanaele < 1) return "[]";
+            int fenster = (int) Math.max(1, Math.round(rate / 20.0)) * kanaele * 2;   // wie kernWavHuelle: gerundet
+            StringBuilder sb = new StringBuilder("[");
+            for (int a = 0; a + 2 <= laenge && sb.length() < 20000; a += fenster) {
+                double summe = 0; int z = 0;
+                for (int i = a; i + 1 < Math.min(laenge, a + fenster); i += 4 * kanaele) { int v = b.getShort(daten + i); summe += (double) v * v; z++; }
+                double w = Math.min(1.0, Math.sqrt(Math.sqrt(summe / Math.max(1, z)) / 9000.0));
+                if (sb.length() > 1) sb.append(',');
+                sb.append(String.format(java.util.Locale.ROOT, "%.2f", w));
+            }
+            return sb.append(']').toString();
+        } catch (Exception e) {
+            return "[]";
         }
     }
 
@@ -1171,7 +1578,13 @@ public class MainActivity extends Activity {
     class Zuhoerer implements RecognitionListener {
         public void onReadyForSpeech(Bundle p) { js("onStatus('hoert')"); }
         public void onBeginningOfSpeech() { }
-        public void onRmsChanged(float rms) { }
+        public void onRmsChanged(float rms) {          // seit 29.10.2026: Pegel fuer den Kern, hoechstens ~16 mal/s
+            long jetzt = android.os.SystemClock.uptimeMillis();
+            if (jetzt - letzterPegel < 60) return;
+            letzterPegel = jetzt;
+            float v = Math.max(0f, Math.min(1f, (rms + 2f) / 12f));     // Android liefert etwa -2 bis 10 dB
+            js("window.onPegel && onPegel(" + String.format(java.util.Locale.ROOT, "%.2f", v) + ")");
+        }
         public void onBufferReceived(byte[] b) { }
         public void onEndOfSpeech() { js("onStatus('denkt')"); }
         public void onEvent(int t, Bundle p) { }
@@ -1189,6 +1602,7 @@ public class MainActivity extends Activity {
                 js("onHinweis(" + q(tx("Nichts verstanden. Nochmal tippen.", "Didn't catch that. Tap again.")) + ")");
                 return;
             }
+            gesprochenMerken(t);
             js("onSprache(" + q(t) + ")");       // seit 3.6 ueber die Oberflaeche: "schreib's auf" erledigt sie selbst
         }
 
@@ -1265,6 +1679,7 @@ public class MainActivity extends Activity {
                     js("onHinweis(" + q(tx("Nichts verstanden. Nochmal tippen.", "Didn't catch that. Tap again.")) + ")");
                     return;
                 }
+                gesprochenMerken(t);
                 js("onSprache(" + q(t) + ")");
             } catch (Exception e) {
                 js("onFehler(" + q(fehlertext(e)) + ")");
@@ -1330,6 +1745,172 @@ public class MainActivity extends Activity {
             ui.post(new Runnable() { public void run() { dateiAktion(kennung, "speichern"); }});
         }
 
+        /** Handy-Steuerung (29.10.2026): Aktion mit dieser Nonce ausfuehren, nur auf Tipp (AUSFUEHREN/NOCHMAL). */
+        @JavascriptInterface
+        public void handyAusfuehren(final String nonce) {
+            imHintergrund(new Runnable() { public void run() { MainActivity.this.handyAusfuehren(handyLetzte, nonce); }});
+        }
+
+        /** Seit 03.11.2026: Schalter "Harmloses sofort" (Apps, Wecker, Timer, Navigation, Einstellungsseite,
+         *  Taschenlampe, Lautstaerke ohne Tipp; Standard an). Aus: wieder nur per Karte. */
+        @JavascriptInterface
+        public boolean handySofortAn() {
+            return einst.getBoolean("handy_sofort", true);
+        }
+
+        @JavascriptInterface
+        public void handySofort(final boolean an) {
+            einst.edit().putBoolean("handy_sofort", an).apply();
+            js("typeof lokalZeigen === 'function' && lokalZeigen()");
+        }
+
+        /** Seit 03.11.2026: Stimme anlernen (Stimmerkennung am Lautsprecher). Nimmt `sekunden` (2..8) mit
+         *  16 kHz mono auf und schickt die WAV an /v1/stimme/anlernen (nur im Heimnetz). person leer = eigene Stimme;
+         *  eine andere Person darf nur die Hauptperson (prueft die Bruecke). Antwort: onStimmeAnlernen(nr, ok, text, proben). */
+        @JavascriptInterface
+        public void stimmeAnlernen(final String nr, final String person, final int sekunden) {
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 8);
+                js("window.onStimmeAnlernen && onStimmeAnlernen(" + q(nr) + ",false," + q(tx("Bitte erst das Mikrofon erlauben.",
+                        "Please allow the microphone first.")) + ",0)");
+                return;
+            }
+            imHintergrund(new Runnable() { public void run() {
+                String text;
+                boolean ok = false;
+                int proben = 0;
+                try {
+                    byte[] wav = stimmeAufnehmen(Math.max(2, Math.min(8, sekunden)));
+                    String pfad = "/v1/stimme/anlernen" + (person == null || person.isEmpty() ? "" : "?person=" + Uri.encode(person));
+                    JSONObject a = new JSONObject(new String(http("POST", pfad, wav, "audio/wav", 40000), StandardCharsets.UTF_8));
+                    ok = a.optBoolean("ok");
+                    proben = a.optInt("proben");
+                    text = ok ? tx("Gespeichert.", "Saved.") : a.optString("fehler", tx("Hat nicht geklappt.", "That didn't work."));
+                } catch (Exception e) {
+                    text = e instanceof HttpFehler && ((HttpFehler) e).code / 100 == 4 && ((HttpFehler) e).code != 401
+                            && !((HttpFehler) e).meldung.isEmpty() ? ((HttpFehler) e).meldung : fehlertext(e);
+                }
+                js("window.onStimmeAnlernen && onStimmeAnlernen(" + q(nr) + "," + ok + "," + q(text) + "," + proben + ")");
+            }});
+        }
+
+        @JavascriptInterface
+        public void stimmeStatus(final String person) {
+            imHintergrund(new Runnable() { public void run() {
+                String erg;
+                try {
+                    erg = new String(http("POST", "/v1/stimme/status" + (person == null || person.isEmpty() ? "" : "?person="
+                            + Uri.encode(person)), new byte[0], "application/octet-stream", 15000), StandardCharsets.UTF_8);
+                    new JSONObject(erg);
+                } catch (Exception e) {
+                    erg = "{\"fehler\":" + JSONObject.quote(fehlertext(e)) + "}";
+                }
+                js("window.onStimmeStatus && onStimmeStatus(" + erg + ")");
+            }});
+        }
+
+        @JavascriptInterface
+        public void stimmeVergessen(final String person) {
+            imHintergrund(new Runnable() { public void run() {
+                boolean ok = false;
+                String text;
+                try {
+                    JSONObject a = new JSONObject(new String(http("POST", "/v1/stimme/vergessen" + (person == null || person.isEmpty()
+                            ? "" : "?person=" + Uri.encode(person)), new byte[0], "application/octet-stream", 15000), StandardCharsets.UTF_8));
+                    ok = a.optBoolean("ok");
+                    text = ok ? tx("Stimmprofil gelöscht.", "Voice profile deleted.") : a.optString("fehler");
+                } catch (Exception e) {
+                    text = fehlertext(e);
+                }
+                js("window.onStimmeVergessen && onStimmeVergessen(" + ok + "," + q(text) + ")");
+            }});
+        }
+
+        /** App-Schalter fuer Stufe 2 (Standard aus). */
+        /** Seit 30.10.2026: App-Schalter "Anrufen und WhatsApp nach Ja" (Standard aus), Einschalten mit nativer Rueckfrage. */
+        @JavascriptInterface
+        public boolean handyJaAn() {
+            return einst.getBoolean("handy_ja", false);
+        }
+
+        @JavascriptInterface
+        public void handyJa(final boolean an) {
+            if (!an) {
+                einst.edit().putBoolean("handy_ja", false).apply();
+                synchronized (jaEntwuerfe) {
+                    jaEntwuerfe.clear();
+                }
+                js("typeof lokalZeigen === 'function' && lokalZeigen()");
+                return;
+            }
+            ui.post(new Runnable() { public void run() {
+                new android.app.AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Anrufen und WhatsApp nach Ja?")
+                        .setMessage("Sagst du „Ruf Anna an“ oder „Schreib Anna in WhatsApp …“, zeigt Jarvis Kontakt, Nummer und "
+                                + "Text und fragt nach. Nach deinem GESPROCHENEN „Ja“ ruft er an bzw. sendet. Das Telefonbuch bleibt auf "
+                                + "dem Handy. Gilt nur, wenn es auch auf deinem Jarvis für dieses Handy freigeschaltet ist.")
+                        .setPositiveButton("EINSCHALTEN", new android.content.DialogInterface.OnClickListener() {
+                            public void onClick(android.content.DialogInterface dlg, int w) {
+                                einst.edit().putBoolean("handy_ja", true).apply();
+                                requestPermissions(new String[]{Manifest.permission.READ_CONTACTS, Manifest.permission.CALL_PHONE}, 7);
+                                js("typeof lokalZeigen === 'function' && lokalZeigen()");
+                            }})
+                        .setNegativeButton("ABBRECHEN", null)
+                        .show();
+            }});
+        }
+
+        @JavascriptInterface
+        public boolean bedienenAn() {
+            return einst.getBoolean("handy_bedienen", false);
+        }
+
+        /** N5/M3: Einschalten nur nach nativer Rueckfrage (kein WebView-Dialog), dann meldet das Geraet es der Bruecke
+         *  (/v1/handy/freischalten, nur mit seinem eigenen Token). Ausschalten sofort, mit disableSelf (N8). */
+        @JavascriptInterface
+        public void bedienen(final boolean an) {
+            if (!an) {
+                einst.edit().putBoolean("handy_bedienen", false).apply();
+                kettenEnde();
+                JarvisBedienung d = JarvisBedienung.aktiv;
+                if (d != null) d.abschalten();
+                freischaltenMelden(false);
+                js("typeof lokalZeigen === 'function' && lokalZeigen()");
+                return;
+            }
+            ui.post(new Runnable() { public void run() {
+                new android.app.AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Handy-Bedienung einschalten?")
+                        .setMessage("Jarvis darf dann auf diesem Handy Apps aus einer kurzen Liste bedienen (Uhr, Musik, Karten, "
+                                + "Kalender ...). Jeden einzelnen Schritt bestätigst du hier. Was auf dem Bildschirm steht, geht "
+                                + "dabei an deinen Jarvis und das Sprachmodell dahinter. Banking, Passwörter, Nachrichten-Apps, "
+                                + "Mail und Browser bleiben gesperrt. Danach noch die Bedienungshilfe „Jarvis Handy-Bedienung“ "
+                                + "in den Android-Einstellungen einschalten.")
+                        .setPositiveButton("EINSCHALTEN", new android.content.DialogInterface.OnClickListener() {
+                            public void onClick(android.content.DialogInterface dlg, int w) {
+                                einst.edit().putBoolean("handy_bedienen", true).apply();
+                                freischaltenMelden(true);
+                                if (JarvisBedienung.aktiv == null) startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                                js("typeof lokalZeigen === 'function' && lokalZeigen()");
+                            }})
+                        .setNegativeButton("ABBRECHEN", null)
+                        .show();
+            }});
+        }
+
+        /** Handy-Steuerung Stufe 2: Ist die Bedienungshilfe an? Und die Seite dafuer oeffnen. */
+        @JavascriptInterface
+        public boolean bedienungshilfeAn() {
+            return JarvisBedienung.aktiv != null;
+        }
+
+        @JavascriptInterface
+        public void bedienungshilfeEinstellungen() {
+            ui.post(new Runnable() { public void run() {
+                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            }});
+        }
+
         @JavascriptInterface
         public boolean gekoppelt() {
             return token() != null;
@@ -1374,6 +1955,7 @@ public class MainActivity extends Activity {
                             .put("quelle", "echtzeit-app").put("geraet", "Handy").put("echtzeit", true)),
                             "application/json", 245000), StandardCharsets.UTF_8));
                     antwort = a.optString("antwort");
+                    handyEchtzeit(a);
                 } catch (Exception e) {
                     antwort = tx("Das Hausgehirn ist gerade nicht erreichbar.", "The home brain can't be reached right now.");
                 }
@@ -1397,7 +1979,9 @@ public class MainActivity extends Activity {
                     long n = u == null ? -1 : dateiGroesse(u);
                     boolean passt = n > 0 && n <= ORIGINAL_MAX && n == (long) groesse && name != null && name.equals(dateiName(u));
                     byte[] roh = frageSenden(kopf, new JSONObject(anhang), passt ? u : null, n, typ);
-                    antwort = new JSONObject(new String(roh, StandardCharsets.UTF_8)).optString("antwort");
+                    JSONObject ea = new JSONObject(new String(roh, StandardCharsets.UTF_8));
+                    antwort = ea.optString("antwort");
+                    handyEchtzeit(ea);
                 } catch (Exception e) {
                     antwort = tx("Das Hausgehirn ist gerade nicht erreichbar.", "The home brain can't be reached right now.");
                 }
@@ -1554,6 +2138,60 @@ public class MainActivity extends Activity {
             }});
         }
 
+        /** 3D-Grundriss (seit 29.10.2026): Raeume, Geraete und Live-Zustaende von der Bruecke, im Heimnetz und
+         *  unterwegs; Ergebnis an onGrundriss (bei Fehler null, die Ansicht behaelt dann den letzten Stand). */
+        @JavascriptInterface
+        public void grundriss() {
+            imHintergrund(new Runnable() { public void run() {
+                try {
+                    js("onGrundriss(" + jsonSicher(http("GET", "/v1/grundriss", null, null, 20000)) + ")");
+                } catch (Exception e) {
+                    js("onGrundriss(null)");
+                }
+            }});
+        }
+
+        /** Foto-Grundriss (seit 30.10.2026): ein Bild von der Bruecke (GET /v1/grundriss/bild/<name>) als data-URL an
+         *  onGrundrissBild(name, url); bei Fehler null. Nur feste Namen, wie die Bruecke sie prueft. */
+        @JavascriptInterface
+        public void grundrissBild(final String name) {
+            if (name == null || !name.matches("(eg|og|kg|dg|k\\d)_[a-z0-9_]{1,30}\\.(jpg|png|webp)")) {
+                js("onGrundrissBild(" + JSONObject.quote(String.valueOf(name)) + ",null)");
+                return;
+            }
+            imHintergrund(new Runnable() { public void run() {
+                String url = "null";
+                try {
+                    byte[] roh = http("GET", "/v1/grundriss/bild/" + name, null, null, 30000);
+                    String typ = name.endsWith(".png") ? "image/png" : name.endsWith(".webp") ? "image/webp" : "image/jpeg";
+                    url = JSONObject.quote("data:" + typ + ";base64," + android.util.Base64.encodeToString(roh, android.util.Base64.NO_WRAP));
+                } catch (Exception ignored) {
+                }
+                js("onGrundrissBild(" + JSONObject.quote(name) + "," + url + ")");
+            }});
+        }
+
+        /** Geraete-Menue im 3D-Haus (seit 4.11, 01.11.2026): POST /v1/grundriss/steuern; die Antwort geht mit der Nummer
+         *  des Auftrags an onGrundrissSteuern(nr, antwort), damit jeder Knopf seine eigene Antwort bekommt. Was geschaltet
+         *  werden darf, entscheidet die Bruecke (feste Liste, Jarvis-Regeln). */
+        @JavascriptInterface
+        public void grundrissSteuern(final String nr, final String auftrag) {
+            final String n = nr != null && nr.matches("[0-9]{1,9}") ? nr : "0";
+            imHintergrund(new Runnable() { public void run() {
+                try {
+                    JSONObject a = new JSONObject(auftrag == null || auftrag.isEmpty() ? "{}" : auftrag);
+                    js("onGrundrissSteuern(" + n + "," + jsonSicher(http("POST", "/v1/grundriss/steuern", json(a), "application/json", 50000)) + ")");
+                } catch (HttpFehler e) {
+                    js("onGrundrissSteuern(" + n + ",{\"ok\":false,\"meldung\":" + q(e.code == 404
+                            ? tx("Dein Jarvis kann das noch nicht (Brücke zu alt).", "Your Jarvis can't do this yet (bridge too old).")
+                            : e.code == 403 ? tx("Schalten ist für dieses Gerät nicht freigegeben.", "Switching isn't allowed for this device.")
+                            : fehlertext(e)) + "})");
+                } catch (Exception e) {
+                    js("onGrundrissSteuern(" + n + ",{\"ok\":false,\"meldung\":" + q(fehlertext(e)) + "})");
+                }
+            }});
+        }
+
         @JavascriptInterface
         public void faehigkeiten() {
             // Seite 2 (3.1): Faehigkeiten-Katalog der Bruecke, im Heimnetz und unterwegs
@@ -1578,6 +2216,23 @@ public class MainActivity extends Activity {
                             : fehlertext(e)) + "})");
                 } catch (Exception e) {
                     js("onEinstellungen({\"fehler\": " + q(fehlertext(e)) + "})");
+                }
+            }});
+        }
+
+        /** Gedaechtnis als Sternbild (4.10, Jarvis 0.5): liste, aendern, vergessen an /v1/gedaechtnis, Ergebnis an
+         *  onGedaechtnis. Die Bruecke nimmt die Person aus dem Geraete-Token und liefert nur Haus und das Eigene. */
+        @JavascriptInterface
+        public void gedaechtnis(final String auftrag) {
+            imHintergrund(new Runnable() { public void run() {
+                try {
+                    JSONObject a = new JSONObject(auftrag == null || auftrag.isEmpty() ? "{}" : auftrag);
+                    js("onGedaechtnis(" + jsonSicher(http("POST", "/v1/gedaechtnis", json(a), "application/json", 30000)) + ")");
+                } catch (HttpFehler e) {
+                    js("onGedaechtnis({\"fehler\": " + q(e.code == 404 ? tx("Dein Jarvis kennt das Gedächtnis-Sternbild noch nicht (Brücke zu alt).", "Your Jarvis doesn't know the memory view yet (bridge too old).")
+                            : fehlertext(e)) + "})");
+                } catch (Exception e) {
+                    js("onGedaechtnis({\"fehler\": " + q(fehlertext(e)) + "})");
                 }
             }});
         }

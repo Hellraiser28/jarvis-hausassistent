@@ -1,0 +1,46 @@
+/* Gedaechtnis als Sternbild: gemeinsam fuer HUD und App, in jedem Design. Alle Farben kommen aus Variablen; Vorgabe ist die
+   Farbwelt Observatorium, jede Seite setzt fuer das klassische Design (und kuenftige) eigene Werte (--sb-*), ohne diese Datei
+   anzufassen. Die Leinwand liest --sb-haus, --sb-privat, --sb-rgb, --sb-dim-rgb, --sb-akz-rgb, --sb-bg-rgb aus. */
+.sb { --sb-haus: #a9c4ff; --sb-privat: #e3b866; --sb-text: #e8ecf4; --sb-text2: #c9d1e0; --sb-dim: #9aa6bc; --sb-akz: #a9c4ff;
+  --sb-rgb: 196,210,236; --sb-dim-rgb: 168,180,202; --sb-akz-rgb: 169,196,255; --sb-bg-rgb: 7,10,18; --sb-karte: rgba(14,19,32,.9); --sb-warn: #e3b866; }
+.sb { display: flex; flex-direction: column; gap: 12px; color: var(--sb-text); font-family: 'IBM Plex Sans', system-ui, sans-serif; min-width: 0; }
+.sb-kopf { display: flex; justify-content: space-between; align-items: baseline; }
+.sb-kopf h2 { margin: 0; font-family: 'IBM Plex Sans Condensed', sans-serif; font-size: 20px; font-weight: 600; letter-spacing: .26em; color: var(--sb-text); }
+.sb-zahl { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--sb-dim); }
+.sb-suche { width: 100%; box-sizing: border-box; min-height: 44px; padding: 0 14px; border-radius: 22px; border: 1px solid rgba(var(--sb-rgb),.22);
+  background: var(--sb-karte); color: var(--sb-text); font: 15px 'IBM Plex Sans', sans-serif; outline: none; }
+.sb-suche:focus { border-color: var(--sb-akz); }
+.sb-bild { position: relative; width: 100%; height: var(--sb-h, min(100vw - 24px, 62vh, 460px)); min-height: 280px; border-radius: 6px; overflow: hidden;
+  background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(var(--sb-akz-rgb),.08), rgba(var(--sb-bg-rgb),0) 72%); }
+.sb-bild canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+.sb-leer { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 36px; pointer-events: none;
+  color: var(--sb-dim); font-size: 14px; line-height: 1.5; }
+.sb-leer[hidden] { display: none; }
+.sb-zeit { display: flex; flex-direction: column; gap: 4px; }
+.sb-zeit input[type=range] { width: 100%; height: 32px; margin: 0; accent-color: var(--sb-akz); background: transparent; }
+.sb-zeit-zeile { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 12px 'IBM Plex Mono', monospace; color: var(--sb-dim); }
+.sb-woche, .sb-chip, .sb-knopf { min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid rgba(var(--sb-rgb),.22); background: transparent; color: var(--sb-text2);
+  font: 13px 'IBM Plex Sans Condensed', sans-serif; cursor: pointer; }
+.sb-woche.an, .sb-chip.an, .sb-knopf.an { border-color: var(--sb-akz); color: #fff; background: rgba(var(--sb-akz-rgb),.16); }
+.sb-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sb-chip small { margin-left: 6px; font: 11px 'IBM Plex Mono', monospace; color: var(--sb-dim); }
+.sb-legende { display: flex; gap: 18px; font-size: 12px; color: var(--sb-dim); }
+.sb-legende i, .sb-blatt-kopf i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: baseline; }
+i.haus { background: var(--sb-haus); box-shadow: 0 0 8px var(--sb-haus); } i.privat { background: var(--sb-privat); box-shadow: 0 0 8px var(--sb-privat); }
+.sb-hinweis { min-height: 16px; font-size: 12px; color: var(--sb-dim); }
+.sb-blatt { position: sticky; bottom: 6px; z-index: 5; box-shadow: 0 -8px 18px rgba(var(--sb-bg-rgb),.8); padding: 14px 16px; background: var(--sb-karte); border: 1px solid rgba(var(--sb-rgb),.22); border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
+.sb-blatt[hidden] { display: none; }
+.sb-blatt-kopf { display: flex; align-items: center; font: 600 12px 'IBM Plex Sans Condensed', sans-serif; letter-spacing: .2em; text-transform: uppercase; color: var(--sb-dim); }
+.sb-blatt-kopf span { flex: 1; }
+.sb-zu { width: 44px; height: 44px; margin: -12px -12px -12px 0; border: none; background: transparent; color: var(--sb-dim); font-size: 24px; cursor: pointer; }
+.sb-text { margin: 2px 0 4px; font-size: 17px; line-height: 1.45; color: #fff; overflow-wrap: anywhere; }
+.sb-z { display: flex; justify-content: space-between; gap: 14px; font-size: 13px; color: var(--sb-dim); }
+.sb-z b { font-weight: 400; color: var(--sb-text2); text-align: right; overflow-wrap: anywhere; }
+.sb-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+.sb-knopf.warn { border-color: var(--sb-warn); color: var(--sb-warn); }
+.sb-sicher span { flex: 1 1 100%; font-size: 13px; color: var(--sb-warn); }
+.sb-feld { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(var(--sb-rgb),.3); background: rgba(var(--sb-bg-rgb),.9); color: #fff;
+  font: 16px/1.4 'IBM Plex Sans', sans-serif; resize: vertical; }
+
+.sb-feld:focus { outline: none; border-color: var(--sb-akz); }
+.sb-nur { font-size: 12px; line-height: 1.4; color: var(--sb-dim); }

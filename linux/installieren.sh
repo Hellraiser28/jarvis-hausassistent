@@ -455,29 +455,40 @@ PYEOF
 }
 
 # ------------------------------------------------------------------ Weg 2: neuen Jarvis mit Claude Code einrichten
+# Vorlagen (seit 0.6 alles unter vorlagen/ im Paket: Bruecken-Module mit Tests, HUD, App-Seite, Web-App, Unterordner
+# grundriss/, sprecher/, gemeinsam/) kommen 1:1 nach <projekt>/einrichtung, Unterordner bleiben Unterordner. Erneuter
+# Lauf: Vorhandenes, das Claude erweitert haben kann, nicht überschreiben; die neue Fassung kommt als .neu daneben.
+# Rekursiv statt fester Liste (Pruefung 05.11.2026: die Liste stand auf 0.3.3), wie installer/einrichten.ps1.
+vorlagen_kopieren() {   # $1 = Zielordner (<projekt>/einrichtung)
+  [ -d "$HIER/vorlagen" ] || fehler "$(t "Die Vorlagen fehlen ($HIER/vorlagen). Bitte das Paket neu entpacken." "The templates are missing ($HIER/vorlagen). Please unpack the package again.")"
+  local q f
+  # eigener Kanal 3 statt der Standardeingabe: nichts in der Schleife kann die Dateiliste wegfressen
+  while IFS= read -r -d '' q <&3; do
+    f=${q#"$HIER/vorlagen/"}
+    mkdir -p "$(dirname "$1/$f")"
+    if [ -f "$1/$f" ] && ! cmp -s "$q" "$1/$f"; then
+      install -m 644 "$q" "$1/$f.neu"
+      # Seit 0.3.4 (Pruefbericht 0.3.3, Fund 16): Sicherheitsmodule nicht nur nebenbei erwaehnen
+      case "${f##*/}" in   # nach Dateiname, auch in Unterordnern
+        anhang.py|ed25519.py|ausgabe.py|pdf.py|bilddienst.py|konvertieren.py|zusatzdienste.py|fremdtext.py|fremdtext_hook.py|handy.py|personen.py|gaeste.py|sprecher.py|anruf.py|raeume.py|postfach.py|updates.py|jarvis_sprecher.py)
+          printf '   %s%s%s\n' "$ROT" "$(t "WICHTIG: einrichtung/$f ist ein Sicherheitsmodul und wurde nicht ersetzt. $f.neu enthält Sicherheitskorrekturen: Claude im Jarvis-Ordner bitten, sie zu übernehmen, bevor Jarvis weiterläuft." "IMPORTANT: einrichtung/$f is a security module and was not replaced. $f.neu contains security fixes: ask Claude in the Jarvis folder to apply them before Jarvis keeps running.")" "$AUS" ;;
+      esac
+      hinweis "$(t "einrichtung/$f behalten (vielleicht angepasst), die neue Vorlage liegt als $f.neu daneben." "kept einrichtung/$f (maybe customized), the new template is next to it as $f.neu.")"
+    else
+      install -m 644 "$q" "$1/$f"
+    fi
+  done 3< <(find "$HIER/vorlagen" -name __pycache__ -prune -o -type f ! -name '*.pyc' -print0)
+}
+
 neu() {
   local projekt=$HOME/Jarvis
   schritt "$(t "Projektordner anlegen" "Creating the project folder")"
   mkdir -p "$projekt/einrichtung"
   install -m 644 "$HIER/EINRICHTUNG.md" "$projekt/EINRICHTUNG.md"
   install -m 644 "$HIER/EINRICHTUNG.en.md" "$projekt/EINRICHTUNG.en.md"
-  local f
-  # Erneuter Lauf: Vorlagen, die Claude erweitert haben kann, nicht überschreiben; die neue Fassung kommt als .neu daneben
-  for f in jarvis_pc.py jarvis.png hud.html oberflaeche.py verhalten.py test_oberflaeche.py test_verhalten.py app.html \
-           jarvis-web.js webapp_bauen.py anhang.py ed25519.py ausgabe.py pdf.py bilddienst.py konvertieren.py zusatzdienste.py \
-           test_anhang.py test_ed25519.py test_pdf.py test_ausgabe.py test_bilddienst.py test_konvertieren.py; do
-    if [ -f "$projekt/einrichtung/$f" ] && ! cmp -s "$HIER/$f" "$projekt/einrichtung/$f" && [ "$f" != jarvis_pc.py ]; then
-      install -m 644 "$HIER/$f" "$projekt/einrichtung/$f.neu"
-      # Seit 0.3.4 (Pruefbericht 0.3.3, Fund 16): Sicherheitsmodule nicht nur nebenbei erwaehnen
-      case "$f" in
-        anhang.py|ed25519.py|ausgabe.py|pdf.py|bilddienst.py|konvertieren.py|zusatzdienste.py)
-          printf '   %s%s%s\n' "$ROT" "$(t "WICHTIG: einrichtung/$f ist ein Sicherheitsmodul und wurde nicht ersetzt. $f.neu enthält Sicherheitskorrekturen: Claude im Jarvis-Ordner bitten, sie zu übernehmen, bevor Jarvis weiterläuft." "IMPORTANT: einrichtung/$f is a security module and was not replaced. $f.neu contains security fixes: ask Claude in the Jarvis folder to apply them before Jarvis keeps running.")" "$AUS" ;;
-      esac
-      hinweis "$(t "einrichtung/$f behalten (vielleicht angepasst), die neue Vorlage liegt als $f.neu daneben." "kept einrichtung/$f (maybe customized), the new template is next to it as $f.neu.")"
-    else
-      install -m 644 "$HIER/$f" "$projekt/einrichtung/$f"
-    fi
-  done
+  # Der Client wird immer ersetzt (wie bisher), alles andere mit .neu-Schutz
+  install -m 644 "$HIER/jarvis_pc.py" "$projekt/einrichtung/jarvis_pc.py"
+  vorlagen_kopieren "$projekt/einrichtung"
   if [ ! -f "$projekt/CLAUDE.md" ] && $EN; then
     cat > "$projekt/CLAUDE.md" <<'EOF'
 # Jarvis project

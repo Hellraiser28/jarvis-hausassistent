@@ -39,6 +39,8 @@ STANDARD = {
     "name": "J.A.R.V.I.S.",
     "untertitel": "Just A Rather Very Intelligent System",
     "person": "",
+    "haus": "",                       # seit 0.6: Zeile ueber dem Namen im Design Kern, z. B. "Zuhause bei Familie Muster";
+                                      # leer = HAUS <PERSON> (HUD, PC-Fenster und App setzen das selbst ein)
     "farbe": "rot",
     "farben": None,
     "design": "klassisch",
@@ -70,7 +72,7 @@ STANDARD_EN = {
     "werte_namen": {"strom": "POWER", "euro": "TODAY", "last": "LOAD"},
 }
 # Laengengrenzen: lang genug fuer Echtes, zu kurz fuer eingeschmuggelte Romane
-GRENZE = {"name": 30, "untertitel": 80, "person": 30, "pc_name": 30, "gruss": 120, "start_a": 30, "start_b": 20,
+GRENZE = {"name": 30, "untertitel": 80, "person": 30, "haus": 40, "pc_name": 30, "gruss": 120, "start_a": 30, "start_b": 20,
           "knopf": 20, "frage": 200, "wert_name": 10, "extra": 30}
 
 
@@ -132,7 +134,7 @@ def pruefen(o):
                         % (", ".join(fremd), ", ".join(STANDARD)))
     e = standard()
     e.update(copy.deepcopy(o))
-    for k in ("name", "untertitel", "person", "pc_name"):
+    for k in ("name", "untertitel", "person", "haus", "pc_name"):
         e[k] = _text(e[k], GRENZE[k], k)
     if not e["name"]:
         e["name"] = STANDARD["name"]
@@ -287,6 +289,8 @@ def beschreiben(e):
         extra += _t(" In der App ausgeblendet: %s.", " Hidden in the app: %s.") % ", ".join(app_aus)
     if e["nachtmodus"] != "aus" or e["bewegung"] != "voll":
         extra += _t(" Nachtmodus: %s, Bewegung: %s.", " Night mode: %s, motion: %s.") % (e["nachtmodus"], e["bewegung"])
+    if e["haus"]:
+        extra += _t(" Zeile über dem Namen: %s.", " Line above the name: %s.") % e["haus"]
     keine = _t("keine", "none")
     design = (DESIGN_NAMEN_EN if SPRACHE == "en" else DESIGN_NAMEN)[e["design"]]
     return (_t("Design: %s. Farbe: %s. Zeile unter dem Logo: %s. Bereiche an: %s%s. Knöpfe: %s.%s",
@@ -366,3 +370,88 @@ class Speicher:
         roh = self._lesen(self.grund, None)
         ziel = pruefen(roh) if roh is not None else pruefen({})
         return self._knoepfe_von_jetzt(ziel) if knoepfe_behalten else ziel
+
+
+# Seit 0.6 (statt "Zahnrad nur die Hauptperson"): Jede weitere Person hat ein eigenes Aussehen auf ihren eigenen
+# Geraeten. Gespeichert werden nur ihre Abweichungen in diesen Schluesseln, ueber das Haus-Aussehen gelegt: Was sie
+# nicht angefasst hat, folgt dem Haus. Knoepfe, Bereiche des Wandbildschirms und der Rest bleiben beim Haus, das
+# Verhalten (verhalten.py) stellt weiter nur die Hauptperson um.
+PERSOENLICH = ("farbe", "farben", "design", "app_bereiche", "nachtmodus", "bewegung", "begruessungen", "name",
+               "untertitel", "haus")
+PERSON_ID = re.compile(r"^[a-z][a-z0-9_-]{0,23}$")
+
+
+def persoenlich_pruefen(aenderung):
+    """Darf eine Person das fuer sich aendern? Wirft Ungueltig mit einer Erklaerung, sonst nichts."""
+    if not isinstance(aenderung, dict) or not aenderung:
+        raise Ungueltig(_t("Keine Änderung angegeben.", "No change given."))
+    fremd = sorted(k for k in aenderung if k not in PERSOENLICH)
+    if fremd:
+        raise Ungueltig(_t("Für dich allein lassen sich Farbe, Design, die Bereiche der App, Nachtmodus, Bewegung, "
+                           "Begrüßungen und die Zeilen am Logo ändern; %s gehört zum ganzen Haus.",
+                           "Just for you, you can change the color, design, app sections, night mode, motion, "
+                           "greetings and the lines at the logo; %s belongs to the whole house.") % ", ".join(fremd))
+
+
+class PersonSpeicher:
+    """daten/oberflaeche-personen/<person>.json: nur die Abweichungen der Person (Schluessel aus PERSOENLICH),
+    <person>-verlauf.json die letzten 20 Fassungen fuer "rueckgaengig"."""
+
+    def __init__(self, ordner, person):
+        if not PERSON_ID.match(str(person or "")):        # auch Schutz gegen Pfade wie "../x"
+            raise Ungueltig(_t("Unbekannte Person.", "Unknown person."))
+        o = os.path.join(ordner, "oberflaeche-personen")
+        self.ordner = o
+        self.datei = os.path.join(o, person + ".json")
+        self.verlauf = os.path.join(o, person + "-verlauf.json")
+
+    def _lesen(self, pfad, sonst):
+        try:
+            with open(pfad, encoding="utf-8") as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return sonst
+
+    def abweichungen(self):
+        roh = self._lesen(self.datei, {})
+        return {k: v for k, v in roh.items() if k in PERSOENLICH} if isinstance(roh, dict) else {}
+
+    def fuer(self, haus):
+        """Aussehen dieser Person: Haus-Aussehen mit ihren Abweichungen. Passt etwas nicht (mehr), gilt das Haus."""
+        abw = self.abweichungen()
+        if not abw:
+            return haus
+        try:
+            return pruefen(dict(haus, **abw))
+        except Ungueltig:
+            return haus
+
+    def _ablegen(self, abw, quelle):
+        alt = self.abweichungen()
+        if alt == abw:
+            return False
+        os.makedirs(self.ordner, mode=0o700, exist_ok=True)
+        verlauf = self._lesen(self.verlauf, [])
+        verlauf = verlauf if isinstance(verlauf, list) else []
+        verlauf.append({"zeit": time.strftime("%Y-%m-%d %H:%M:%S"), "quelle": quelle, "vorher": alt})
+        _schreiben(self.verlauf, verlauf[-20:])
+        _schreiben(self.datei, abw)
+        return True
+
+    def speichern(self, haus, neu, quelle):
+        """neu = vollstaendiges Aussehen (aus aendern()); abgelegt wird nur, was persoenlich ist und vom Haus abweicht."""
+        return self._ablegen({k: neu[k] for k in PERSOENLICH if neu.get(k) != haus.get(k)}, quelle)
+
+    def rueckgaengig(self):
+        verlauf = self._lesen(self.verlauf, [])
+        if not isinstance(verlauf, list) or not verlauf:
+            raise Ungueltig(_t("Es gibt keine frühere Fassung.", "There is no earlier version."))
+        letzte = verlauf.pop()
+        vorher = letzte.get("vorher") if isinstance(letzte, dict) else None
+        vorher = vorher if isinstance(vorher, dict) else {}
+        _schreiben(self.datei, {k: v for k, v in vorher.items() if k in PERSOENLICH})
+        _schreiben(self.verlauf, verlauf)
+
+    def zuruecksetzen(self, quelle):
+        """Wieder wie das Haus (Grundeinstellung einer Person)."""
+        return self._ablegen({}, quelle)

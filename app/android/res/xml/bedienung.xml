@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Handy-Steuerung Stufe 2 (Prototyp, 29.10.2026). Bewusst ohne isAccessibilityTool: Jarvis ist kein Hilfsmittel fuer
+     Menschen mit Behinderung. Keine Ereignisse ausser Fensterwechseln; gelesen wird nur auf einen Befehl hin. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/bedienung_beschreibung"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault|flagIncludeNotImportantViews|flagReportViewIds"
+    android:canRetrieveWindowContent="true"
+    android:canPerformGestures="true"
+    android:canTakeScreenshot="true"
+    android:notificationTimeout="200" />
