@@ -265,6 +265,29 @@ def _laden(m, kennung):
     return o, uid, email.message_from_bytes(roh, policy=email.policy.default)
 
 
+HTML_MAX = 200_000                      # so viel einer Mail geht ueberhaupt in die Suchmuster (TEXT_MAX ist 4000)
+_BLOCK = re.compile(r"(?i)<(/?)(script|style)\b")
+
+
+def _ohne_bloecke(t):
+    """<script>/<style>-Bloecke entfernen, in einem Durchgang. Vorher ein Muster mit Rueckverweis und .*?, das bei
+    vielen offenen <style> ohne Ende quadratisch lief (Claude Security F1, 06.11.2026). Ein Block ohne Ende nimmt den
+    Rest mit."""
+    aus, pos, offen = [], 0, None
+    for m in _BLOCK.finditer(t):
+        if m.start() < pos:
+            continue
+        if offen is None and not m.group(1):
+            aus.append(t[pos:m.start()])
+            offen = m.group(2).lower()
+        elif offen and m.group(1) and m.group(2).lower() == offen:
+            e = t.find(">", m.end())
+            pos, offen = (len(t) if e < 0 else e + 1), None
+    if offen is None:
+        aus.append(t[pos:])
+    return " ".join(aus)
+
+
 def _text(msg):
     teil = msg.get_body(preferencelist=("plain", "html"))
     if teil is None:
@@ -274,10 +297,11 @@ def _text(msg):
     except Exception:
         t = teil.get_payload(decode=True) or b""
         t = t.decode("utf-8", "replace") if isinstance(t, bytes) else str(t)
+    t = t[:HTML_MAX]                    # seit 06.11.2026 (Claude Security F1): erst kuerzen, dann Suchmuster
     if teil.get_content_type() == "text/html":
-        t = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>", " ", t)
+        t = _ohne_bloecke(t)
         t = re.sub(r"(?i)<br\s*/?>|</p>|</div>|</tr>", "\n", t)
-        t = html.unescape(re.sub(r"<[^>]+>", " ", t))
+        t = html.unescape(re.sub(r"<[^<>]*>", " ", t))     # linear: ein "<" ohne ">" scannt nur bis zum naechsten "<"
     t = re.sub(r"[ \t\r\f\v]+", " ", t)
     return re.sub(r"\n\s*\n+", "\n\n", t).strip()
 

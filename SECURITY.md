@@ -78,6 +78,18 @@ Die Regeln stehen ausführlich in `EINRICHTUNG.md` (Phase 2, „Sicherheit“). 
   standardmäßig keine PC-Werkzeuge, weil auch Ton aus den eigenen Lautsprechern (ein Video, eine Webseite) als
   Sprecher zählt. Wer das einschaltet, nimmt genau das in Kauf.
 - **Ein Gehirn mit Shell** erreicht auch gesperrte Dateien. Davor schützen dann nur Anweisung und Freigabe.
+- **Gemeinsame Lautsprecher** (seit 0.7): Ohne Stimmerkennung gilt jeder Sprecher als die Person des Geräts. Die
+  Superhirn-Module nennen ihre privaten Aktionen (`LAUTSPRECHER_PRIVAT`), die Brücke lehnt sie dort ab. Eigene
+  Erweiterungen müssen das genauso halten.
+- **Die Werkzeugschmiede** (seit 0.7, standardmäßig aus) führt Code aus, den Claude geschrieben hat, nach Freigabe
+  durch die Hauptperson und nur in einem Container ohne Netz, nur lesend, ohne Rechte und mit festen Grenzen. Auf
+  einem Kernel ohne Seccomp (manche NAS) schützt allein der Container. Wer zur Gruppe `docker` gehört, hat Rechte wie
+  root. Schalte die Schmiede nur ein, wenn du das in Kauf nimmst, und sieh dir den Code vor der Freigabe an.
+- **Geräte-Tokens im Heimnetz:** App, PC-Client und Web-App reden mit der Brücke über HTTP. Wer im eigenen
+  Netz mitlauschen kann (etwa über ein gekapertes Gerät per ARP-Spoofing), sieht die Tokens im Klartext.
+  Seit 0.7 prüft die App den Beweis der Brücke nach jedem Netzwechsel neu, und der PC-Client nimmt Updates
+  nur mit dem beim Koppeln angehefteten Schlüssel an. Gegen Mitlauschen im eigenen Netz hilft nur HTTPS zur
+  Brücke (z. B. `tailscale cert` oder ein eigener Reverse-Proxy).
 - **Die Web-App** kommt per HTTP, ihr Geräte-Token liegt im Browser-Speicher dieser Adresse. Antwortet in einem
   fremden Netz ein anderes Gerät unter derselben Adresse, kann es das Token auslesen; ein Beweis der Brücke hilft
   hier nicht, weil die fremde Seite ihren eigenen Code mitbringt. Deshalb gelten Web-App-Geräte nur im Heimnetz und

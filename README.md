@@ -11,7 +11,9 @@ English version: [README.en.md](README.en.md)
 Jarvis ist ein Hausassistent mit eigener Stimme und Persönlichkeit, inspiriert vom KI-Butler aus den Iron-Man-Filmen.
 Er kennt deinen Kalender, dein Zuhause und die Welt, merkt sich, was du ihm sagst, und tut nur, was du erlaubst.
 Seit 0.6 zeigt er dein Zuhause als 3D-Modell, in dem du Geräte antippst und schaltest, erkennt am Lautsprecher, wer
-gerade spricht, und erledigt auf Zuruf Dinge auf deinem Handy.
+gerade spricht, und erledigt auf Zuruf Dinge auf deinem Handy. Seit 0.7 denkt er auch weiter, wenn du gerade nicht
+fragst: Er recherchiert nachts deine offenen Fragen, beobachtet Webseiten für dich, berät Entscheidungen mit vier
+Stimmen und baut sich auf Wunsch kleine Werkzeuge selbst.
 
 Das hier ist **kein fertiges Programm**, sondern eine Bauanleitung, nach der **Claude Code** dir deinen eigenen
 Jarvis baut. Jede Umgebung ist anders: Rechner, Smart Home, Kalender, Wünsche. Claude fragt nach, schlägt vor, baut
@@ -30,6 +32,34 @@ Ein privates Fanprojekt. Nicht verbunden mit Marvel, Disney, Anthropic oder Goog
   <img src="docs/bilder/jarvis-haus3d-handy.jpg" width="260" alt="Das 3D-Haus am Handy, unten Szenen und laufende Geräte">
   <img src="docs/bilder/jarvis-sternbild.jpg" width="260" alt="Das Gedächtnis als Sternbild: jeder Stern ist etwas, das Jarvis sich gemerkt hat">
 </p>
+
+## Neu in 0.7
+
+- **Das Superhirn: zehn Fähigkeiten, die selbst weiterdenken.** Jede ist einzeln wählbar:
+    - **Nachtschicht:** Was tagsüber offen blieb, recherchiert er nachts und berichtet morgens.
+    - **Welt-Wache:** „Sag mir, wenn der Preis unter 200 € fällt.“ Er beobachtet öffentliche Seiten oder eine Suche,
+      nie dein Heimnetz.
+    - **Kabinett:** Bei einer Entscheidung beraten vier Stimmen (Sparfuchs, Familie, Zukunft, Advocatus diaboli),
+      ein Vorsitz fasst zusammen, auf Wunsch mit Wiedervorlage.
+    - **Familienrunde:** „Frag alle, ob wir Samstag Pizza oder Pasta essen.“ Alle stimmen per Link ab, das Ergebnis
+      bekommt jeder.
+    - **Zeig's mir:** Erklärungen als kleine Webseite, auf Wunsch auf dem großen Bild.
+    - **Ablageort:** „Wo ist der Ersatzschlüssel?“ Er merkt sich, wo Dinge liegen, auch mit Foto.
+    - **Lernbegleiter:** Karteikarten aus Text oder einem fotografierten Arbeitsblatt, mit Wiederholung im richtigen
+      Abstand.
+    - **Haus-Abenteuer:** Ein Rätselspiel durch eure echten Räume, mit Durchsagen und, wenn du willst, farbigem Licht.
+    - **Zeitkapsel:** Botschaften an die Zukunft, an ein Datum oder ein Ereignis gebunden.
+    - **Werkzeugschmiede:** Fehlt ihm eine Fähigkeit, schreibt er sich ein kleines Rechenwerkzeug, testet es in
+      einem abgeschotteten Container und legt es dir zur Freigabe vor. Standardmäßig aus, braucht Docker.
+- **Private Dinge nie über gemeinsame Lautsprecher.** Listen, Archive und Berichte einer Person liest Jarvis nicht
+  über Alexa oder ein Sprachgerät im Wohnzimmer vor, dort kann jeder mithören.
+- **Schnelle Antworten ohne Nachdenken:** Uhrzeit, Datum, Rechnen und Umrechnen beantwortet er sofort und ohne Kosten.
+- **„Sag mir Bescheid, wenn …“** für alles in deinem Smart Home, einmal gemeldet, danach vergessen.
+- **Kalender-Abos:** Private iCal-Adressen, zum Beispiel einen Schichtplan aus einer Schicht-App, holt er regelmäßig
+  und kennt danach deine Schichten.
+- **PC-Client 25:** das neue Symbol auch in der Taskleiste, Strg+Alt+J holt das Fenster, Strg+K öffnet eine
+  Befehlspalette, „Größte Last“ zeigt, was den PC gerade bremst. **App 4.15:** Teilen an Jarvis, eine Kachel in den
+  Schnelleinstellungen und ein Visualizer beim Sprechen. Alles im Einzelnen im [CHANGELOG](CHANGELOG.md).
 
 ## Neu in 0.6
 
@@ -284,7 +314,7 @@ Was Jarvis nie tut: [NEVER.md](NEVER.md). Wie Jarvis aufgebaut ist, wo die Grenz
 | `app/` | Quellen der Android-App und ihr Bauskript (mit eigenem Signaturschlüssel) |
 | `vorlagen/pc/` | der PC-Client für Windows und Linux (Weckwort, Jarvis-Fenster, Stimme) und seine Pakete mit Prüfsummen |
 | `vorlagen/hud/` | die Oberfläche, für alle gleich. Ihre Einstellungen kommen von der Brücke |
-| `vorlagen/bruecke/` | fertige Bausteine der Brücke mit Einheitentests: Aussehen und Verhalten (`oberflaeche.py`, `verhalten.py`), Dateien (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), Update-Signatur (`ed25519.py`), seit 0.4 Personen, Gedächtnis, Szenen, Postfach und Briefe (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`), seit 0.6 3D-Haus, Stimmerkennung, Handy-Steuerung, Fremdtext-Sperre, offene Fäden, Ankunft, Gäste, Räume, Anrufe, Leinwand, Quiz, Update-Zentrale und Plattengesundheit (`grundriss.py`, `sprecher.py`, `handy.py`, `fremdtext.py`, `faeden.py`, `ankunft.py`, `gaeste.py`, `raeume.py`, `anruf.py`, `leinwand.py`, `quiz.py`, `updates.py`, `nas_gesundheit.py`) |
+| `vorlagen/bruecke/` | fertige Bausteine der Brücke mit Einheitentests: Aussehen und Verhalten (`oberflaeche.py`, `verhalten.py`), Dateien (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), Update-Signatur (`ed25519.py`), seit 0.4 Personen, Gedächtnis, Szenen, Postfach und Briefe (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`), seit 0.6 3D-Haus, Stimmerkennung, Handy-Steuerung, Fremdtext-Sperre, offene Fäden, Ankunft, Gäste, Räume, Anrufe, Leinwand, Quiz, Update-Zentrale und Plattengesundheit (`grundriss.py`, `sprecher.py`, `handy.py`, `fremdtext.py`, `faeden.py`, `ankunft.py`, `gaeste.py`, `raeume.py`, `anruf.py`, `leinwand.py`, `quiz.py`, `updates.py`, `nas_gesundheit.py`), seit 0.7 das Superhirn (`superhirn.py`, `denken.py`, `schmiede.py`, `kabinett.py`, `familienrunde.py`, `nachtschicht.py`, `weltwache.py`, `zeigen.py`, `ablageort.py`, `lernbegleiter.py`, `abenteuer.py`, `zeitkapsel.py`), Schnellpfad, Beobachter und Kalender-Abos (`schnellpfad.py`, `beobachter.py`, `kalender_abo.py`) |
 | `vorlagen/webapp/` | Web-App für iPhone und Browser: Schicht `jarvis-web.js` und Bauskript (Oberfläche aus `app/`) |
 | `vorlagen/grundriss/` | seit 0.6: die 3D-Hausansicht (`haus3d.js` mit `three.min.js`), ein erfundenes Beispielhaus samt Erzeuger und eine Vorschauseite |
 | `vorlagen/gemeinsam/` | seit 0.6: das Gedächtnis als Sternbild (`sternbild.js`, `sternbild.css`) für Fenster, App und Web-App |

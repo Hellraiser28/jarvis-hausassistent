@@ -53,8 +53,11 @@ pruef("Ziel: homelab_auftrag, geraet_steuern, nachricht, merken, verhalten, hand
                                    "mcp__jarvis__szenen")))
 pruef("Ziel: jedes PC-Werkzeug", ft.ist_ziel("mcp__pc__Click") and ft.ist_ziel("mcp__pc__Snapshot"))
 pruef("Kein Ziel: lesen (wetter, termine, postfach)", not any(ft.ist_ziel(x) for x in ("wetter", "termine", "postfach", "", None)))
-pruef("Quellen und Ziele ueberschneiden sich nur bei updates (Release Notes lesen, dann einspielen)",
-      ft.QUELLEN & ft.ZIELE == {"updates"}, ft.QUELLEN & ft.ZIELE)
+# Seit 0.7 (Superhirn): Ueberschneiden duerfen sich nur Werkzeuge, deren fremder Text an bestimmte Aktionen gebunden ist
+# (QUELLE_AKTIONEN) und deren Leseaktionen in NUR_LESEN stehen, wie bei updates (Release Notes lesen, dann einspielen)
+pruef("Quellen und Ziele ueberschneiden sich nur bei aktionsgenauen Quellen (updates, schmiede, nachtschicht, weltwache, "
+      "zeitkapsel)", ft.QUELLEN & ft.ZIELE == {"updates", "schmiede", "nachtschicht", "weltwache", "zeitkapsel"}
+      and all(w in ft.QUELLE_AKTIONEN and w in ft.NUR_LESEN for w in ft.QUELLEN & ft.ZIELE), ft.QUELLEN & ft.ZIELE)
 pruef("Jede Quelle hat einen Klartext (de und en)", all(q in ft.NAMEN and q in ft.NAMEN_EN for q in ft.QUELLEN | ft.QUELLEN_EINGEBAUT)
       and set(ft.NAMEN) == set(ft.NAMEN_EN))
 
@@ -256,6 +259,134 @@ pruef("postfach je Aktion: lesen nach lesen frei, verschieben nach Mail gesperrt
       ablauf == ["lief", "lief", "gesperrt (Mail)"], ablauf)
 neue_frage(P)
 pruef("postfach verschieben ohne fremden Text: frei", aufruf(P, "postfach", {"aktion": "verschieben"}) == "lief")
+
+# ---------------------------------------------------------------- Superhirn (seit 0.7)
+# Aktionen der zehn Module (Schema "aktion" -> enum) und ihre Einordnung, Stand 0.7. Lesend = frei nach fremdem Text,
+# Quelle = liefert selbst fremden Text, alles andere ist Ziel.
+SH = {"schmiede": (["liste", "nutzen", "zeigen", "vorschlag", "freigeben", "verwerfen"], {"liste", "zeigen", "nutzen"},
+                   {"zeigen"}),
+      "kabinett": (["beraten", "wiedervorlage", "rueckblick", "liste", "zeigen"], {"liste", "zeigen"}, set()),
+      "familienrunde": (["neu", "stand", "abbrechen"], {"stand"}, set()),
+      "nachtschicht": (["heute", "einstellen", "jetzt"], {"heute"}, {"heute", "jetzt"}),
+      "weltwache": (["neu", "liste", "loeschen", "pruefen_jetzt"], {"liste"}, {"pruefen_jetzt"}),
+      "zeigen": (["erklaeren", "zeigen", "liste"], {"liste"}, set()),
+      "ablageort": (["merken", "suchen", "verlauf", "liste", "vergessen"], {"suchen", "verlauf", "liste"}, set()),
+      "lernbegleiter": (["neues_thema", "ueben", "antwort", "stand", "erinnern", "thema_loeschen"], {"stand"}, set()),
+      "abenteuer": (["start", "antwort", "hinweis", "stand", "ende"], {"stand"}, set()),
+      "zeitkapsel": (["liste", "neu", "archiv", "loeschen"], {"liste", "archiv"}, {"archiv"})}
+pruef("Superhirn: alle zehn Werkzeuge sind Ziel (ohne args das ganze Werkzeug)",
+      all(w in ft.ZIELE and ft.ist_ziel(w) and ft.ist_ziel("mcp__jarvis__" + w) for w in SH), [w for w in SH if w not in ft.ZIELE])
+falsch = []
+for w, (aktionen, lesend, quelle) in SH.items():
+    for a in aktionen:
+        if ft.ist_ziel(w, {"aktion": a}) == (a in lesend):
+            falsch.append((w, a, "Ziel" if a not in lesend else "lesend"))
+        if ft.ist_quelle(w, {"aktion": a}) != (a in quelle):
+            falsch.append((w, a, "Quelle" if a in quelle else "keine Quelle"))
+    if not ft.ist_ziel(w, {"aktion": "gibtsnicht"}) or not ft.ist_ziel(w, {"aktion": aktionen[0].upper()}):
+        falsch.append((w, "unbekannt/Schreibweise", "muss Ziel sein"))
+pruef("Superhirn je Aktion: lesend frei, sonst Ziel; fremder Text nur bei den Quellen-Aktionen; Unbekanntes Ziel",
+      not falsch, falsch[:6])
+pruef("Superhirn: NUR_LESEN und QUELLE_AKTIONEN stimmen mit der Tabelle ueberein (Standardaktion lesend wo erwartet)",
+      all(ft.NUR_LESEN[w][2] == frozenset(SH[w][1]) for w in SH)
+      and {w: set(e[2]) for w, e in ft.QUELLE_AKTIONEN.items() if w in SH} == {w: q for w, (_, _, q) in SH.items() if q}
+      and ft.ist_ziel("zeigen", {}) and not ft.ist_ziel("kabinett", {}) and not ft.ist_ziel("ablageort", {}))
+pruef("Superhirn-Quellen ohne args: ganzes Werkzeug (im Zweifel fremd)",
+      all(ft.ist_quelle(w) for w in ("schmiede", "nachtschicht", "weltwache", "zeitkapsel"))
+      and not any(ft.ist_quelle(w) for w in ("kabinett", "familienrunde", "zeigen", "ablageort", "lernbegleiter", "abenteuer")))
+
+# Gegenprobe gegen die Module selbst, soweit sie im Arbeitsstand liegen und sich laden lassen (FREMDTEXT im Modul)
+geprueft, abweichend = [], []
+for w in SH:
+    if not os.path.isfile(os.path.join(os.path.dirname(HIER), "bruecke", w + ".py")):
+        continue
+    try:
+        mod = __import__(w)
+        nl, qa = mod.FREMDTEXT.get("nur_lesen"), mod.FREMDTEXT.get("quelle_aktionen")
+        enum = list((mod.WERKZEUG["schema"]["properties"].get("aktion") or {}).get("enum") or [])
+    except Exception as x:                                   # noqa: BLE001 - Modul (noch) nicht ladbar
+        print("(Superhirn-Modul %s nicht ladbar: %s, Gegenprobe uebersprungen)" % (w, type(x).__name__))
+        continue
+    geprueft.append(w)
+    if (nl[0], nl[1], frozenset(nl[2])) != ft.NUR_LESEN[w] or sorted(enum) != sorted(SH[w][0]):
+        abweichend.append((w, "nur_lesen/enum"))
+    if (qa and (qa[0], qa[1], frozenset(qa[2])) != ft.QUELLE_AKTIONEN.get(w)) or (not qa and w in ft.QUELLE_AKTIONEN):
+        abweichend.append((w, "quelle_aktionen"))
+if geprueft:
+    pruef("Superhirn-Module (%d im Arbeitsstand) deklarieren dieselbe Einordnung wie fremdtext.py" % len(geprueft),
+          not abweichend, abweichend)
+else:
+    print("(keine Superhirn-Module im Arbeitsstand, Gegenprobe uebersprungen)")
+
+# Ausnahme NUR_ANHANG: merken/neues_thema bleiben Ziel und sind nur frei, wenn der Anhang der Person die einzige
+# Fremdquelle der Frage ist (Foto vom Ersatzschluessel, Foto vom Arbeitsblatt)
+na = ft.nur_anhang_frei
+pruef("NUR_ANHANG: merken/neues_thema bleiben Ziel, frei nur mit genau [Anhang]",
+      ft.ist_ziel("ablageort", {"aktion": "merken"}) and ft.ist_ziel("lernbegleiter", {"aktion": "neues_thema"})
+      and na("ablageort", {"aktion": "merken"}, ["Anhang"]) and na("mcp__jarvis__lernbegleiter", {"aktion": "neues_thema"},
+                                                                  ["Anhang"])
+      and na("ablageort", {"aktion": "merken"}, ["Anhang", "Anhang"]))
+pruef("NUR_ANHANG: gesperrt mit Mail, Mail+Anhang, anderer Aktion, ohne args, unlesbar, anderem Werkzeug, ohne Fremdtext",
+      not na("ablageort", {"aktion": "merken"}, ["postfach"]) and not na("ablageort", {"aktion": "merken"}, ["Anhang", "postfach"])
+      and not na("ablageort", {"aktion": "vergessen"}, ["Anhang"]) and not na("ablageort", None, ["Anhang"])
+      and not na("ablageort", {"aktion": "merken"}, ["unlesbar"]) and not na("kabinett", {"aktion": "beraten"}, ["Anhang"])
+      and not na("ablageort", {"aktion": "merken"}, []) and not na("ablageort", ["aktion", "merken"], ["Anhang"]))
+pruef("NUR_ANHANG: strenger Aktionsvergleich (Merken, ' merken', leer, kein Text sind gesperrt)",
+      not any(na("ablageort", {"aktion": a}, ["Anhang"]) for a in ("Merken", " merken", "merken\n", "", 1, ["merken"]))
+      and not na("ablageort", {}, ["Anhang"]))
+pruef("NUR_ANHANG nennt nur Ziele, die freien Aktionen sind keine Leseaktionen",
+      all(w in ft.ZIELE and not (e[2] & ft.NUR_LESEN.get(w, (0, 0, frozenset()))[2]) for w, e in ft.NUR_ANHANG.items()))
+
+
+def aufruf_args(pid, name, args):
+    """Wie aufruf(), aber befleckt bekommt die args (Ausnahme NUR_ANHANG), wie im Werkzeug-Server seit 0.7."""
+    if ft.ist_ziel(name, args):
+        quelle = ft.befleckt(T, pid, name, args)
+        if quelle:
+            return "gesperrt (%s)" % quelle
+    if ft.ist_quelle(name, args):
+        ft.markieren(T, pid, name)
+    return "lief"
+
+
+neue_frage(P)
+pruef("arten: frische Frage ohne fremden Text -> []", ft.arten(T, P) == [])
+neue_frage(P, fremd="Anhang")
+pruef("arten: Anhang", ft.arten(T, P) == ["Anhang"])
+ablauf = [aufruf_args(P, "ablageort", {"aktion": "merken", "gegenstand": "Ersatzschluessel", "ort": "Flur"}),
+          aufruf_args(P, "mcp__jarvis__lernbegleiter", {"aktion": "neues_thema", "fach": "Bio", "thema": "Zelle"}),
+          aufruf_args(P, "ablageort", {"aktion": "vergessen", "gegenstand": "Ersatzschluessel"}),
+          aufruf_args(P, "familienrunde", {"aktion": "neu", "frage": "x"}), aufruf(P, "ablageort", {"aktion": "merken"})]
+pruef("Nur Anhang: merken und neues_thema laufen, vergessen/familienrunde gesperrt, ohne args an befleckt gesperrt",
+      ablauf == ["lief", "lief", "gesperrt (Anhang)", "gesperrt (Anhang)", "gesperrt (Anhang)"], ablauf)
+ft.markieren(T, P, "postfach")
+pruef("arten: Anhang und Mail", sorted(ft.arten(T, P)) == ["Anhang", "postfach"], ft.arten(T, P))
+pruef("Anhang + Mail: merken gesperrt (nennt beides)", aufruf_args(P, "ablageort", {"aktion": "merken"})
+      == "gesperrt (Anhang, Mail)")
+neue_frage(P)
+ft.markieren(T, P, "WebFetch")
+pruef("Nur Webseite: merken gesperrt", aufruf_args(P, "ablageort", {"aktion": "merken"}) == "gesperrt (Webseite)")
+neue_frage(P)
+ablauf = [aufruf_args(P, "zeitkapsel", {"aktion": "liste"}), ft.befleckt(T, P, "merken"),
+          aufruf_args(P, "zeitkapsel", {"aktion": "archiv"}), aufruf_args(P, "zeitkapsel", {"aktion": "liste"}),
+          aufruf_args(P, "zeitkapsel", {"aktion": "neu", "text": "x"}), aufruf_args(P, "weltwache", {"aktion": "liste"}),
+          aufruf_args(P, "weltwache", {"aktion": "neu", "url": "x"})]
+pruef("zeitkapsel: liste markiert nicht, archiv markiert, danach lesen frei, neu und weltwache neu gesperrt",
+      ablauf == ["lief", "", "lief", "lief", "gesperrt (Zeitkapsel)", "lief", "gesperrt (Zeitkapsel)"], ablauf)
+neue_frage(P)
+ablauf = [aufruf_args(P, "weltwache", {"aktion": "pruefen_jetzt", "nr": 1}), aufruf_args(P, "schmiede", {"aktion": "zeigen"}),
+          aufruf_args(P, "schmiede", {"aktion": "freigeben"}), aufruf_args(P, "nachtschicht", {}),
+          aufruf_args(P, "nachtschicht", {"aktion": "einstellen"})]
+pruef("weltwache pruefen_jetzt und schmiede zeigen markieren, freigeben/einstellen danach gesperrt, heute frei",
+      ablauf == ["lief", "lief", "gesperrt (Werkzeug-Entwurf, Webseite)", "lief",
+                 "gesperrt (Nachtschicht-Bericht, Werkzeug-Entwurf, Webseite)"], ablauf)
+os.remove(os.path.join(AKTIV, "%d.json" % P))
+open(os.path.join(AKTIV, "%d.json" % P), "w").write("kaputt")
+pruef("Unlesbare frische Frage: arten [unlesbar], merken auch mit Anhang-Ausnahme gesperrt",
+      ft.arten(T, P) == ["unlesbar"] and ft.befleckt(T, P, "ablageort", {"aktion": "merken"})
+      == "Datei der laufenden Frage unlesbar", ft.arten(T, P))
+os.remove(os.path.join(AKTIV, "%d.json" % P))
+pruef("Ohne laufende Frage: arten leer, keine Sperre", ft.arten(T, P) == [] and ft.befleckt(T, P, "ablageort", {}) == "")
 
 # ---------------------------------------------------------------- Laeuft gerade eine Frage? (fuer den Hook)
 L = tempfile.mkdtemp(prefix="fremdtext-lauf-")
@@ -472,6 +603,16 @@ r = ft.rueckfrage("e-mail")
 pruef("EN: Rueckfrage", r.startswith("BLOCKED (untrusted-text lock): In this question you have read untrusted text (e-mail).")
       and "ask whether you should do it" in r and "%" not in r, r)
 pruef("EN: Rueckfrage ohne Quelle", "(untrusted text)" in ft.rueckfrage(None))
+neue_frage(P)
+for q in ("weltwache", "schmiede", "nachtschicht", "zeitkapsel"):
+    ft.markieren(T, P, q)
+en_namen = ft.befleckt(T, P, "kabinett", {"aktion": "beraten"})
+pruef("EN: Klartext der Superhirn-Quellen", en_namen == "night report, tool draft, web page, time capsule", en_namen)
+neue_frage(P, fremd="Anhang")
+pruef("EN: Anhang-Ausnahme unveraendert (merken frei, vergessen gesperrt)",
+      ft.befleckt(T, P, "ablageort", {"aktion": "merken"}) == ""
+      and ft.befleckt(T, P, "ablageort", {"aktion": "vergessen"}) == "attachment")
+pruef("EN: Klartexte ohne deutschen Rest", not [v for v in ft.NAMEN_EN.values() if re.search(r"[äöüÄÖÜß]|Text\b|aus ", v)])
 ft.setze_sprache("de")
 pruef("Zurueck auf Deutsch", ft.rueckfrage("Mail").startswith("GESPERRT"))
 

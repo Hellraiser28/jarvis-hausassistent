@@ -1,5 +1,58 @@
 # Änderungen
 
+## 0.7.0 – 2026-11-06
+
+Das Superhirn. *English: ten abilities that keep thinking when you are not asking – a tool forge, a council for
+decisions, family polls, a night shift, web watches, explainer pages, a place finder, a learning companion, house
+adventures and time capsules – plus quick answers without the brain, watchers, calendar subscriptions, a speaker lock
+for private things, PC client 25 and app 4.15.1. A Claude Security scan of the whole
+repository found 11 issues; 10 are fixed, one is a documented limit.*
+
+- **Superhirn** (`superhirn.py` als Register, `denken.py` für Denkaufrufe, `sh_attrappe.py` als Kontext zum Testen),
+  zehn Module, jedes mit Test, Deutsch und Englisch, jedes einzeln wählbar:
+    - **Werkzeugschmiede** (`schmiede.py`): Jarvis schreibt sich kleine Rechenwerkzeuge, testet sie in einem
+      Container ohne Netz und legt sie der Hauptperson mit Freigabe-Code vor. **Standardmäßig aus**
+      (`JARVIS_SCHMIEDE=an`), braucht Docker und das Image mit festem Digest.
+    - **Kabinett** (`kabinett.py`): vier Stimmen und ein Vorsitz beraten eine Entscheidung, mit Wiedervorlage.
+    - **Familienrunde** (`familienrunde.py`): Abstimmung per Push und Einmal-Link, Ergebnis an alle.
+    - **Nachtschicht** (`nachtschicht.py`, nur Hauptperson): offene Fragen des Tages nachts recherchieren,
+      morgens berichten.
+    - **Welt-Wache** (`weltwache.py`): öffentliche Seiten oder Suchen mit einer Bedingung in normaler Sprache
+      beobachten, nie im Heimnetz, eigene Domain über `setze_eigene_domains()`.
+    - **Zeig's mir** (`zeigen.py`): Erklärungen als geprüfte Webseite mit strenger CSP.
+    - **Ablageort** (`ablageort.py`), **Lernbegleiter** (`lernbegleiter.py`, Karteikarten mit SM-2),
+      **Haus-Abenteuer** (`abenteuer.py`, Licht nur aus einer Positivliste) und **Zeitkapsel** (`zeitkapsel.py`).
+    - Denkaufrufe gehärtet: leerer Ordner, keine MCP-Server, höchstens WebSearch, Auftrag über die Standardeingabe,
+      Tageslimit fail-closed (Standard 2 $, `SUPERHIRN_TAGESLIMIT_USD`), Befehl über `JARVIS_DENKEN_BEFEHL`.
+    - Vor der Veröffentlichung drei Runden einer unabhängigen Sicherheitsprüfung und ein Scan mit Claude Security.
+- **Lautsprecher-Sperre:** Jedes Modul nennt in `LAUTSPRECHER_PRIVAT` die Aktionen, die nie über Alexa, die
+  Sprachkette von Home Assistant oder Sprach-Satelliten laufen. Dazu kommen `superhirn.offener_lautsprecher()`
+  und `lautsprecher_privat()`. Fund des Claude-Security-Scans: Zeitkapsel-Archiv und -Liste waren dort lesbar.
+- **Schnellpfad** (`schnellpfad.py`): Uhrzeit, Datum, Rechnen, Einheiten und Würfel ohne Gehirn, Deutsch und Englisch.
+- **Beobachter** (`beobachter.py`): „Sag mir Bescheid, wenn …“ über Zustände in Home Assistant, nie Kameras oder
+  Babyfon.
+- **Kalender-Abo** (`kalender_abo.py`): private iCal-Adressen regelmäßig holen, nur https, keine Heimnetz-Ziele, die
+  Adresse steht nie in einer Meldung.
+- **Fremdtext-Sperre** kennt die zehn neuen Werkzeuge. Der Hook gibt die Argumente weiter, damit greift die Ausnahme
+  für reine Foto-Anhänge.
+- **Sicherheitsprüfung mit Claude Security** über das ganze Repo: 11 Funde (7 mittel, 4 niedrig), 10 davon
+  behoben:
+    - Suchmuster über fremden Text laufen linear: HTML-Mails (`postfach.py`), Office-XML (`anhang.py`) und die
+      Nachlesen-Marke (`kern.py`). Vorher konnte eine präparierte Mail die Brücke minutenlang blockieren.
+    - App 4.15.1: Nach jedem Netzwechsel beweist die Brücke sich neu, bevor ein Token rausgeht. Antworten
+      landen nur neu serialisiert in der Oberfläche, Rückmeldungen des Paketinstallers nur mit Sitzungs-Token.
+    - PC-Client 25: Updates nur noch mit dem beim Koppeln angehefteten Schlüssel (keine HMAC-Ausweichprüfung,
+      kein Holen zur Laufzeit), Fensteraufrufe nur mit einer Kennung je Start.
+    - Setup: Ein vorhandener Ordner außerhalb des Profils wird nur übernommen, wenn kein fremdes Konto Rechte
+      daran hat; die Rechte werden vollständig ersetzt (`ordner.ps1`).
+    - Offen und dokumentiert: Im Heimnetz laufen die Geräte-Tokens über HTTP (SECURITY.md, „Bekannte Grenzen“).
+- **PC-Client 24/25:** Sternbild-Symbol mit dem Setup, auch für angeheftete Verknüpfungen. „Neu in dieser Version“ gilt
+  erst nach „Verstanden“ als gesehen. Strg+Alt+J holt das Fenster, Strg+K öffnet die Befehlspalette, „Größte Last“
+  steht im Reiter Lage. Prozessnamen bekommt nur die Hauptperson (`lage.system_mit_prozessen`).
+- **App 4.15:** Teilen an Jarvis (Text, Links, Bilder), Schnelleinstellungs-Kachel, Sprech-Visualizer mit
+  Startsequenz.
+- Die Bauanleitung beschreibt jeden neuen Baustein samt Abnahmeprobe und den Umstieg von 0.6.
+
 ## 0.6.0 – 2026-11-05
 
 Haus, Handy und Stimme. *English: your home in 3D with device menus, speaker recognition, phone control, memory as a

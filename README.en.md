@@ -11,7 +11,9 @@ Deutsche Fassung: [README.md](README.md)
 Jarvis is a home assistant with its own voice and personality, inspired by the AI butler from the Iron Man films.
 It knows your calendar, your home and the world, remembers what you tell it, and only does what you allow.
 Since 0.6 it shows your home as a 3D model where you tap devices to switch them, recognises at the speakers who is
-talking, and does things on your phone when you ask.
+talking, and does things on your phone when you ask. Since 0.7 it also keeps thinking when you are not asking: it
+researches your open questions at night, watches web pages for you, talks decisions through with four voices and, if
+you want, builds small tools for itself.
 
 This is **not a finished program**. It is a build guide that **Claude Code** follows to build your own Jarvis.
 Every home is different (computers, smart home, calendars, wishes), so Claude asks, proposes, builds and tests each
@@ -30,6 +32,34 @@ A private fan project. Not affiliated with Marvel, Disney, Anthropic or Google.
   <img src="docs/bilder/jarvis-haus3d-handy.jpg" width="260" alt="The 3D house on the phone, scenes and running devices at the bottom">
   <img src="docs/bilder/jarvis-sternbild.jpg" width="260" alt="Memory as a constellation: every star is something Jarvis remembers">
 </p>
+
+## New in 0.7
+
+- **The Superbrain: ten abilities that keep thinking on their own.** Each one can be chosen individually:
+    - **Night shift:** whatever stayed open during the day, it researches at night and reports back in the morning.
+    - **Web watch:** "Tell me when the price drops below €200." It watches public pages or a search, never your
+      home network.
+    - **Council:** for a decision, four voices deliberate (Penny Pincher, Family, Future, Devil's Advocate), a chair
+      sums up, with a follow-up if you want.
+    - **Family poll:** "Ask everyone whether we're having pizza or pasta on Saturday." Everyone votes via a link, and
+      everyone gets the result.
+    - **Show me:** explanations as a small web page, on the big screen if you want.
+    - **Where is it:** "Where is the spare key?" It remembers where things are, with a photo too.
+    - **Learning companion:** flash cards from text or a photographed worksheet, with repetition at the right
+      intervals.
+    - **House adventure:** a puzzle game through your real rooms, with announcements and, if you want, colored light.
+    - **Time capsule:** messages to the future, tied to a date or an event.
+    - **Tool forge:** if it lacks a skill, it writes itself a small calculation tool, tests it in an isolated
+      container and puts it to you for approval. Off by default, needs Docker.
+- **Private things never via shared speakers.** Jarvis doesn't read a person's lists, archives and reports aloud via
+  Alexa or a voice device in the living room, where anyone can listen in.
+- **Quick answers without thinking:** time, date, arithmetic and unit conversion it answers instantly and at no cost.
+- **"Tell me when …"** for anything in your smart home, reported once, then forgotten.
+- **Calendar subscriptions:** private iCal addresses, for example a shift schedule from a shift app, it fetches
+  regularly and then knows your shifts.
+- **PC client 25:** the new icon in the taskbar too, Ctrl+Alt+J brings up the window, Ctrl+K opens a command palette,
+  "Top load" shows what is slowing the PC down right now. **App 4.15:** share to Jarvis, a Quick Settings tile and a
+  visualizer while speaking. All the details are in the [CHANGELOG](CHANGELOG.md).
 
 ## New in 0.6
 
@@ -275,7 +305,7 @@ What Jarvis never does: [NEVER.en.md](NEVER.en.md). How Jarvis is built, its lim
 | `app/` | sources of the Android app and its build script (with its own signing key) |
 | `vorlagen/pc/` | the PC client for Windows and Linux (wake word, Jarvis window, voice) and its packages with checksums |
 | `vorlagen/hud/` | the interface, the same for everyone. Its settings come from the bridge |
-| `vorlagen/bruecke/` | ready-made building blocks of the bridge with unit tests: appearance and behavior (`oberflaeche.py`, `verhalten.py`), files (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), update signature (`ed25519.py`), since 0.4 people, memory, scenes, mailbox and letters (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`), since 0.6 the 3D house, speaker recognition, phone control, untrusted-text lock, follow-ups, arrival, guests, rooms, calls, projector screen, quiz, update centre and disk health (`grundriss.py`, `sprecher.py`, `handy.py`, `fremdtext.py`, `faeden.py`, `ankunft.py`, `gaeste.py`, `raeume.py`, `anruf.py`, `leinwand.py`, `quiz.py`, `updates.py`, `nas_gesundheit.py`) |
+| `vorlagen/bruecke/` | ready-made building blocks of the bridge with unit tests: appearance and behavior (`oberflaeche.py`, `verhalten.py`), files (`anhang.py`, `ausgabe.py`, `pdf.py`, `bilddienst.py`, `konvertieren.py`, `zusatzdienste.py`), update signature (`ed25519.py`), since 0.4 people, memory, scenes, mailbox and letters (`personen.py`, `gedaechtnis.py`, `szenen.py`, `postfach.py`, `briefe.py`), since 0.6 the 3D house, speaker recognition, phone control, untrusted-text lock, follow-ups, arrival, guests, rooms, calls, projector screen, quiz, update centre and disk health (`grundriss.py`, `sprecher.py`, `handy.py`, `fremdtext.py`, `faeden.py`, `ankunft.py`, `gaeste.py`, `raeume.py`, `anruf.py`, `leinwand.py`, `quiz.py`, `updates.py`, `nas_gesundheit.py`), since 0.7 the Superbrain (`superhirn.py`, `denken.py`, `schmiede.py`, `kabinett.py`, `familienrunde.py`, `nachtschicht.py`, `weltwache.py`, `zeigen.py`, `ablageort.py`, `lernbegleiter.py`, `abenteuer.py`, `zeitkapsel.py`), quick path, watchers and calendar subscriptions (`schnellpfad.py`, `beobachter.py`, `kalender_abo.py`) |
 | `vorlagen/webapp/` | web app for iPhone and browser: layer `jarvis-web.js` and build script (interface from `app/`) |
 | `vorlagen/grundriss/` | since 0.6: the 3D house view (`haus3d.js` with `three.min.js`), a made-up sample house with its generator and a preview page |
 | `vorlagen/gemeinsam/` | since 0.6: memory as a constellation (`sternbild.js`, `sternbild.css`) for the window, the app and the web app |

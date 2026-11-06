@@ -195,6 +195,8 @@ du gleich zu Beginn beantragen, damit die Freigabe bis zum Bau da ist.
 | Räume und Anruf (seit 0.6) | Welche Lautsprecher und Sprachgeräte stehen in welchem Raum, wann ist Nachtruhe? Soll Jarvis bei schwerem Unwetter oder einem Plattenfehler anrufen (Baustein „Anrufen“ und eine Rufnummer der Person)? |
 | Fernsehen, Leinwand, Quiz (seit 0.6) | Welche Fernseher, Beamer, Boxen und Verstärker sind in Home Assistant? An welchen Steckdosen hängen Geräte, die nie hart ausgehen dürfen? Leinwand und Quiz brauchen ein Bild mit Google Cast und Home Assistant per HTTPS |
 | Dokumente lesen (seit 0.6) | Soll MarkItDown lokal laufen (Docker), damit Jarvis Word, Excel und PowerPoint lesen kann? |
+| Superhirn (seit 0.7, einzeln wählbar) | Welche der zehn: Werkzeugschmiede (eigene kleine Rechenwerkzeuge, braucht Docker, standardmäßig aus), Kabinett (Rat für Entscheidungen), Familienrunde (Abstimmungen), Nachtschicht (nur Hauptperson: offene Fragen nachts recherchieren), Welt-Wache (Webseiten beobachten), Zeig's mir (Erklärseiten), Ablageort („Wo ist …?“), Lernbegleiter (Karteikarten), Haus-Abenteuer (Rätselspiel durch die Räume), Zeitkapsel (Botschaften an die Zukunft)? Tageslimit fürs Nachdenken (Standard 2 $ am Tag)? Für die Welt-Wache die Domain des Fernzugangs. Fürs Abenteuer: welche Lampen (nur Lampen, nie Steckdosen; ohne Liste kein Licht)? Gibt es eine Rezeptquelle für die Familienrunde? |
+| Schnellpfad, Beobachter, Kalender-Abo (seit 0.7) | Schnellpfad immer (abschaltbar). Beobachter („sag mir, wenn …“) mit Home Assistant. Kalender-Abo: Welche privaten iCal-Adressen sollen regelmäßig geholt werden, z. B. ein Schichtplan aus einer Schicht-App über den Google-Kalender? Die Adresse legt die Person selbst in eine Datei (Rechte 600), sie gehört nie in den Chat. |
 
 ### Runde 5 – Was hast du vor?
 
@@ -623,9 +625,10 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
   Ed25519-Signatur über Version und Prüfsumme (`ed25519` von `/v1/client/version`, Nachricht
   `jarvis-code:<Version>:<SHA-256>`), dann prüft er die SHA-256. Den Schlüssel dafür legt die Brücke beim ersten Bedarf
   an (`daten/update_ed25519.key`, 600, nie neu anlegen, wenn die Datei da, aber nicht lesbar ist) und nimmt dafür
-  `einrichtung/ed25519.py` (im Release unter `vorlagen/bruecke/`); der öffentliche Teil geht bei der Kopplung mit (`update_schluessel`) und unter
-  `/v1/client/schluessel` (mit Token) an Clients, die ihn noch nicht haben. Das alte `mac` (HMAC mit dem Token-Hash)
-  bleibt für Clients bis 15 in der Antwort. Prüft er GitHub-Releases, dann nur Tags `pc-<Nummer>` mit
+  `einrichtung/ed25519.py` (im Release unter `vorlagen/bruecke/`); der öffentliche Teil geht bei der Kopplung mit (`update_schluessel`). Seit
+  Client 25 gilt nur dieser beim Koppeln angeheftete Schlüssel: kein Holen über `/v1/client/schluessel` zur Laufzeit
+  und keine Ausweichprüfung mit `mac` (HMAC mit dem Token-Hash) mehr; ohne Schlüssel bricht das Update ab und
+  verweist aufs Setup. `mac` und `/v1/client/schluessel` bleiben nur für ältere Clients in der Antwort. Prüft er GitHub-Releases, dann nur Tags `pc-<Nummer>` mit
   `jarvis_pc.py.sha256` und `jarvis_pc.py.sig` (Ed25519 mit dem Schlüssel des Projekts), nie Vorabversionen. Die Release-App fragt GitHub (`Jarvis-App.json`), eine
   selbst gebaute App die Brücke (`/v1/app/version`); installiert wird über den Paketinstaller von Android, die Person
   bestätigt.
@@ -1289,6 +1292,111 @@ Person kann noch etwas ändern. Nach dem Ja speicherst du die Antworten ohne Geh
   das Gehirn. Der Dienst läuft lokal (z. B. Docker, nur 127.0.0.1, `MARKITDOWN_URL`), nimmt nur hochgeladene Dateien
   und nie Adressen. Der Inhalt ist fremder Text.
 
+**Bausteine seit 0.7.** Alle fertig im Release unter `vorlagen/bruecke/`, jedes Modul mit eigenem Test, Deutsch und
+Englisch (`setze_sprache`).
+
+- **Superhirn, gemeinsamer Unterbau** (seit 0.7, sobald eines der zehn Module gewählt ist): `superhirn.py` (Register),
+  `denken.py` (Denkaufrufe), `sh_attrappe.py` (der Kontext als Attrappe, zugleich die Beschreibung der Schnittstelle)
+  und `test_superhirn.py`.
+    - Jedes Modul liefert `NAME`, `RECHTE` (`haupt` oder `familie`; Gäste nie), `WERKZEUG` (Beschreibung und Schema
+      fürs MCP-Werkzeug), `FREMDTEXT`, `LAUTSPRECHER_PRIVAT` und `auftrag(args, person, ctx)`. Manche zusätzlich
+      `runde(ctx)` mit `TAKT_S` (Hintergrund) und `seite(pfad, abfrage, ctx, oeffentlich)` (eigene Webseite).
+    - Die Brücke baut den Kontext `ctx` genau mit den Methoden aus `sh_attrappe.Kontext`: `jetzt`, `personen`,
+      `person_name`, `raeume`, `raum_lichter`, `rezept_ideen`, `denken`, `denken_json`, `push`, `durchsage`,
+      `ha_zustand`, `ha_dienst`, `leinwand_text`, `ablegen`, `datei_holen`, `oeffentlich`, `lan`, `log`, dazu `daten`
+      (eigener Unterordner) und `fremd` (Fremdarten der laufenden Frage aus `fremdtext.arten()`). Die Brücke prüft
+      dabei weiter selbst: Push nur an Personen der Familie, Durchsagen mit Nachtruhe, `ha_dienst` nie an Babyfon und
+      Kameras.
+    - Der Werkzeug-Server erzeugt aus `WERKZEUG` je ein MCP-Werkzeug und ruft die Brücke (z. B. `/intern/sh/<name>`,
+      nur von 127.0.0.1, mit Person und Quelle der Frage). Vor `auftrag` prüft die Brücke Rolle und `RECHTE` und die
+      **Lautsprecher-Sperre**: Ist `superhirn.offener_lautsprecher(quelle)` und
+      `superhirn.lautsprecher_privat(modul, aktion)`, antwortet sie „Das sage ich nicht über einen Lautsprecher, den
+      alle hören können“. Über Alexa, die Sprachkette von Home Assistant oder einen Sprach-Satelliten gilt jeder
+      Sprecher als die Person des Geräts. Ohne diese Sperre läse Jarvis dort zum Beispiel das Zeitkapsel-Archiv der
+      Hauptperson vor (Fund eines Claude-Security-Scans).
+    - Hintergrund: `superhirn.runden(ctx_fuer, log)` aus der Schleife der Brücke (jedes Modul nach seinem `TAKT_S`, je
+      in einem eigenen Faden). Eigene Seiten: `superhirn.seite(...)` vor dem 404, mit den Kopfzeilen des Moduls.
+      Beim Start einmal `superhirn.setze_sprache(sprache)`.
+    - Denkaufrufe (`denken.py`): `claude -p` ohne Projektkontext in einem leeren Ordner, ohne MCP-Server,
+      `--permission-mode dontAsk`, höchstens WebSearch, der Auftrag über die Standardeingabe. Befehl einstellbar mit
+      `JARVIS_DENKEN_BEFEHL`, ein gesetzter `ANTHROPIC_API_KEY` wird durchgereicht. Tageslimit
+      `SUPERHIRN_TAGESLIMIT_USD` (Standard 2 $), fail-closed: Jeder Aufruf reserviert vorher seinen Höchstbetrag,
+      eine unlesbare Buchführung heißt „nicht nachdenken“. Kosten in `daten/kosten.jsonl` (`quelle` =
+      `superhirn:<zweck>`).
+    - `fremdtext.py` kennt die zehn Werkzeuge. Was ein Modul aus fremdem Text speichert (Webseiten, Lernstoff,
+      Notizen), markiert es und gibt es später nur mit Hinweis wieder.
+    - Persona: je Modul eine Zeile, wann es gilt (die Werkzeugbeschreibungen sagen es dem Gehirn schon genau).
+- **Werkzeugschmiede** (seit 0.7, **standardmäßig aus**, braucht Docker): `schmiede.py`. Fehlt Jarvis eine Fähigkeit,
+  schreibt er sich ein kleines Rechenwerkzeug (JSON rein, JSON raus), testet es in einem Container ohne Netz und
+  legt es der Hauptperson vor.
+    - Einschalten: `JARVIS_SCHMIEDE=an` in der Umgebung der Brücke, optional `JARVIS_SCHMIEDE_DOCKER` (Standard
+      `docker`, z. B. `sudo docker`; gelesen beim Import). Die Variablen müssen im Prozess stehen, z. B. per
+      `EnvironmentFile=` in der Dienst-Unit. Eine `.env`, die die Brücke nur in ein Wörterbuch liest, reicht nicht.
+    - Einmal das Image holen, genau mit dem Digest aus `schmiede.IMAGE`: `docker pull python@sha256:…` (die Schmiede
+      startet mit `--pull never`). Gegen ein Aufräumen von Docker zusätzlich taggen, z. B. als `jarvis-schmiede:sandbox`.
+    - Sandbox: `--network none`, nur lesend, `cap-drop ALL`, `no-new-privileges`, Nutzer 65534, 256 MB, `ulimit nproc`,
+      20 Sekunden, ein eingeschränkter Läufer. Ohne Seccomp im Kernel (manche NAS) schützt nur der Container.
+      Brücke und Docker brauchen dasselbe `/tmp`, also kein `PrivateTmp=` in der Unit. Wer zur Gruppe `docker`
+      gehört, hat Rechte wie root: Das gehört in die Einrichtung, nicht ins Kleingedruckte.
+    - `vorschlag`, `freigeben` und `verwerfen` nur die Hauptperson. Freigabe nur mit dem vierstelligen Code aus dem Push,
+      drei falsche Codes sperren den Entwurf. `nutzen` darf die Familie (höchstens 60 Läufe je Stunde), ein
+      nachträglich veränderter Code läuft nicht. Ablage `daten/schmiede/`, Ansicht des Codes über eine eigene Seite.
+- **Kabinett** (seit 0.7): `kabinett.py`. Vier Stimmen beraten eine Entscheidung (Sparfuchs, Familie und Alltag,
+  Zukunft, Advocatus diaboli), ein Vorsitz fasst zusammen: Empfehlung, Begründung, stärkste Gegenrede, offene Fragen.
+  Höchstens fünf Denkaufrufe je Beratung. Aktionen `beraten`, `wiedervorlage`, `rueckblick`, `liste`, `zeigen`, die
+  letzten beiden nie über Lautsprecher.
+- **Familienrunde** (seit 0.7): `familienrunde.py`. „Frag alle, ob wir Samstag Pizza oder Pasta essen.“ Jede Person
+  bekommt einen Push mit Einmal-Link auf eine kleine Abstimmseite (`/runde/<token>`, auch über den Fernzugang), das
+  Ergebnis geht an alle, auf Wunsch als Durchsage. Mit einer Rezeptquelle (`ctx.rezept_ideen`) schlägt Jarvis Gerichte
+  vor. Aktionen `neu`, `stand`, `abbrechen`, höchstens fünf offene Runden je Person.
+- **Nachtschicht** (seit 0.7, nur die Hauptperson): `nachtschicht.py`. Sammelt tagsüber offene Fragen aus den
+  Gesprächen, recherchiert sie nachts (nur WebSearch, Fremdtext eingehegt) und schickt morgens einen Bericht.
+  Aktionen `heute`, `jetzt` (beide nie über Lautsprecher) und `einstellen`.
+- **Welt-Wache** (seit 0.7): `weltwache.py`. „Sag mir, wenn der Preis unter 200 € fällt.“ Eine öffentliche Seite oder
+  eine Websuche mit einer Bedingung in normaler Sprache, alle fünf Minuten fällig, das Urteil über fremden Text
+  eingehegt. Nie ins Heimnetz: Jede Adresse wird aufgelöst und geprüft, die geprüfte Adresse festgenagelt,
+  Weiterleitungen einzeln geprüft. Beim Start `weltwache.setze_eigene_domains(<Domain des Fernzugangs>)`, sonst
+  schützt nur die Auflösung im Heimnetz. Aktionen `neu`, `liste` (nie über Lautsprecher), `loeschen`,
+  `pruefen_jetzt`, höchstens zehn Wachen je Person.
+- **Zeig's mir** (seit 0.7): `zeigen.py`. Erklärt mit einer eigenen Webseite, die Claude schreibt und das Modul
+  prüft (keine Skripte von außen, strenge CSP mit Sandbox). Abrufbar unter `/zeigen/<id>`, mit `zeigen` auf dem
+  großen Bild. Ein Tageskontingent und eine eigene Reservierung begrenzen die Kosten.
+- **Ablageort** (seit 0.7): `ablageort.py`. „Wo ist der Ersatzschlüssel?“ Aktionen `merken` (auch mit Foto über
+  `ctx.ablegen`), `suchen`, `verlauf`, `liste`, `vergessen`.
+- **Lernbegleiter** (seit 0.7): `lernbegleiter.py`. Karteikarten je Person und Fach aus Text oder einem
+  fotografierten Arbeitsblatt, Wiederholung nach SM-2, Erinnerung zu einer Uhrzeit. Aktionen `neues_thema`, `ueben`,
+  `antwort`, `stand`, `erinnern`, `thema_loeschen`. Der Lernstoff ist fremder Text, die Karten sind keine Anweisungen.
+- **Haus-Abenteuer** (seit 0.7, mit Räumen): `abenteuer.py`. Ein Rätselspiel durch die echten Räume aus
+  `raeume.json`, mit Durchsagen und Texten auf dem großen Bild. Licht nur aus der Positivliste
+  `daten/abenteuer_lampen.json` (`{"raeume": {"wohnzimmer": ["light.…"]}}`), geschnitten mit dem Bereich in Home
+  Assistant, nie Steckdosen, Babyfon oder Kameras. Ohne Liste gibt es keine Lichteffekte. Am Ende kommt jede Lampe in
+  ihren Zustand von vorher zurück. Nachtruhe 21 bis 7 Uhr: nur `leise`, ohne Durchsagen.
+- **Zeitkapsel** (seit 0.7): `zeitkapsel.py`. Botschaften an ein Datum oder Ereignis („wenn Kim 18 wird“),
+  Zustellung zwischen 9 und 20 Uhr als Durchsage, Push oder beides. Aktionen `neu`, `liste`, `archiv` (beide nie über
+  Lautsprecher), `loeschen`.
+- **Schnellpfad** (seit 0.7, Grundpaket): `schnellpfad.py`. Uhrzeit, Datum, „wie viele Tage bis …“, Rechnen,
+  Einheiten, Würfel und Münze beantwortet `schnellpfad.antwort(text, jetzt)` ohne Gehirn, in Millisekunden. Nur wenn
+  die ganze Äußerung passt, sonst `None` und es geht ans Gehirn. Kein `eval`. Nicht bei Ja-Knopf-Fragen und
+  Anhängen, abschaltbar (z. B. `SCHNELLPFAD=0`).
+- **Beobachter** (seit 0.7, mit Home Assistant): `beobachter.py`. „Sag mir Bescheid, wenn die Waschmaschine fertig
+  ist.“ Werkzeug `beobachten` über `beobachter.auftrag()` (`neu`, `liste`, `loeschen`), die Brücke ruft alle 30
+  Sekunden `pruefen()`, meldet einmal an die fragende Person und vergisst den Beobachter. Nach 24 Stunden verfällt er
+  still. Höchstens zehn je Person, nie Kameras oder Babyfon, Gäste nicht. In `fremdtext.py`: `beobachten` als Ziel,
+  `liste` als lesend.
+- **Kalender-Abo** (seit 0.7, wenn gewählt): `kalender_abo.py`. Holt private iCal-Adressen regelmäßig
+  (`alle_holen(konfig, zielordner)`, z. B. alle 30 Minuten) als `<name>.ics` in den Ordner, den der eigene
+  Kalender-Leser von Jarvis liest. Beispiel: ein Schichtplan aus einer Schicht-App, die in einen Google-Kalender
+  exportiert, dessen geheime iCal-Adresse eingetragen wird. `kalender_abos.json` nennt je Name die Datei mit der
+  Adresse (Rechte 600). Nur https, keine Ziele im Heimnetz, Weiterleitungen geprüft, höchstens 5 MB, eine kaputte
+  Antwort überschreibt nie die letzte gute Datei, die Adresse steht nie in einer Meldung.
+- **Reiter „Lage“ mit „Größter Last“** (seit 0.7, PC-Client 24): Der Client schickt die Prozesse mit der höchsten
+  Last mit. `/v1/client/daten/system.json` und das Feld `system` von `/v1/lage` laufen über
+  `lage.system_mit_prozessen(system, werte, zeit, haupt)`: Prozessnamen nur für die Hauptperson und nur frisch
+  (180 Sekunden), die ohne Anmeldung lesbare `system.json` bleibt ohne Prozesse.
+- **Oberfläche seit 0.7:** PC-Client 24/25 (Sternbild-Symbol mit dem Setup, auch für angeheftete Verknüpfungen; „Neu in
+  dieser Version“ gilt erst nach „Verstanden“ als gesehen; Strg+Alt+J holt das Fenster; Befehlspalette mit Strg+K),
+  HUD-Vorlage dazu, App 4.15.1 (Teilen an Jarvis, Schnelleinstellungs-Kachel, Sprech-Visualizer).
+
 ### Tempo (gemessen, von Anfang an so bauen)
 
 - Feste Persona als Systemprompt. Uhrzeit, Quelle und PC-Lage kommen als Vorspann **jeder Nachricht**
@@ -1431,6 +1539,13 @@ Jeder Punkt hat dort Zeit gekostet. Plane ihn gleich ein und prüfe ihn, statt i
 - Das Protokoll der Brücke enthält keine Gesprächsinhalte, nur Quelle, Dauer, Werkzeug und Längen.
 - Ein Ratenlimit je Geräte-Token, im Heimnetz wie von unterwegs (z. B. 120 Fragen in 10 Minuten im Heimnetz), gegen
   Endlosschleifen und Kosten.
+- **Private Dinge nie über gemeinsame Lautsprecher** (seit 0.7): Über Alexa, die Sprachkette von Home Assistant und
+  Sprach-Satelliten kann jeder mithören, und ohne Stimmerkennung gilt jeder Sprecher als die Person des Geräts.
+  Was ein Modul in `LAUTSPRECHER_PRIVAT` nennt, lehnt die Brücke dort ab (siehe Superhirn-Unterbau). Dasselbe gilt
+  für eigene Erweiterungen: Listen und Archive einer Person gehören in App und PC-Fenster.
+- **Selbst geschriebener Code nur nach Freigabe und nur in der Sandbox** (seit 0.7, Werkzeugschmiede): Kein
+  Werkzeug läuft, bevor die Hauptperson es mit dem Code aus dem Push freigegeben hat, und jeder Lauf geht in einen
+  frischen Container ohne Netz, nur lesend und ohne Rechte. Standardmäßig ist die Schmiede aus.
 - **Was Jarvis nie tut** (`NEVER.md`, seit 0.3.2). Jeder Punkt dort muss gebaut sein, nicht nur in der Persona stehen:
     - Er gibt sich nie als Mensch aus und antwortet auf die Frage nach einer KI ehrlich, auch am Telefon. Was er für
       die Person verschickt, trägt einen Absender: Push mit dem Titel „Jarvis“, Mail mit einer Fußzeile wie „Diese
@@ -1476,6 +1591,11 @@ Jeder Punkt hat dort Zeit gekostet. Plane ihn gleich ein und prüfe ihn, statt i
    Weitere), dann Gedächtnis als Sternbild und Aussehen je Person, Räume, offene Fäden, Ankunft, Gäste, das
    3D-Haus, die Handy-Steuerung, Anruf, Leinwand, Quiz und Fernsehen. Die Stimmerkennung zum Schluss und erst nur
    mit `zeigen`.
+   **Bausteine seit 0.7** danach, soweit gewählt: zuerst Schnellpfad und Beobachter, dann der Superhirn-Unterbau
+   (Kontext, Lautsprecher-Sperre, Denkaufrufe mit Tageslimit), dann die Module, die nur lesen oder ablegen (Ablageort,
+   Lernbegleiter, Zeitkapsel, Zeig's mir), dann die nach außen wirkenden (Familienrunde, Kabinett, Welt-Wache,
+   Nachtschicht, Haus-Abenteuer). Die Werkzeugschmiede zuletzt und nur, wenn die Person sie ausdrücklich will.
+   Kalender-Abo, wenn gewählt, zusammen mit dem Kalender.
 6. **App und Fernzugang**, falls gewählt. Negativtests zuerst: falsches Token, interne Pfade von außen, Sperre.
    Dann: Die Antwort von `/v1/koppeln` und von `/v1/gesund` mit gültigem Beweis enthält `fernzugang` (https), und die
    App zeigt im Zahnrad unter „Verbindung“ den Fernzugang an. Probe im Mobilfunk, WLAN aus.
@@ -1543,6 +1663,22 @@ Belege jeden Punkt einzeln mit einer echten Prüfung (Ausgabe, Statuscode, Messw
       Eine fremde oder künstliche Stimme wird `fremd`, ein Profil lässt sich löschen.
     - Anruf: Der Testanruf über `/v1/anruf/test` kommt an, erst danach `scharf`.
     - Leinwand und Quiz: ein Rezept auf der Leinwand und blättern, eine Quizrunde im Testmodus.
+- Bausteine seit 0.7 (falls gewählt), im Testmodus:
+    - Schnellpfad: „Wie spät ist es?“ antwortet ohne Gehirn (im Verlauf ohne Kosten), „Wie spät ist es in Tokio?“ geht
+      ans Gehirn.
+    - Beobachter: „Sag mir Bescheid, wenn <Sensor> über <Wert> steigt“ legt einen an, `liste` zeigt ihn, ein Kamera-
+      oder Babyfon-Wunsch wird abgelehnt.
+    - Superhirn: Eine Frage über die Quelle `test-alexa` nach dem Zeitkapsel-Archiv bekommt „nicht über einen
+      Lautsprecher“, dieselbe Frage aus der App wird beantwortet. Ein Gast bekommt bei jedem Modul eine Absage.
+      Mit `SUPERHIRN_TAGESLIMIT_USD=0.01` meldet jedes denkende Modul ehrlich das Tageslimit.
+    - Welt-Wache: Eine Adresse im Heimnetz (auch über einen Namen, der dorthin auflöst) wird abgelehnt.
+    - Familienrunde: Der Einmal-Link stimmt einmal ab, ein falscher oder zweiter Aufruf bringt 404.
+    - Haus-Abenteuer: Ohne `abenteuer_lampen.json` schaltet es nichts. Mit Liste kommt jede Lampe am Ende in ihren
+      Zustand von vorher zurück.
+    - Werkzeugschmiede (nur wenn eingeschaltet): Ein Vorschlag bringt den Push mit Code, `nutzen` vor der Freigabe wird
+      abgelehnt, nach der Freigabe läuft das Werkzeug. Der Container hat kein Netz (Probe im Test mit
+      `JARVIS_SCHMIEDE_DOCKER_TEST=1`).
+    - Kalender-Abo: Eine http-Adresse oder ein Ziel im Heimnetz wird abgelehnt, die Meldung nennt die Adresse nicht.
 - Oberfläche (Runde 6a): Bildschirmfoto gezeigt, jeder gewählte Bereich zeigt echte Werte (kein „–“), jede
   Schnellaktion im Testmodus ausgelöst und das passende Werkzeug gerufen, die Person sagt, dass es passt
 - PC-Fenster: Im Zahnrad wirkt eine Farbe sofort, ein ungültiger Wert wird mit Meldung abgelehnt. Es zeigt
@@ -1593,6 +1729,13 @@ und `ausgabe.py` samt Tests tauschen: Die vorhandenen Daten bleiben gültig, neu
 der Ordner `oberflaeche-personen/`. Danach die HUD-Vorlage tauschen und die Fremdtext-Sperre einbauen, dann die Haus-Regel
 (`haupt=`) und `POST /v1/gedaechtnis`, danach die gewählten Bausteine in der Reihenfolge aus Phase 2. Der
 PC-Client holt sich Version 22 über sein Update, die App 4.14 über ihres, die Web-App neu bauen.
+
+**Umstieg von 0.6 auf 0.7:** `Lies EINRICHTUNG.md, Modus Ändern: auf 0.7 umsteigen`. Erst sichern. Mit der Person
+die Zeilen seit 0.7 aus Runde 4 durchgehen. Dann `fremdtext.py` und `lage.py` samt Tests tauschen (neu: die zehn
+Superhirn-Werkzeuge, die Ausnahme für reine Foto-Anhänge mit `args` im Hook, die Prozesse für „Größte Last“) und den
+Hook aus `vorlagen/bruecke/fremdtext_hook.py` übernehmen. Danach die gewählten Bausteine seit 0.7 in der Reihenfolge
+aus Phase 2. Der PC-Client holt sich Version 25 über sein Update, das Sternbild-Symbol kommt mit dem nächsten Lauf des
+Setups. Die App 4.15.1 über ihr Update, die Web-App neu bauen.
 
 Im Jarvis-Ordner `claude` starten und sagen: `Lies EINRICHTUNG.md, Modus Ändern: <Wunsch>`. Dann gilt nur die
 passende Runde, für das Aussehen also Runde 6a. Danach `profil.json` und die Fähigkeiten-Übersicht nachziehen und die betroffene Stufe neu testen.

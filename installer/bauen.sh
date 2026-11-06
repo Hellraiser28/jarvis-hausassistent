@@ -21,7 +21,7 @@ done
 # Dateien, die ins Setup kommen
 rm -rf "$HIER/dateien"
 mkdir -p "$HIER/dateien" "$HIER/dist"
-cp "$HIER/einrichten.ps1" "$HIER/entfernen.ps1" "$RELEASE/EINRICHTUNG.md" "$RELEASE/EINRICHTUNG.en.md" "$HIER/bilder/seitenbild.bmp" \
+cp "$HIER/einrichten.ps1" "$HIER/entfernen.ps1" "$HIER/ordner.ps1" "$RELEASE/EINRICHTUNG.md" "$RELEASE/EINRICHTUNG.en.md" "$HIER/bilder/seitenbild.bmp" \
   "$HIER/dateien/"
 cp "$CLIENT/jarvis_pc.py" "$CLIENT/jarvis.ico" "$CLIENT/pakete.txt" "$CLIENT/weckwort.txt" "$HIER/dateien/"
 # Vorlagen fuer den Weg "neu" (Claude baut daraus die Bruecke). Seit 0.6 per Platzhalter statt fester Liste (Pruefung

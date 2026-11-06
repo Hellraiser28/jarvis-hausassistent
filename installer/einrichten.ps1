@@ -134,12 +134,21 @@ function Verbinden($A) {
   # Seit 25.10.2026 (Pruefbericht): Der Ordner ist waehlbar. Ausserhalb des Benutzerprofils erbt er sonst z. B. von C:\
   # "Authentifizierte Benutzer: Aendern", dann koennten andere Konten das Token lesen oder jarvis_pc.py tauschen.
   # Deshalb Vererbung aus, Vollzugriff nur fuer dieses Konto, SYSTEM und Administratoren.
+  # Seit 0.7.0 (Claude Security F4): dieselbe Pruefung wie im Setup (ordner.ps1): ein Ordner ausserhalb des Profils, in
+  # dem etwas einem anderen Konto gehoert oder ein anderes Konto eigene Rechte hat, wird abgelehnt; sonst werden die Rechte
+  # darunter zurueckgesetzt und die DACL ganz ersetzt. Erst danach wird ein vorhandenes venv oder jarvis_pc.py benutzt.
+  $OrdnerSkript = Join-Path $Mitgeliefert 'ordner.ps1'
   try {
-    $Ich = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-    & (Join-Path $env:SystemRoot 'System32\icacls.exe') $Ziel /inheritance:r /grant:r "*${Ich}:(OI)(CI)F" `
-      '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' /Q | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw "icacls Code $LASTEXITCODE" }
+    if (-not (Test-Path -LiteralPath $OrdnerSkript)) { throw 'ordner.ps1 fehlt' }
+    $Meldung = & $PS -NoProfile -ExecutionPolicy Bypass -File $OrdnerSkript -Ordner $Ziel
+    $Rueck = $LASTEXITCODE
+    if ($Rueck -eq 2) {
+      throw [System.Security.SecurityException]::new(((T 'Dieser Ordner gehört nicht nur deinem Konto ({0}). Ein anderes Konto könnte Jarvis-Dateien austauschen oder das Token lesen. Bitte das Setup mit einem neuen Ordner starten, am sichersten unter %LOCALAPPDATA%.' 'This folder doesn''t belong to your account alone ({0}). Another account could swap Jarvis files or read the token. Please run the setup again with a new folder, safest under %LOCALAPPDATA%.') -f ($Meldung -join ' ')))
+    }
+    if ($Rueck -ne 0) { throw ("ordner.ps1: " + ($Meldung -join ' ')) }
     Write-Host ("   $Ziel " + (T 'nur für dein Konto (dazu SYSTEM und Administratoren).' 'only for your account (plus SYSTEM and administrators).'))
+  } catch [System.Security.SecurityException] {
+    throw
   } catch {
     Hinweis ((T 'Ordnerrechte ließen sich nicht setzen: ' 'Folder permissions couldn''t be set: ') + $_.Exception.Message)
     # Seit 0.3.2 (Pruefbericht 0.3.1, Fund 10): ausserhalb des eigenen Profils abbrechen, bevor das Token hineinkommt
@@ -204,6 +213,7 @@ function Verbinden($A) {
 
   Schritt (T 'Python-Umgebung für Jarvis (eigene Kopie, vorhandenes Python bleibt unberührt)' 'Python environment for Jarvis (its own copy, any existing Python stays untouched)')
   Uv-Bereit
+  # ein vorhandenes venv nur, weil ordner.ps1 oben den Ordner samt Inhalt geprueft hat (sonst Abbruch)
   if (-not (Test-Path $Py)) { uv venv --python 3.12 (Join-Path $Ziel 'venv'); Pruefe 'venv' }
   # alle Pakete samt Abhängigkeiten mit fester Version und Prüfsumme (release/pakete_aufloesen.sh)
   uv pip install --python $Py --require-hashes -r (Join-Path $Mitgeliefert 'pakete.txt'); Pruefe (T 'Pakete' 'Packages')
@@ -325,7 +335,9 @@ function Verbinden($A) {
 # dann als <name>.neu daneben (seit 25.10.2026). Rekursiv statt fester Liste (Pruefung 05.11.2026: die Liste stand auf 0.3.3).
 $Sicherheitsmodule = @('anhang.py', 'ed25519.py', 'ausgabe.py', 'pdf.py', 'bilddienst.py', 'konvertieren.py', 'zusatzdienste.py',
                        'fremdtext.py', 'fremdtext_hook.py', 'handy.py', 'personen.py', 'gaeste.py', 'sprecher.py',
-                       'anruf.py', 'raeume.py', 'postfach.py', 'updates.py', 'jarvis_sprecher.py')   # Vergleich nach Dateiname, auch in Unterordnern
+                       'anruf.py', 'raeume.py', 'postfach.py', 'updates.py', 'jarvis_sprecher.py',
+                       'denken.py', 'superhirn.py', 'schmiede.py', 'weltwache.py', 'kalender_abo.py',
+                       'familienrunde.py', 'zeigen.py')   # Vergleich nach Dateiname, auch in Unterordnern
 function Vorlagen-Kopieren([string]$Quelle, [string]$ZielOrdner, [string]$Rel) {
   New-Item -ItemType Directory -Force -Path $ZielOrdner | Out-Null
   foreach ($E in @(Get-ChildItem -LiteralPath $Quelle -Force | Sort-Object Name)) {

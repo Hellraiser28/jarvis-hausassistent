@@ -21,6 +21,10 @@ Seit Version 13 (25.10.2026): läuft auch unter Linux (Ordner ~/.local/share/jar
 nur mit Prüfsumme. Ohne Bildschirm (--ohne-fenster,
 z. B. Raspberry Pi mit Mikrofon und Lautsprecher) laufen Weckwort und Stimme allein; das gilt auch, wenn das Fenster
 nicht startet (fehlende Systembibliotheken): Jarvis bleibt dann hörbar statt sich zu beenden.
+Seit Version 23 (0.7): dasselbe Symbol wie die App (Sternbild), mitgeliefert vom Setup, ohne Download; „Neu in dieser
+Version“ gilt erst mit „Verstanden“ als gesehen.
+Seit Version 24 (0.7): Strg+Alt+J holt das Fenster nach vorn und hört sofort zu (nur Windows, abschaltbar), die
+Werte für den Reiter „Lage“ nennen die Prozesse mit der größten Last; im HUD die Befehlspalette (Strg+K).
 Sicherheit (Prüfbericht 25.10.2026): Bevor das Token mitgeht, beweist die Brücke, dass sie es kennt (HMAC über eine
 Zufallszahl, wie in der App). In einem fremden Netz mit gleicher Adresse geht so kein Token und kein Code-Abruf raus.
 Updates von der Brücke nur mit Signatur (HMAC mit dem Token-Hash über die Prüfsumme), HUD-Daten mit Token über die
@@ -53,7 +57,7 @@ import urllib.parse
 import urllib.request
 import wave
 
-VERSION = 22
+VERSION = 25
 WINDOWS = sys.platform == "win32"
 
 # Vor den schweren Importen: auch ein Absturz beim Laden landet so in der Datei
@@ -107,7 +111,58 @@ OHR_PORT, STIMME_PORT = _port(E.get("ohr_port"), 10300), _port(E.get("stimme_por
 SPRACHE = E.get("sprache") if E.get("sprache") in ("de", "en") else "de"
 # Neu in dieser Version (seit 16): Wer per Update kommt statt ueber GitHub, sieht so trotzdem,
 # was neu ist. Einmal im Fenster nach einem Update, nicht nach einer Neuinstallation (BESTAND: dieser PC lief schon).
+# Seit 23 gilt eine Version erst als gesehen, wenn im Fenster "Verstanden" gedrueckt wurde (Api.neuigkeiten_gesehen);
+# bis 22 schon beim Abfragen, und nach einem Update im Hintergrund (Fenster minimiert) ging der Hinweis so verloren.
 NEUIGKEITEN = {
+    25: {"titel": "Jarvis · Sicherheit für Fenster und Updates",
+         "de": ["Das Jarvis-Fenster nimmt Befehle nur noch von der eigenen Oberfläche an. Landet eine fremde Webseite "
+                "im Fenster, etwa über einen hineingezogenen Link, kommt sie an keine Jarvis-Funktion mehr heran, auch "
+                "nicht während das Fenster neu lädt.",
+                "Updates über deinen Jarvis-Rechner kommen nur noch mit der Signatur, deren Schlüssel beim Koppeln "
+                "festgehalten wurde. Fehlt er, meldet das Zahnrad das, und ein erneutes Setup mit Kopplungscode holt "
+                "ihn. Die alte Prüfung über das Token gibt es nicht mehr.",
+                "Das Setup übernimmt einen schon vorhandenen Ordner außerhalb deines Profils nur noch, wenn er "
+                "samt Inhalt deinem Konto gehört und kein anderes Konto eigene Rechte darauf hat."],
+         "en": ["The Jarvis window now only takes commands from its own interface. If a foreign web page ends up in "
+                "the window, say through a dragged-in link, it can't reach any Jarvis function, not even while the "
+                "window reloads.",
+                "Updates through your Jarvis host now only come with the signature whose key was pinned at pairing. "
+                "If it is missing, the gear menu says so, and running the setup again with a pairing code fetches it. "
+                "The old check via the token is gone.",
+                "The setup only takes over an existing folder outside your profile if it and everything in it belong "
+                "to your account and no other account has its own permissions on it."]},
+    24: {"titel": "Jarvis · Tastenkürzel, Befehlspalette, Größte Last",
+         "de": ["Unter Windows holt Strg+Alt+J Jarvis von überall nach vorn, und er hört sofort zu, ohne „Hey Jarvis“. "
+                "Abschalten kannst du das im Zahnrad unter „Dieser PC“.",
+                "Strg+K oder der Knopf mit der Lupe öffnet die Befehlspalette: alle Fähigkeiten mit Beispielsätzen und "
+                "deine letzten Fragen zum Durchsuchen. Pfeiltasten wählen, Enter fragt Jarvis, Esc schließt.",
+                "„Warum ist mein PC langsam?“: Unter Windows meldet der Client jetzt auch, welche Programme gerade am "
+                "meisten Prozessor und Arbeitsspeicher brauchen. Im Design Observatorium steht das im Reiter „Lage“ "
+                "beim PC unter „Größte Last“, nur für die Hauptperson und nie am Wandbildschirm."],
+         "en": ["On Windows, Ctrl+Alt+J brings Jarvis to the front from anywhere, and he listens right away, without "
+                "\"Hey Jarvis\". You can switch it off in the gear menu under \"This PC\".",
+                "Ctrl+K or the magnifier button opens the command palette: all skills with example sentences and your "
+                "recent questions to search through. Arrow keys select, Enter asks Jarvis, Esc closes.",
+                "\"Why is my PC slow?\": on Windows, the client now also reports which programs currently need the most "
+                "processor and memory. In the observatory design, the \"Status\" tab shows them for the PC under \"Top "
+                "load\", only for the main person and never on the wall display."]},
+    23: {"titel": "Jarvis · Symbol wie die App",
+         "de": ["Jarvis hat am PC jetzt dasselbe Symbol wie die App, das Sternbild. Es kommt mit dem Setup (unter Linux "
+                "mit dem Installer) ab 0.7. Ist es da, stellen sich Fenster, Taskleiste, Desktop-Symbol und Autostart "
+                "von selbst um, ein angeheftetes Taskleistensymbol eventuell erst nach dem nächsten Anmelden.",
+                "„Neu in dieser Version“ bleibt jetzt stehen, bis du „Verstanden“ drückst, auch wenn Jarvis sich im "
+                "Hintergrund aktualisiert hat.",
+                "Falls du es verpasst hast (Version 22): Im Design Observatorium zeigt der Reiter „Gedächtnis“ alles, "
+                "was Jarvis sich gemerkt hat, als Sternbild. Antippen zeigt Text, Datum und Quelle, dort kannst du "
+                "es ändern oder vergessen."],
+         "en": ["Jarvis on the PC now has the same icon as the app, the constellation. It comes with the setup (on "
+                "Linux with the installer) from 0.7 on. Once it is there, window, taskbar, desktop icon and autostart "
+                "switch over by themselves, a pinned taskbar icon possibly only after your next sign-in.",
+                "\"New in this version\" now stays until you press \"Got it\", even if Jarvis updated itself in the "
+                "background.",
+                "In case you missed it (version 22): in the observatory design, the \"Memory\" tab shows everything "
+                "Jarvis remembers as a constellation. Tap a star to see text, date and source, and edit or forget it "
+                "there."]},
     22: {"titel": "Jarvis · Gedächtnis als Sternbild, 3D-Haus",
          "de": ["Im Design Observatorium gibt es den Reiter „Gedächtnis“: Jeder gemerkte Punkt ist ein Stern, Themen bilden "
                 "Sternbilder. Antippen zeigt Text, Datum und Quelle, dort kannst du ihn ändern oder vergessen. Du siehst "
@@ -198,6 +253,10 @@ bloecke = queue.Queue(maxsize=400)
 gespraech = threading.Lock()
 fenster = None
 stumm = threading.Event()               # waehrend Jarvis spricht, nicht auf das Wake Word hoeren
+# Seit Version 24: Strg+Alt+J (Faden "tastenkuerzel") setzt das Ereignis, die Hoerschleife (hoeren) hoert dann zu wie
+# nach dem Wake Word. Ein Ereignis statt eines Aufrufs: Aufnahme, Ton und Gespraechssperre bleiben in einem Faden.
+SOFORT_HOEREN = threading.Event()
+MIKRO = {"an": False}                   # Mikrofon liest und die Hoerschleife laeuft (sonst setzt das Kuerzel nichts)
 
 
 # ------------------------------------------------------------------ NAS
@@ -553,6 +612,7 @@ def mikrofon_lesen(strom):
             daten, _ = strom.read(BLOCK)
         except Exception as e:
             log.warning("Mikrofon: %s - Wake Word aus, Befehle über HUD-Texteingabe oder Jarvis-App", e)
+            MIKRO["an"] = False
             return
         if not stumm.is_set():
             try:
@@ -592,21 +652,32 @@ def hoeren():
     log.info("Wake Word bereit (Schwelle %.2f)", SCHWELLE)
     war_echtzeit = False
     while True:
-        b = bloecke.get()
+        # Seit Version 24 mit Zeitgrenze: Waehrend Jarvis spricht, kommen keine Bloecke (stumm), das Tastenkuerzel soll
+        # trotzdem ankommen und danach zuhoeren
+        try:
+            b = bloecke.get(timeout=0.3)
+        except queue.Empty:
+            b = None
         if ECHTZEIT["an"]:             # Echtzeit im Fenster hoert selbst zu (eigenes Mikrofon in Chromium)
+            SOFORT_HOEREN.clear()
             war_echtzeit = True
             continue
         if war_echtzeit:
             war_echtzeit = False
             modell.reset()
             pegel = []
-        pegel = (pegel + [float(np.sqrt(np.mean(b.astype(np.float32) ** 2)))])[-40:]
-        if modell.predict(b).get("hey_jarvis_v0.1", 0.0) < SCHWELLE:
+        sofort = SOFORT_HOEREN.is_set()     # Strg+Alt+J (seit 24): ohne Wake Word
+        if b is not None:
+            pegel = (pegel + [float(np.sqrt(np.mean(b.astype(np.float32) ** 2)))])[-40:]
+            if not sofort and modell.predict(b).get("hey_jarvis_v0.1", 0.0) < SCHWELLE:
+                continue
+        elif not sofort:
             continue
         # Grundrauschen: leiseste Viertel der letzten 3 s (der Median enthielte das gesprochene Wake Word)
         grund = float(np.percentile(pegel, 25)) if pegel else 400.0
         with gespraech:
-            log.info("Wake Word erkannt")
+            SOFORT_HOEREN.clear()
+            log.info("Tastenkürzel: höre zu" if sofort else "Wake Word erkannt")
             fenster_vor()
             ton(True)
             status("hoert")
@@ -631,6 +702,7 @@ def hoeren():
                 status("hoert")
             modell.reset()
             leeren()
+            SOFORT_HOEREN.clear()     # im Gespraech gedrueckt: Jarvis hoerte ohnehin zu, nicht gleich noch einmal
 
 
 # ------------------------------------------------------------------ Wächter: Windows-MCP und Selbst-Update
@@ -817,19 +889,15 @@ def update_signiert(schluessel_hex, version, pruef, signatur_hex):
         return False
 
 
-def schluessel_holen():
-    """Oeffentlichen Update-Schluessel der Bruecke einmal festhalten (seit 16). Neue Kopplungen bekommen ihn im Setup;
-    aeltere Clients holen ihn hier einmal, mit Token und Brueckenbeweis, und behalten ihn danach."""
-    try:
-        s = str(json.loads(bruecke_holen("/v1/client/schluessel", 10).decode()).get("ed25519", "")).lower()
-    except Exception:
-        return None                  # aeltere Bruecke ohne eigenen Schluessel
-    if not re.fullmatch(r"[0-9a-f]{64}", s):
-        return None
-    E["update_schluessel"] = s
-    einstellungen_speichern()
-    log.info("Update-Schlüssel der Brücke festgehalten")
-    return s
+# Seit 25 (Claude Security 0.7, F9): Der Update-Schluessel der Bruecke kommt nur noch aus der Kopplung (Setup, Antwort
+# von /v1/koppeln). Vorher holte der Client ihn bei der ersten Update-Pruefung ueber /v1/client/schluessel und hielt fest,
+# was kam (ueber dasselbe unverschluesselte HTTP), und ohne Schluessel galt sogar ein HMAC aus dem Token-Hash. Wer das
+# Token mitlas, konnte so Updates bauen. Jetzt: ohne festgehaltenen Schluessel kein Update ueber die Bruecke; das Setup
+# einmal erneut ausfuehren (koppeln) holt ihn. GitHub-Updates pruefen weiter gegen RELEASE_SCHLUESSEL.
+def update_schluessel():
+    """Festgehaltener Ed25519-Schluessel der Bruecke (64 Hex) oder None."""
+    s = str(E.get("update_schluessel") or "").lower()
+    return s if re.fullmatch(r"[0-9a-f]{64}", s) else None
 
 
 def update_suchen():
@@ -863,15 +931,14 @@ def update_suchen():
         return neu, anhang["jarvis_pc.py"], "GitHub " + repo, pruef
     v = json.loads(bruecke_holen("/v1/client/version", 10).decode())
     pruef, neu = str(v["sha256"]).lower(), int(v["version"])
-    schluessel = E.get("update_schluessel") or schluessel_holen()
-    if schluessel:
-        if not update_signiert(schluessel, neu, pruef, v.get("ed25519", "")):
-            raise ValueError(tx("Update der Brücke ohne gültige Signatur, nicht eingespielt", "bridge update without a valid signature, not installed"))
-    else:
-        # aeltere Bruecke ohne eigenen Schluessel: wie bis Version 15 (HMAC mit dem Token-Hash)
-        soll = hmac.new(TOKEN_HASH.encode(), ("jarvis-code:" + pruef).encode(), hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(str(v.get("mac", "")).encode("utf-8", "replace"), soll.encode()):
-            raise ValueError(tx("Update der Brücke ohne gültige Signatur, nicht eingespielt", "bridge update without a valid signature, not installed"))
+    schluessel = update_schluessel()
+    if not schluessel:
+        raise ValueError(tx("Kein Update-Schlüssel der Brücke festgehalten. Das Setup einmal erneut ausführen (mit "
+                            "Kopplungscode), dann gehen Updates wieder.",
+                            "No update key of the bridge pinned. Run the setup once more (with a pairing code), then "
+                            "updates work again."))
+    if not update_signiert(schluessel, neu, pruef, v.get("ed25519", "")):
+        raise ValueError(tx("Update der Brücke ohne gültige Signatur, nicht eingespielt", "bridge update without a valid signature, not installed"))
     return neu, "bruecke", tx("Jarvis-Rechner", "Jarvis host"), pruef
 
 
@@ -998,16 +1065,114 @@ def pc_werte(vorher):
     return {"cpu": cpu, "ram": ram, "ram_gib": ram_gib, "platten": platten[:8], "gpu": gpu}, jetzt
 
 
+# ------------------------------------------------------------------ Groesste Last (seit Version 24)
+# "Warum ist mein PC langsam?": zu den Werten die Prozesse mit der meisten CPU- und RAM-Last, Feld "prozesse" (hoechstens
+# 8 Eintraege {"name", "cpu", "ram_mb"}). CPU = Anteil an der gesamten CPU ueber das Intervall: Differenz der
+# CPU-Sekunden je Prozess zwischen zwei Stichproben durch (Intervall x logische Kerne). Gleichnamige Prozesse (chrome)
+# zaehlen zusammen. Die Stichprobe kommt von Get-Process (ohne Fenster), die Rechnung ist reine Python-Logik
+# (tests/test_pc_ideen.py prueft sie unter Linux). Ohne Adminrechte liefert Windows fuer manche Systemprozesse keine
+# CPU-Zeit, die zaehlen dann nur mit ihrem Speicher.
+PROZESSE_MAX, PROZESSE_CPU, PROZESSE_RAM = 8, 5, 3
+_PS_PROZESSE = ("Get-Process | Where-Object { $_.Id -ne $PID -and $_.Id -ne 0 } | "
+                "Select-Object Id, ProcessName, CPU, WorkingSet64 | ConvertTo-Json -Compress")
+
+
+def prozess_name(roh):
+    """Programmname ohne Pfad und ohne .exe, ohne Steuerzeichen, hoechstens 40 Zeichen."""
+    n = re.split(r"[\\/]", str(roh or ""))[-1].strip()
+    if n.lower().endswith(".exe"):
+        n = n[:-4]
+    return "".join(c for c in n if not unicodedata.category(c).startswith("C")).strip()[:40]
+
+
+def _zahl_oder_none(v):
+    if isinstance(v, bool) or not isinstance(v, (int, float)) or v != v or not -1e15 < v < 1e15:
+        return None
+    return float(v)
+
+
+def prozess_stichprobe(daten):
+    """Get-Process als JSON (Liste, bei nur einem Prozess ein Objekt) -> {Id: (Name, CPU-Sekunden oder None, RAM-Bytes)}.
+    Kaputte Eintraege fallen weg, der Leerlaufprozess (Idle, Id 0) auch."""
+    if isinstance(daten, dict):
+        daten = [daten]
+    aus = {}
+    for p in daten if isinstance(daten, list) else []:
+        if not isinstance(p, dict) or isinstance(p.get("Id"), bool) or not isinstance(p.get("Id"), int) or p["Id"] <= 0:
+            continue
+        name = prozess_name(p.get("ProcessName"))
+        if not name or name.lower() == "idle":
+            continue
+        ram = _zahl_oder_none(p.get("WorkingSet64"))
+        aus[p["Id"]] = (name, _zahl_oder_none(p.get("CPU")), int(ram) if ram and ram > 0 else 0)
+    return aus
+
+
+def prozesse_top(vorher, jetzt, sekunden, kerne):
+    """Top 5 nach CPU plus die 3 mit dem meisten Speicher unter den uebrigen (keine Dubletten, hoechstens 8), aus zwei
+    Stichproben von prozess_stichprobe. Steht ein Speicherfresser schon bei der CPU, rueckt der naechste nach.
+    Ein Prozess, der in der ersten Stichprobe fehlt (oder dessen Id jetzt anders heisst), ist im Intervall gestartet:
+    seine ganze CPU-Zeit zaehlt. Ohne CPU-Zeit (Zugriff verweigert) zaehlt nur der Speicher. Ohne erste Stichprobe oder
+    Intervall gibt es keine Liste (die CPU-Anteile waeren geraten)."""
+    if not vorher or not jetzt or not isinstance(sekunden, (int, float)) or sekunden <= 0:
+        return []
+    kerne = max(1, int(kerne or 1))
+    gruppen = {}
+    for pid, (name, cpu, ram) in jetzt.items():
+        alt = vorher.get(pid)
+        if cpu is None:
+            d = 0.0
+        elif alt is None or alt[0] != name:
+            d = cpu
+        elif alt[1] is None:
+            d = 0.0
+        else:
+            d = max(0.0, cpu - alt[1])
+        g = gruppen.setdefault(name.lower(), [name, 0.0, 0])
+        g[1] += d
+        g[2] += ram
+    liste = [{"name": n, "cpu": round(max(0.0, min(100.0, 100.0 * d / (sekunden * kerne))), 1),
+              "ram_mb": int(round(r / 1048576.0))} for n, d, r in gruppen.values()]
+    nach_cpu = sorted((e for e in liste if e["cpu"] > 0), key=lambda e: (-e["cpu"], -e["ram_mb"], e["name"].lower()))
+    oben = nach_cpu[:PROZESSE_CPU]
+    schon = {e["name"].lower() for e in oben}
+    nach_ram = sorted((e for e in liste if e["ram_mb"] > 0 and e["name"].lower() not in schon),
+                      key=lambda e: (-e["ram_mb"], -e["cpu"], e["name"].lower()))
+    return (oben + nach_ram[:PROZESSE_RAM])[:PROZESSE_MAX]
+
+
+def prozesse_lesen():
+    """(Zeitpunkt, Stichprobe) ueber Get-Process ohne Konsolenfenster, None bei jedem Fehler (die Werte gehen dann ohne
+    das Feld raus). Der Zeitpunkt ist nach der Antwort genommen; der Versatz zum Messzeitpunkt ist je Aufruf etwa gleich
+    und faellt in der Differenz heraus."""
+    try:
+        roh = powershell(_PS_PROZESSE, 20)
+        jetzt = time.monotonic()
+        stichprobe = prozess_stichprobe(json.loads(roh)) if roh else {}
+    except Exception as e:
+        log.info("Prozesse: %s", type(e).__name__)
+        return None
+    return (jetzt, stichprobe) if stichprobe else None
+
+
 def werte_melden():
     """Seit Version 21: alle 30 s die Werte an die Bruecke. Kennt sie /v1/pc/werte nicht (aeltere Bruecke, 404), hoert
-    der Faden auf."""
+    der Faden auf. Seit Version 24 mit "prozesse" (Groesste Last ueber dieselben 30 s); eine Bruecke, die das Feld
+    nicht kennt, verwirft es."""
     if not WINDOWS:
         return
     vorher = _cpu_zeiten()
+    p_vorher = prozesse_lesen()
     while True:
         time.sleep(30)
         try:
             w, vorher = pc_werte(vorher)
+            p_jetzt = prozesse_lesen()
+            if p_vorher and p_jetzt:
+                top = prozesse_top(p_vorher[1], p_jetzt[1], p_jetzt[0] - p_vorher[0], os.cpu_count())
+                if top:
+                    w["prozesse"] = top
+            p_vorher = p_jetzt
             bruecke("/v1/pc/werte", w, 10)
         except urllib.error.HTTPError as e:
             if e.code == 404:
@@ -1051,16 +1216,69 @@ def waechter():
 
 PYTHONW = os.path.join(ORDNER, "venv", "Scripts", "pythonw.exe") if WINDOWS else os.path.join(ORDNER, "venv", "bin", "python")
 # Neues Symbol = neuer Dateiname: Windows haelt Symbole je Pfad im Zwischenspeicher, eine ueberschriebene Datei bliebe
-# auf dem Desktop sonst alt. jarvis-rot.ico seit Version 8 (24.10.2026), vorher jarvis.ico (Cyan).
-SYMBOL = os.path.join(ORDNER, "jarvis-rot.ico")
-SYMBOL_ALT = os.path.join(ORDNER, "jarvis.ico")
+# auf dem Desktop sonst alt. jarvis-rot.ico seit Version 8 (24.10.2026), vorher jarvis.ico (so heisst auch die Datei,
+# die das Setup mitbringt). Seit Version 23 (0.7) das Sternbild wie die App: jarvis-sternbild.ico, unter Linux
+# jarvis-sternbild.png. Es kommt ohne Download mit dem Setup bzw. dem Linux-Installer (ab 0.7) als SYMBOL_QUELLE;
+# symbol_bereitstellen() erkennt es an der festen Pruefsumme und legt es einmal unter dem neuen Namen ab, damit
+# vorhandene Verknuepfungen einen neuen Pfad bekommen. Ein aelteres Setup-Symbol hat eine andere Pruefsumme und bleibt,
+# wie es ist (ein Update nur ueber den Code bringt keine Symboldatei mit). Neues Symbol spaeter: neuer Name, Datei in
+# spiegel/pc/, Pruefsumme hier (tests/test_pc_symbol.py prueft, dass beides zusammenpasst).
+SYMBOL_NEU = "jarvis-sternbild.ico" if WINDOWS else "jarvis-sternbild.png"
+SYMBOL_QUELLE = "jarvis.ico" if WINDOWS else "jarvis.png"
+SYMBOL_PRUEFSUMMEN = {"jarvis-sternbild.ico": "37d5a32c56fdad00b4c45f5b562652ffbb77975db43a4a5c6021e1f7b50bcfc7",
+                      "jarvis-sternbild.png": "48a22ddaddc05382202ea64c8661681151d1851ef1735c49d7f82d17c141ffa3"}
+SYMBOLE = ["jarvis-sternbild.ico", "jarvis-rot.ico", "jarvis.ico"] if WINDOWS else ["jarvis-sternbild.png", "jarvis.png"]
 EINZEL_PORT = 47811                      # nur 127.0.0.1: ein zweiter Start meldet sich hier und beendet sich
 
 
+_EINST_SPERRE = threading.Lock()         # seit 23: mehrere Faeden schreiben beim Start (Symbol, Neuigkeiten, Schluessel)
+
+
 def einstellungen_speichern():
-    with open(EINST_PFAD + ".neu", "w", encoding="utf-8") as f:
-        json.dump(E, f, ensure_ascii=False, indent=1)
-    os.replace(EINST_PFAD + ".neu", EINST_PFAD)
+    with _EINST_SPERRE:
+        with open(EINST_PFAD + ".neu", "w", encoding="utf-8") as f:
+            json.dump(E, f, ensure_ascii=False, indent=1)
+        os.replace(EINST_PFAD + ".neu", EINST_PFAD)
+
+
+def symbol_pfad():
+    """Das neueste vorhandene Symbol (SYMBOLE, neuestes zuerst) oder None."""
+    for name in SYMBOLE:
+        pfad = os.path.join(ORDNER, name)
+        if os.path.exists(pfad):
+            return pfad
+    return None
+
+
+def symbol_bereitstellen():
+    """Seit Version 23: das Sternbild unter SYMBOL_NEU bereitstellen, ohne Netz. True = liegt mit passender Pruefsumme
+    da. Quelle ist das Symbol, das Setup bzw. Linux-Installer mitbringen (SYMBOL_QUELLE), aber nur, wenn es genau das
+    Sternbild ist (Pruefsumme); sonst bleibt alles beim bisherigen Symbol. Eine kaputte Kopie wird aus der Quelle
+    ersetzt. Laeuft beim Start vor Fenster und Verknuepfungen (nur zwei kleine lokale Dateien)."""
+    ziel, soll = os.path.join(ORDNER, SYMBOL_NEU), SYMBOL_PRUEFSUMMEN[SYMBOL_NEU]
+    try:
+        with open(ziel, "rb") as f:
+            if hashlib.sha256(f.read()).hexdigest() == soll:
+                return True
+    except OSError:
+        pass
+    try:
+        with open(os.path.join(ORDNER, SYMBOL_QUELLE), "rb") as f:
+            daten = f.read(1024 * 1024 + 1)
+    except OSError:
+        return False
+    if len(daten) > 1024 * 1024 or hashlib.sha256(daten).hexdigest() != soll:
+        log.info("Symbol: %s ist nicht das Sternbild, bleibe beim bisherigen", SYMBOL_QUELLE)
+        return False
+    try:
+        with open(ziel + ".neu", "wb") as f:
+            f.write(daten)
+        os.replace(ziel + ".neu", ziel)
+    except OSError as e:
+        log.warning("Symbol: %s nicht angelegt (%s)", SYMBOL_NEU, e)
+        return False
+    log.info("Symbol: %s bereitgestellt", SYMBOL_NEU)
+    return True
 
 
 def verknuepfung_linux(ort, an, nur_wenn_da=False):
@@ -1077,7 +1295,7 @@ def verknuepfung_linux(ort, an, nur_wenn_da=False):
             os.remove(pfad)
         return
     os.makedirs(os.path.dirname(pfad), exist_ok=True)
-    png = os.path.join(ORDNER, "jarvis.png")
+    png = symbol_pfad() or os.path.join(ORDNER, "jarvis.png")        # seit 23: jarvis-sternbild.png, wenn da
     # Desktop-Entry-Spezifikation: Exec-Argumente in Anfuehrungszeichen, \ doppelt maskiert, " ` $ maskiert, % verdoppelt
     q = lambda t: '"%s"' % (t.replace("\\", "\\\\\\\\").replace('"', '\\"').replace("`", "\\`").replace("$", "\\$")
                            .replace("%", "%%"))
@@ -1109,21 +1327,87 @@ def verknuepfung(ort, an, nur_wenn_da=False):
         return
     q = lambda s: s.replace("'", "''")
     argumente = '"%s"%s' % (os.path.abspath(__file__), " --fenster" if ort == "Desktop" else "")
+    symbol = symbol_pfad()
     powershell("$s = (New-Object -ComObject WScript.Shell).CreateShortcut('%s'); $s.TargetPath = '%s'; $s.Arguments = '%s'; "
                "$s.WorkingDirectory = '%s'; $s.Description = 'J.A.R.V.I.S.'; %s$s.Save()"
-               % (q(pfad), q(PYTHONW), q(argumente), q(ORDNER), ("$s.IconLocation = '%s'; " % q(SYMBOL)) if os.path.exists(SYMBOL) else ""))
+               % (q(pfad), q(PYTHONW), q(argumente), q(ORDNER), ("$s.IconLocation = '%s'; " % q(symbol)) if symbol else ""))
+
+
+# Seit Version 23 (auch die Taskleiste soll das Sternbild zeigen). Angeheftete Taskleisten-Verknuepfungen
+# liegen je Benutzer unter %APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar (belegt nur durch
+# Antworten auf Microsoft Q&A, nicht durch die Referenz). Das Startmenue legt weder Client noch Setup an; ein selbst
+# angelegter Eintrag dort (Programs, mit Unterordnern) wird gleich behandelt.
+ANGEHEFTET = r"Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
+
+
+def angeheftete_umstellen(symbol):
+    """Verknuepfungen in der Taskleiste und im eigenen Startmenue, die auf diesen Jarvis zeigen (Ziel PYTHONW, Argumente
+    nennen jarvis_pc.py aus ORDNER), bekommen das neue Symbol; nur IconLocation, sonst nichts. Fremde bleiben, nichts
+    wird neu angeheftet. Liefert die umgestellten Pfade (fuer shell_symbole_auffrischen)."""
+    if not WINDOWS or not symbol:
+        return []
+    q = lambda s: s.replace("'", "''")
+    skripte = sorted({os.path.abspath(__file__), os.path.join(ORDNER, "jarvis_pc.py")})
+    befehl = (
+        "$sh = New-Object -ComObject WScript.Shell; $ziel = '%s'; $symbol = '%s'; $skripte = @(%s); "
+        "$orte = @((Join-Path $env:APPDATA '%s'), [Environment]::GetFolderPath('Programs')); "
+        "foreach ($o in $orte) { if (-not $o -or -not (Test-Path -LiteralPath $o)) { continue }; "
+        "foreach ($f in @(Get-ChildItem -LiteralPath $o -Filter '*.lnk' -Recurse -ErrorAction SilentlyContinue)) { "
+        "$s = $sh.CreateShortcut($f.FullName); if ($s.TargetPath -ine $ziel) { continue }; $eigen = $false; "
+        "foreach ($k in $skripte) { if ([string]$s.Arguments -and $s.Arguments.IndexOf($k, "
+        "[StringComparison]::OrdinalIgnoreCase) -ge 0) { $eigen = $true } }; if (-not $eigen) { continue }; "
+        "if (([string]$s.IconLocation -replace ',-?\\d+$', '') -ieq $symbol) { continue }; "
+        "$s.IconLocation = $symbol; $s.Save(); $f.FullName } }"
+    ) % (q(PYTHONW), q(symbol), ", ".join("'%s'" % q(k) for k in skripte), ANGEHEFTET)
+    return [z.strip() for z in powershell(befehl).splitlines() if z.strip().lower().endswith(".lnk")]
+
+
+def shell_symbole_auffrischen(pfade):
+    """Der Shell sagen, dass sich Symbole geaendert haben: SHChangeNotify (Microsoft-Referenz, shlobj_core.h) mit
+    SHCNE_UPDATEITEM je umgestellter Verknuepfung, danach SHCNE_ASSOCCHANGED; dazu sagt die Referenz, es weise die Shell
+    an, "to invalidate the icon and thumbnail cache". Zahlenwerte wie in den Headern von Wine und mingw-w64. Ob die
+    Taskleiste ein angeheftetes Symbol damit sofort neu zeichnet, ist nicht dokumentiert (sonst nach dem Abmelden)."""
+    if not WINDOWS:
+        return
+    try:
+        s = ctypes.WinDLL("shell32")         # eigene Instanz: argtypes beruehren windll.shell32 nicht
+        s.SHChangeNotify.argtypes = [ctypes.c_long, ctypes.c_uint, ctypes.c_wchar_p, ctypes.c_wchar_p]
+        s.SHChangeNotify.restype = None
+        for p in pfade:
+            s.SHChangeNotify(0x00002000, 0x0005, p, None)      # SHCNE_UPDATEITEM, SHCNF_PATHW
+        s.SHChangeNotify(0x08000000, 0x0000, None, None)       # SHCNE_ASSOCCHANGED, SHCNF_IDLIST
+    except Exception as e:
+        log.info("Symbol-Zwischenspeicher: %s", e)
 
 
 def verknuepfungen_abgleichen():
     """Beim Start: Autostart nach Einstellung, Desktop-Symbol einmalig anlegen (wer es loescht, bekommt es nicht
     wieder aufgedraengt; an/aus im HUD-Fenster). Das Symbol bringt das Setup mit (bis Version 15 kam es bei Bedarf
-    ohne Token aus dem Glance-Ordner, Pruefbericht 0.3.1, 12d)."""
+    ohne Token aus dem Glance-Ordner, Pruefbericht 0.3.1, 12d).
+    Seit Version 23: Ist das Symbol ein anderes als beim letzten Abgleich (E["symbol"]), bekommt eine vorhandene
+    Desktop-Verknuepfung (Linux: Eintrag im Anwendungsmenue) das neue; eine fehlende wird dafuer nicht angelegt. Den
+    Autostart schreibt die erste Zeile ohnehin bei jedem Start neu, solange er an ist. Unter Windows dazu eigene
+    angeheftete Taskleisten- und Startmenue-Verknuepfungen (angeheftete_umstellen), danach shell_symbole_auffrischen.
+    Das Sternbild stellt symbol_bereitstellen() vorher im Hauptfaden bereit (mitgeliefert, ohne Netz)."""
     try:
         verknuepfung("Startup", E.get("autostart", True))
+        neu_angelegt = False
         if E.get("desktop_symbol", True) and not E.get("desktop_symbol_angelegt"):
             verknuepfung("Desktop", True)
-            E["desktop_symbol_angelegt"] = True
+            E["desktop_symbol_angelegt"] = neu_angelegt = True
             einstellungen_speichern()
+        symbol = os.path.basename(symbol_pfad() or "")
+        if symbol and E.get("symbol") != symbol:
+            if not neu_angelegt:                       # gerade angelegt = hat das Symbol schon
+                verknuepfung("Desktop", True, nur_wenn_da=True)
+            if WINDOWS:
+                umgestellt = angeheftete_umstellen(symbol_pfad())
+                if umgestellt:
+                    log.info("Verknüpfungen: %d angeheftete bzw. im Startmenü umgestellt", len(umgestellt))
+                shell_symbole_auffrischen(umgestellt)
+            E["symbol"] = symbol
+            einstellungen_speichern()
+            log.info("Verknüpfungen: Symbol jetzt %s", symbol)
     except Exception as e:
         log.warning("Verknüpfungen: %s", e)
 
@@ -1276,6 +1560,135 @@ def maximiert_wiederherstellen():
         log.info("Fenster maximiert wiederherstellen: %s", bool(u.SetWindowPlacement(h, ctypes.byref(p))))
 
 
+# ------------------------------------------------------------------ Tastenkuerzel Strg+Alt+J (seit Version 24)
+# Holt das Fenster nach vorn und hoert sofort zu, ohne Wake Word (Vorbild: Friday, Ctrl+Alt+F). RegisterHotKey ohne
+# Fenster (hWnd NULL) legt WM_HOTKEY in die Nachrichtenschlange des Fadens, der das Kuerzel registriert hat; deshalb ein
+# eigener Faden mit GetMessageW-Schleife. Abschalten: WM_QUIT an diesen Faden (PostThreadMessageW), er gibt das Kuerzel
+# selbst frei. MOD_NOREPEAT: Gedrueckthalten loest nur einmal aus. Ist das Kuerzel belegt (anderes Programm), steht das
+# im Protokoll und im Zahnrad, sonst passiert nichts. Zahlenwerte aus der Microsoft-Referenz (RegisterHotKey, WM_HOTKEY,
+# WM_QUIT, PeekMessageW); die Kennung muss fuer Anwendungen zwischen 0x0000 und 0xBFFF liegen.
+KUERZEL_ID = 0x4A41
+MOD_ALT, MOD_CONTROL, MOD_NOREPEAT = 0x0001, 0x0002, 0x4000
+KUERZEL_MODS, KUERZEL_TASTE = MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, ord("J")
+WM_HOTKEY, WM_QUIT, WM_USER = 0x0312, 0x0012, 0x0400
+KUERZEL = {"faden": None, "tid": 0, "belegt": False, "versucht": None}
+
+
+def kuerzel_einstellung():
+    """Standard an; nur ein ausdrueckliches false in den Einstellungen schaltet es ab."""
+    return E.get("tastenkuerzel", True) is not False
+
+
+def _kuerzel_schleife(u, msg, ausloesen):
+    """Nachrichtenschleife des Kuerzel-Fadens. Endet mit WM_QUIT (GetMessageW 0) oder Fehler (-1); liefert die Zahl der
+    Ausloesungen. Ein Fehler beim Ausloesen beendet die Schleife nicht."""
+    n = 0
+    while True:
+        r = u.GetMessageW(ctypes.byref(msg), None, 0, 0)
+        if r == 0 or r == -1:
+            return n
+        if msg.message == WM_HOTKEY and msg.wParam == KUERZEL_ID:
+            n += 1
+            try:
+                ausloesen()
+            except Exception as e:
+                log.info("Tastenkürzel: %s: %s", type(e).__name__, e)
+
+
+def kuerzel_faden():
+    from ctypes import wintypes
+    u = ctypes.WinDLL("user32", use_last_error=True)      # eigene Instanz: argtypes beruehren pywebview nicht
+    k = ctypes.WinDLL("kernel32")
+    u.RegisterHotKey.argtypes = [wintypes.HWND, ctypes.c_int, wintypes.UINT, wintypes.UINT]
+    u.RegisterHotKey.restype = wintypes.BOOL
+    u.UnregisterHotKey.argtypes = [wintypes.HWND, ctypes.c_int]
+    u.GetMessageW.argtypes = [ctypes.POINTER(wintypes.MSG), wintypes.HWND, wintypes.UINT, wintypes.UINT]
+    u.GetMessageW.restype = ctypes.c_int
+    u.PeekMessageW.argtypes = [ctypes.POINTER(wintypes.MSG), wintypes.HWND, wintypes.UINT, wintypes.UINT, wintypes.UINT]
+    msg = wintypes.MSG()
+    versucht = KUERZEL["versucht"]
+    try:
+        u.PeekMessageW(ctypes.byref(msg), None, WM_USER, WM_USER, 0)     # PM_NOREMOVE: legt die Schlange sicher an
+        KUERZEL["tid"] = k.GetCurrentThreadId()
+        if not u.RegisterHotKey(None, KUERZEL_ID, KUERZEL_MODS, KUERZEL_TASTE):
+            KUERZEL.update(belegt=True, tid=0)
+            log.info("Tastenkürzel Strg+Alt+J nicht verfügbar (Windows-Fehler %d, vermutlich von einem anderen "
+                     "Programm belegt)", ctypes.get_last_error())
+            return
+        KUERZEL["belegt"] = False
+    finally:
+        if versucht is not None:
+            versucht.set()
+    log.info("Tastenkürzel Strg+Alt+J bereit")
+    try:
+        _kuerzel_schleife(u, msg, kuerzel_gedrueckt)
+    finally:
+        u.UnregisterHotKey(None, KUERZEL_ID)
+        KUERZEL["tid"] = 0
+        log.info("Tastenkürzel Strg+Alt+J aus")
+
+
+def kuerzel_an(warten=False):
+    """Faden starten (nur Windows, nur einmal). warten: bis zu 1 s auf das Ergebnis der Registrierung (Zahnrad)."""
+    if not WINDOWS or (KUERZEL["faden"] is not None and KUERZEL["faden"].is_alive()):
+        return
+    KUERZEL["versucht"] = threading.Event()
+    KUERZEL["faden"] = threading.Thread(target=kuerzel_faden, daemon=True, name="tastenkuerzel")
+    KUERZEL["faden"].start()
+    if warten:
+        KUERZEL["versucht"].wait(1)
+
+
+def kuerzel_aus():
+    """WM_QUIT an den Kuerzel-Faden; er gibt das Kuerzel frei und endet."""
+    f = KUERZEL["faden"]
+    if not WINDOWS or f is None or not f.is_alive():
+        KUERZEL["belegt"] = False
+        return
+    if KUERZEL["versucht"] is not None:
+        KUERZEL["versucht"].wait(1)
+    tid = KUERZEL["tid"]
+    if tid:
+        from ctypes import wintypes
+        u = ctypes.WinDLL("user32")
+        u.PostThreadMessageW.argtypes = [wintypes.DWORD, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+        u.PostThreadMessageW(tid, WM_QUIT, 0, 0)
+    f.join(2)
+    KUERZEL["belegt"] = False
+
+
+def fenster_nach_vorn():
+    """Fuer das Tastenkuerzel: wie fenster_vor (ein minimiertes Fenster zurueck, maximiert bleibt maximiert), dazu
+    SetForegroundWindow. Ob Windows das Fenster dabei wirklich vor ein anderes laesst, entscheidet seine
+    Vordergrund-Regel (Microsoft-Referenz SetForegroundWindow); das Ergebnis steht im Protokoll."""
+    fenster_vor()
+    if not WINDOWS or not fenster:
+        return
+    try:
+        from ctypes import wintypes
+        u, h = _hud_fenster()
+        if h:
+            u.SetForegroundWindow.argtypes = [wintypes.HWND]
+            log.info("Tastenkürzel: Fenster vorn=%s", bool(u.SetForegroundWindow(h)))
+    except Exception as e:
+        log.info("Fenster: %s", e)
+
+
+def kuerzel_gedrueckt():
+    """WM_HOTKEY: Fenster nach vorn, dann zuhoeren wie nach dem Wake Word (die Hoerschleife sieht SOFORT_HOEREN). Ohne
+    Mikrofon oder waehrend Echtzeit (hoert selbst zu) nur das Fenster; das HUD setzt dann den Cursor ins Eingabefeld."""
+    log.info("Tastenkürzel Strg+Alt+J gedrückt")
+    fenster_nach_vorn()
+    hoeren_kann = bool(MIKRO["an"]) and not ECHTZEIT["an"]
+    if hoeren_kann:
+        SOFORT_HOEREN.set()
+    if fenster is not None:
+        try:
+            fenster.evaluate_js("window.kuerzelGedrueckt && window.kuerzelGedrueckt(%s)" % ("true" if hoeren_kann else "false"))
+        except Exception:
+            pass
+
+
 # ------------------------------------------------------------------ Echtzeit im Fenster (Version 10, 24.10.2026)
 # Gemini Live laeuft im HUD (Chromium: Echo-Unterdrueckung, Reinreden ueber Lautsprecher). Der Client liefert dafuer
 # Einmal-Schluessel, Hausgehirn (Quelle echtzeit-pc, PC-Werkzeuge nur am Haupt-PC) und Mitschrift ueber die Bruecke.
@@ -1380,9 +1793,78 @@ def eigene_seite(url):
 
 START_ADRESSE = [None]                   # Fensteradresse beim Start, Ziel nach einer fremden Seite
 
+# Seit 25 (Claude Security 0.7, F8): Die Adresse des Fensters sagt nicht, welches Dokument einen Aufruf geschickt hat.
+# Nach einer fremden Seite laedt seite_pruefen() das HUD neu; pywebviews get_current_url() wartet dabei, bis es geladen
+# ist, und ein Aufruf der fremden Seite kam danach mit der HUD-Adresse durch. Jetzt bekommt die HUD-Seite beim
+# Ausliefern eine zufaellige Faehigkeit eingebettet (hud_mit_faehigkeit), die jeder Aufruf als erstes Argument mitschickt
+# (Api: fenster_geschuetzt). Eine fremde Seite kennt sie nicht. Nach einer fremden Seite gibt es eine neue Faehigkeit,
+# und alle Aufrufe sind gesperrt, bis sich ein frisch geladenes HUD mit ihr anmeldet. Die Adresse wird nur noch ohne
+# Warten gelesen; wer sie nicht sofort bekommt, wird abgelehnt.
+_FENSTER = {"faehigkeit": secrets.token_urlsafe(24), "gesperrt": False}
+_FENSTER_SPERRE = threading.Lock()
+_AUFRUF = threading.local()
+URL_WARTEN_S = 1.0
+
+
+def faehigkeit_neu(sperren):
+    """Neue Faehigkeit (die alte gilt nicht mehr); sperren=True: Aufrufe erst nach anmelden() eines frischen HUD."""
+    with _FENSTER_SPERRE:
+        _FENSTER["faehigkeit"] = secrets.token_urlsafe(24)
+        if sperren:
+            _FENSTER["gesperrt"] = True
+
+
+def faehigkeit_passt(k):
+    with _FENSTER_SPERRE:
+        soll = _FENSTER["faehigkeit"]
+    return isinstance(k, str) and hmac.compare_digest(k.encode("utf-8", "replace"), soll.encode())
+
+
+def hud_mit_faehigkeit(daten):
+    """HUD-Seite (Bytes) mit einem Skript ganz vorn im <head>: haengt die Faehigkeit vor jeden pywebview.api-Aufruf und
+    meldet die Seite an. Die CSP rechnet ihren Hash aus der ausgelieferten Seite, das Skript ist also erlaubt."""
+    with _FENSTER_SPERRE:
+        k = _FENSTER["faehigkeit"]
+    skript = ('<script>(function(){var K="%s";function z(){var p=window.pywebview,a=p&&p.api;if(!a||a.__jarvisK)return;'
+              'Object.keys(a).forEach(function(n){var f=a[n];if(typeof f==="function"){a[n]=function(){'
+              'return f.apply(a,[K].concat(Array.prototype.slice.call(arguments)));};}});'
+              'try{Object.defineProperty(a,"__jarvisK",{value:true});}catch(e){a.__jarvisK=true;}'
+              'if(a.anmelden){a.anmelden().catch(function(){});}}'
+              'window.addEventListener("pywebviewready",z);z();})();</script>' % k).encode()
+    m = re.search(rb"<head(\s[^>]*)?>", daten, re.I)
+    return daten[:m.end()] + skript + daten[m.end():] if m else skript + daten
+
+
+def fenster_geschuetzt(f):
+    """Fuer jede Methode der js_api: erstes Argument ist die Faehigkeit; aus_dem_fenster() fragt danach."""
+    def w(self, faehigkeit=None, *a, **k):
+        _AUFRUF.ok = faehigkeit_passt(faehigkeit)
+        try:
+            return f(self, *a, **k)
+        finally:
+            _AUFRUF.ok = False
+    w.__name__, w.__doc__ = f.__name__, f.__doc__
+    return w
+
+
+def url_jetzt(warten=URL_WARTEN_S):
+    """Fensteradresse ohne auf das Laden zu warten (pywebview wartet sonst darauf); None, wenn sie nicht sofort kommt."""
+    erg = []
+
+    def holen():
+        try:
+            erg.append(fenster.get_current_url())
+        except Exception:
+            erg.append(None)
+    t = threading.Thread(target=holen, daemon=True, name="url")
+    t.start()
+    t.join(warten)
+    return erg[0] if erg else None
+
 
 def seite_pruefen():
-    """Nach jeder geladenen Seite (events.loaded) und bei abgelehnten Aufrufen: fremde Seite -> zurueck zum HUD."""
+    """Nach jeder geladenen Seite (events.loaded) und bei abgelehnten Aufrufen: fremde Seite -> neue Faehigkeit,
+    Sperre, zurueck zum HUD."""
     try:
         url = fenster.get_current_url()
     except Exception as e:
@@ -1390,20 +1872,21 @@ def seite_pruefen():
         return
     if url and not eigene_seite(url) and START_ADRESSE[0]:
         log.warning("Fenster auf fremder Seite (%s), lade das HUD neu", urllib.parse.urlsplit(url).netloc[:60])
+        faehigkeit_neu(sperren=True)
         fenster.load_url(START_ADRESSE[0])
 
 
 def aus_dem_fenster(name):
-    """Erste Zeile jeder Fensterfunktion: nur die eigene HUD-Seite darf sie benutzen."""
-    try:
-        url = fenster.get_current_url()
-    except Exception as e:
-        log.info("Seitenprüfung (%s): %s", name, e)
-        url = None
-    if eigene_seite(url):
+    """Erste Zeile jeder Fensterfunktion: nur die eigene HUD-Seite darf sie benutzen (Faehigkeit, keine Sperre nach
+    einer fremden Seite, und die Adresse ist sofort die eigene)."""
+    ok = getattr(_AUFRUF, "ok", False)
+    with _FENSTER_SPERRE:
+        gesperrt = _FENSTER["gesperrt"]
+    if ok and not gesperrt and eigene_seite(url_jetzt()):
         return True
-    log.warning("Fensterfunktion %s von fremder Seite abgelehnt", name)
-    threading.Thread(target=seite_pruefen, daemon=True, name="seite").start()
+    log.warning("Fensterfunktion %s abgelehnt (%s)", name, "gesperrt bis zum neuen HUD" if gesperrt and ok else
+                "ohne gültige Fähigkeit" if not ok else "Adresse nicht die eigene oder nicht sofort lesbar")
+    threading.Thread(target=seite_pruefen, daemon=True, name="seite").start()      # fremde Seite? -> Sperre, HUD
     return False
 
 
@@ -1437,7 +1920,7 @@ class _HudDurchreiche(http.server.BaseHTTPRequestHandler):
         basis = _HUD_ZIEL.path or "/"
         try:
             if pfad in (basis, basis + "index.html"):
-                daten, art, code = bruecke_holen("/v1/client/hud", 15), "text/html; charset=utf-8", 200
+                daten, art, code = hud_mit_faehigkeit(bruecke_holen("/v1/client/hud", 15)), "text/html; charset=utf-8", 200
             elif pfad == basis + "zustand.json":
                 daten, art, code = bruecke_holen("/v1/zustand", 8), "application/json", 200
             elif pfad.startswith(basis) and _HUD_GR_BILD.fullmatch(pfad[len(basis):]):
@@ -1534,6 +2017,18 @@ def mikrofon_erlauben(adresse):
 
 
 class Api:
+    def anmelden(self):
+        """Ein frisch geladenes HUD meldet sich mit der aktuellen Faehigkeit an (seit 25) und hebt die Sperre nach einer
+        fremden Seite auf."""
+        if not getattr(_AUFRUF, "ok", False) or not eigene_seite(url_jetzt()):
+            log.warning("Anmeldung des Fensters abgelehnt")
+            return False
+        with _FENSTER_SPERRE:
+            war, _FENSTER["gesperrt"] = _FENSTER["gesperrt"], False
+        if war:
+            log.info("Fenster: frisches HUD angemeldet, Fensterfunktionen wieder frei")
+        return True
+
     def frage(self, text):
         """Aufruf aus der Texteingabe im HUD."""
         if not aus_dem_fenster("frage"):
@@ -1709,36 +2204,68 @@ class Api:
             return ABGELEHNT
         return datei_speichern(kennung, name)
 
-    def neuigkeiten(self):
-        """Fuer das HUD (seit Version 16): einmal nach einem Update zeigen, danach gilt es als gesehen."""
+    def neuigkeiten(self, bestaetigt_spaeter=False):
+        """Fuer das HUD (seit Version 16): einmal nach einem Update zeigen.
+        Bis Version 22 galt die Version schon beim Abfragen als gesehen. Ein Update im Hintergrund startet das Fenster
+        aber minimiert; wurde der Client neu gestartet (PC aus, naechstes Update), bevor jemand hinsah, war der
+        Hinweis weg (so bei Version 22 vermutet). Seit 23: Sagt das HUD bestaetigt_spaeter=True, gilt die Version erst mit
+        neuigkeiten_gesehen() als gesehen (Knopf "Verstanden"); bis dahin kommt der Hinweis bei jedem Laden wieder.
+        Eine HUD-Seite ohne den Knopfaufruf fragt ohne Argument, dann wie bisher sofort gesehen (nie Dauerschleife)."""
         if not aus_dem_fenster("neuigkeiten"):
             return ABGELEHNT
         punkte = neuigkeiten_offen()
-        if E.get("zuletzt_version") != VERSION:
+        if (not punkte or bestaetigt_spaeter is not True) and E.get("zuletzt_version") != VERSION:
             E["zuletzt_version"] = VERSION
             einstellungen_speichern()
         return {"version": VERSION, "punkte": punkte}
 
+    def neuigkeiten_gesehen(self, version):
+        """Seit Version 23: Knopf "Verstanden" im HUD. Nur die laufende Version, nie eine kuenftige."""
+        if not aus_dem_fenster("neuigkeiten_gesehen"):
+            return ABGELEHNT
+        if isinstance(version, bool) or not isinstance(version, int) or version != VERSION:
+            return False
+        if E.get("zuletzt_version") != VERSION:
+            E["zuletzt_version"] = VERSION
+            einstellungen_speichern()
+            log.info("Neu in Version %d: gesehen", VERSION)
+        return True
+
     def einstellungen(self):
-        """Fuer das Zahnrad im HUD (seit Version 5)."""
+        """Fuer das Zahnrad im HUD (seit Version 5). Seit 24 unter Windows auch das Tastenkuerzel Strg+Alt+J."""
         if not aus_dem_fenster("einstellungen"):
             return ABGELEHNT
-        return {"autostart": bool(E.get("autostart", True)), "desktop_symbol": bool(E.get("desktop_symbol", True)),
-                "version": VERSION}
+        e = {"autostart": bool(E.get("autostart", True)), "desktop_symbol": bool(E.get("desktop_symbol", True)),
+             "version": VERSION}
+        if WINDOWS:
+            e["tastenkuerzel"] = kuerzel_einstellung()
+            e["tastenkuerzel_belegt"] = bool(KUERZEL["belegt"])
+        return e
 
     def einstellen(self, name, wert):
         if not aus_dem_fenster("einstellen"):
             return ABGELEHNT
-        if name not in ("autostart", "desktop_symbol"):
+        if name not in ("autostart", "desktop_symbol", "tastenkuerzel") or (name == "tastenkuerzel" and not WINDOWS):
             return self.einstellungen()
         E[name] = bool(wert)
         einstellungen_speichern()
         try:
-            verknuepfung("Startup" if name == "autostart" else "Desktop", bool(wert))
+            if name == "tastenkuerzel":
+                if E[name]:
+                    kuerzel_an(warten=True)
+                else:
+                    kuerzel_aus()
+            else:
+                verknuepfung("Startup" if name == "autostart" else "Desktop", bool(wert))
             log.info("Einstellung %s = %s", name, bool(wert))
         except Exception as e:
             log.warning("Einstellung %s: %s", name, e)
         return self.einstellungen()
+
+
+for _n, _f in list(vars(Api).items()):          # seit 25: jede Fensterfunktion verlangt die Faehigkeit (F8)
+    if not _n.startswith("_") and callable(_f):
+        setattr(Api, _n, fenster_geschuetzt(_f))
 
 
 def kopflos(grund):
@@ -1758,10 +2285,13 @@ def start_hintergrund():
     try:
         strom = sd.InputStream(samplerate=RATE, channels=1, dtype="int16", blocksize=BLOCK, device=E.get("mikrofon"))
         strom.start()
+        MIKRO["an"] = True
         threading.Thread(target=mikrofon_lesen, args=(strom,), name="mikrofon", daemon=True).start()
         threading.Thread(target=hoeren, name="weckwort", daemon=True).start()
     except Exception as e:
         log.info("Kein Mikrofon am PC (%s) - Befehle über HUD-Texteingabe oder Jarvis-App", e)
+    if WINDOWS and kuerzel_einstellung():          # seit Version 24: Strg+Alt+J
+        kuerzel_an()
     threading.Thread(target=mcp_sicherstellen, daemon=True).start()
     threading.Thread(target=waechter, daemon=True).start()
     threading.Thread(target=verknuepfungen_abgleichen, daemon=True).start()
@@ -1779,6 +2309,8 @@ if __name__ == "__main__":
     if "--neustart" not in sys.argv and schon_offen():
         sys.exit(0)
     log.info("Start (Version %d%s)", VERSION, ", ohne Fenster" if "--ohne-fenster" in sys.argv else "")
+    # Seit Version 23: das mitgelieferte Sternbild bereitstellen (nur lokale Dateien), vor Fenster und Verknuepfungen
+    symbol_bereitstellen()
     threading.Thread(target=einzel_lauscher, daemon=True).start()
     if "--ohne-fenster" in sys.argv or E.get("ohne_fenster"):
         kopflos("so eingestellt")
@@ -1807,9 +2339,7 @@ if __name__ == "__main__":
     fenster_beobachten(fenster, minimiert)
     if adresse.startswith("http://127.0.0.1:"):
         fenster.events.loaded += seite_pruefen
-    symbol = SYMBOL if os.path.exists(SYMBOL) else (SYMBOL_ALT if os.path.exists(SYMBOL_ALT) else None)
-    if not WINDOWS and os.path.exists(os.path.join(ORDNER, "jarvis.png")):
-        symbol = os.path.join(ORDNER, "jarvis.png")
+    symbol = symbol_pfad()                  # seit 23: das neueste vorhandene (Sternbild, sonst das bisherige)
     try:
         webview.start(start_hintergrund, icon=symbol, gui=None if WINDOWS else "qt")
     except Exception as e:                  # z. B. Qt-Bibliothek fehlt (Linux): hoerbar bleiben statt beenden

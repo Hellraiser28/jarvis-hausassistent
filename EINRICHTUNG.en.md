@@ -202,6 +202,8 @@ right at the start, so that the approval is there by build time.
 | Rooms and calling (since 0.6) | Which speakers and voice devices are in which room, when are the quiet hours? Should Jarvis call for severe weather or a disk fault (building block "Phone calls" and a phone number of the person)? |
 | TV, projector screen, quiz (since 0.6) | Which TVs, projectors, TV boxes and amplifiers are in Home Assistant? Which plugs power devices that must never be switched off hard? Projector screen and quiz need a screen with Google Cast and Home Assistant via HTTPS |
 | Reading documents (since 0.6) | Should MarkItDown run locally (Docker) so that Jarvis can read Word, Excel and PowerPoint? |
+| Superbrain (since 0.7, each one optional) | Which of the ten: Tool forge (small calculation tools of its own, needs Docker, off by default), Council (advice on decisions), Family poll (votes), Night shift (main person only: research open questions at night), Web watch (watch web pages), Show me (explainer pages), Where is it ("Where is …?"), Learning companion (flash cards), House adventure (puzzle game through the rooms), Time capsule (messages to the future)? Daily limit for thinking (default $2 a day)? For Web watch, the domain of the remote access. For the adventure: which lamps (only lamps, never plugs; no list, no light)? Is there a recipe source for the Family poll? |
+| Quick path, watchers, calendar subscriptions (since 0.7) | Quick path always (can be switched off). Watchers ("tell me when …") with Home Assistant. Calendar subscriptions: which private iCal addresses should be fetched regularly, e.g. a shift schedule from a shift app via Google Calendar? The person puts the address into a file themselves (permissions 600); it never belongs in the chat. |
 
 ### Round 5 – What are you planning?
 
@@ -635,9 +637,10 @@ build time. The person can still change things. After the yes, you save the answ
   Ed25519 signature over version and checksum (`ed25519` from `/v1/client/version`, message
   `jarvis-code:<version>:<SHA-256>`), then it checks the SHA-256. The bridge creates the key for this on first use
   (`daten/update_ed25519.key`, 600; never create a new one if the file exists but can't be read) using
-  `einrichtung/ed25519.py` (in the release under `vorlagen/bruecke/`); the public part goes along with pairing (`update_schluessel`) and, via
-  `/v1/client/schluessel` (with token), to clients that don't have it yet. The old `mac` (HMAC with the token hash)
-  stays in the answer for clients up to 15. If it checks GitHub releases, then only tags `pc-<Nummer>` with
+  `einrichtung/ed25519.py` (in the release under `vorlagen/bruecke/`); the public part goes along with pairing (`update_schluessel`). Since
+  client 25 only this key pinned at pairing counts: no fetching via `/v1/client/schluessel` at runtime and no
+  fallback check with `mac` (HMAC with the token hash); without a key the update stops and points to the setup.
+  `mac` and `/v1/client/schluessel` stay in the answer only for older clients. If it checks GitHub releases, then only tags `pc-<Nummer>` with
   `jarvis_pc.py.sha256` and `jarvis_pc.py.sig` (Ed25519 with the project's key), never pre-releases. The release app asks GitHub (`Jarvis-App.json`), a
   self-built app asks the bridge (`/v1/app/version`); installation goes through Android's package installer, and the person
   confirms.
@@ -1299,6 +1302,111 @@ build time. The person can still change things. After the yes, you save the answ
   service runs locally (e.g. Docker, only 127.0.0.1, `MARKITDOWN_URL`), only takes uploaded files and never URLs.
   The content is third-party text.
 
+**Building blocks since 0.7.** All ready-made in the release under `vorlagen/bruecke/`, every module with its own test,
+German and English (`setze_sprache`).
+
+- **Superbrain, shared foundation** (since 0.7, as soon as one of the ten modules is chosen): `superhirn.py`
+  (registry), `denken.py` (thinking calls), `sh_attrappe.py` (the context as a mock, at the same time the description
+  of the interface) and `test_superhirn.py`.
+    - Every module provides `NAME`, `RECHTE` (`haupt` or `familie`; guests never), `WERKZEUG` (description and schema
+      for the MCP tool), `FREMDTEXT`, `LAUTSPRECHER_PRIVAT` and `auftrag(args, person, ctx)`. Some also provide
+      `runde(ctx)` with `TAKT_S` (background) and `seite(pfad, abfrage, ctx, oeffentlich)` (a web page of their own).
+    - The bridge builds the context `ctx` with exactly the methods from `sh_attrappe.Kontext`: `jetzt`, `personen`,
+      `person_name`, `raeume`, `raum_lichter`, `rezept_ideen`, `denken`, `denken_json`, `push`, `durchsage`,
+      `ha_zustand`, `ha_dienst`, `leinwand_text`, `ablegen`, `datei_holen`, `oeffentlich`, `lan`, `log`, plus `daten`
+      (a subfolder of its own) and `fremd` (the kinds of third-party text in the running question, from
+      `fremdtext.arten()`). The bridge keeps checking for itself: push only to people in the family, announcements
+      respect the quiet hours, `ha_dienst` never on baby monitors and cameras.
+    - The tool server creates one MCP tool from each `WERKZEUG` and calls the bridge (e.g. `/intern/sh/<name>`, only
+      from 127.0.0.1, with the person and the source of the question). Before `auftrag` the bridge checks the role,
+      `RECHTE` and the **speaker lock**: if `superhirn.offener_lautsprecher(quelle)` and
+      `superhirn.lautsprecher_privat(modul, aktion)` are true, it answers "I won't say that over a speaker everyone
+      can hear". Via Alexa, Home Assistant's voice pipeline or a voice satellite, whoever speaks counts as the person
+      the device belongs to. Without this lock Jarvis would, for example, read out the main person's time capsule
+      archive there (found by a Claude Security scan).
+    - Background: `superhirn.runden(ctx_fuer, log)` from the bridge's loop (every module according to its `TAKT_S`,
+      each in a thread of its own). Pages of their own: `superhirn.seite(...)` before the 404, with the module's
+      headers. At start, call `superhirn.setze_sprache(sprache)` once.
+    - Thinking calls (`denken.py`): `claude -p` without project context in an empty folder, without MCP servers,
+      `--permission-mode dontAsk`, at most WebSearch, the task via standard input. The command can be set with
+      `JARVIS_DENKEN_BEFEHL`, an `ANTHROPIC_API_KEY` that is set is passed through. Daily limit
+      `SUPERHIRN_TAGESLIMIT_USD` (default $2), fail-closed: every call reserves its maximum amount beforehand, and
+      unreadable bookkeeping means "don't think". Costs in `daten/kosten.jsonl` (`quelle` =
+      `superhirn:<zweck>`).
+    - `fremdtext.py` knows the ten tools. Whatever a module stores from third-party text (web pages, learning
+      material, notes) it marks, and later returns only with a note.
+    - Persona: one line per module saying when it applies (the tool descriptions already tell the brain precisely).
+- **Tool forge** (since 0.7, **off by default**, needs Docker): `schmiede.py`. If Jarvis lacks a skill, he writes
+  himself a small calculation tool (JSON in, JSON out), tests it in a container without network and presents it to the
+  main person.
+    - Switching on: `JARVIS_SCHMIEDE=an` in the bridge's environment, optionally `JARVIS_SCHMIEDE_DOCKER` (default
+      `docker`, e.g. `sudo docker`; read at import). The variables have to be in the process environment, e.g. via
+      `EnvironmentFile=` in the service unit. A `.env` that the bridge only reads into a dictionary is not enough.
+    - Fetch the image once, with exactly the digest from `schmiede.IMAGE`: `docker pull python@sha256:…` (the forge
+      starts with `--pull never`). To protect it from a Docker cleanup, also tag it, e.g. as `jarvis-schmiede:sandbox`.
+    - Sandbox: `--network none`, read-only, `cap-drop ALL`, `no-new-privileges`, user 65534, 256 MB, `ulimit nproc`,
+      20 seconds, a restricted runner. Without seccomp in the kernel (some NAS) only the container protects.
+      Bridge and Docker need the same `/tmp`, so no `PrivateTmp=` in the unit. Whoever belongs to the group `docker`
+      has rights like root: that belongs in the setup, not in the small print.
+    - `vorschlag`, `freigeben` and `verwerfen` only for the main person. Approval only with the four-digit code from
+      the push, three wrong codes lock the draft. The family may use `nutzen` (at most 60 runs per hour), code changed
+      afterwards doesn't run. Stored in `daten/schmiede/`, the code can be viewed on a page of its own.
+- **Council** (since 0.7): `kabinett.py`. Four voices discuss a decision (Penny Pincher, Family and Everyday Life,
+  Future, Devil's Advocate), a chair sums up: recommendation, reasons, strongest counterargument, open questions.
+  At most five thinking calls per consultation. Actions `beraten`, `wiedervorlage`, `rueckblick`, `liste`, `zeigen`,
+  the last two never via speakers.
+- **Family poll** (since 0.7): `familienrunde.py`. "Ask everyone whether we're having pizza or pasta on Saturday."
+  Every person gets a push with a one-time link to a small voting page (`/runde/<token>`, also via remote access), the
+  result goes to everyone, as an announcement on request. With a recipe source (`ctx.rezept_ideen`) Jarvis suggests
+  dishes. Actions `neu`, `stand`, `abbrechen`, at most five open polls per person.
+- **Night shift** (since 0.7, main person only): `nachtschicht.py`. Collects open questions from the conversations
+  during the day, researches them at night (WebSearch only, third-party text contained) and sends a report in the
+  morning. Actions `heute`, `jetzt` (both never via speakers) and `einstellen`.
+- **Web watch** (since 0.7): `weltwache.py`. "Tell me when the price drops below €200." A public page or a web search
+  with a condition in plain language, due every five minutes, the verdict on third-party text contained. Never into
+  the home network: every address is resolved and checked, the checked address is pinned, redirects are checked one
+  by one. At start `weltwache.setze_eigene_domains(<domain of the remote access>)`, otherwise only the resolution on
+  the home network protects. Actions `neu`, `liste` (never via speakers), `loeschen`, `pruefen_jetzt`, at most ten
+  watches per person.
+- **Show me** (since 0.7): `zeigen.py`. Explains with a web page of its own that Claude writes and the module checks
+  (no scripts from outside, strict CSP with sandbox). Available at `/zeigen/<id>`, with `zeigen` on the big screen.
+  A daily quota and a reservation of its own limit the costs.
+- **Where is it** (since 0.7): `ablageort.py`. "Where is the spare key?" Actions `merken` (also with a photo via
+  `ctx.ablegen`), `suchen`, `verlauf`, `liste`, `vergessen`.
+- **Learning companion** (since 0.7): `lernbegleiter.py`. Flash cards per person and subject from text or a
+  photographed worksheet, repetition by SM-2, a reminder at a set time. Actions `neues_thema`, `ueben`, `antwort`,
+  `stand`, `erinnern`, `thema_loeschen`. The learning material is third-party text, the cards are not instructions.
+- **House adventure** (since 0.7, with rooms): `abenteuer.py`. A puzzle game through the real rooms from
+  `raeume.json`, with announcements and texts on the big screen. Light only from the allow list
+  `daten/abenteuer_lampen.json` (`{"raeume": {"wohnzimmer": ["light.…"]}}`), intersected with the area in Home
+  Assistant, never plugs, baby monitors or cameras. Without the list there are no light effects. At the end every
+  lamp returns to its previous state. Quiet hours 9 p.m. to 7 a.m.: only `leise`, without announcements.
+- **Time capsule** (since 0.7): `zeitkapsel.py`. Messages tied to a date or an event ("when Kim turns 18"), delivered
+  between 9 a.m. and 8 p.m. as an announcement, a push or both. Actions `neu`, `liste`, `archiv` (both never via
+  speakers), `loeschen`.
+- **Quick path** (since 0.7, basic package): `schnellpfad.py`. `schnellpfad.antwort(text, jetzt)` answers time, date,
+  "how many days until …", arithmetic, units, dice and coin without the brain, in milliseconds. Only if the whole
+  utterance matches, otherwise `None` and it goes to the brain. No `eval`. Not for yes-button questions and
+  attachments, can be switched off (e.g. `SCHNELLPFAD=0`).
+- **Watchers** (since 0.7, with Home Assistant): `beobachter.py`. "Let me know when the washing machine is done."
+  Tool `beobachten` via `beobachter.auftrag()` (`neu`, `liste`, `loeschen`), the bridge calls `pruefen()` every 30
+  seconds, reports once to the person who asked and forgets the watcher. After 24 hours it expires silently. At most
+  ten per person, never cameras or baby monitors, not for guests. In `fremdtext.py`: `beobachten` as a target,
+  `liste` as reading.
+- **Calendar subscriptions** (since 0.7, if chosen): `kalender_abo.py`. Fetches private iCal addresses regularly
+  (`alle_holen(konfig, zielordner)`, e.g. every 30 minutes) as `<name>.ics` into the folder that Jarvis's own
+  calendar reader reads. Example: a shift schedule from a shift app that exports to a Google calendar whose secret
+  iCal address is entered. `kalender_abos.json` names, for each name, the file with the address (permissions 600).
+  Only https, no targets on the home network, redirects checked, at most 5 MB, a broken response never overwrites the
+  last good file, the address never appears in a message.
+- **"Status" tab with "Top load"** (since 0.7, PC client 24): the client also sends the processes with the highest
+  load. `/v1/client/daten/system.json` and the field `system` of `/v1/lage` go through
+  `lage.system_mit_prozessen(system, werte, zeit, haupt)`: process names only for the main person and only when fresh
+  (180 seconds), the `system.json` that can be read without sign-in stays without processes.
+- **Interface since 0.7:** PC client 24/25 (constellation icon with the setup, also for pinned shortcuts; "New in this
+  version" only counts as seen after "Got it"; Ctrl+Alt+J brings up the window; command palette with Ctrl+K), the
+  matching HUD template, app 4.15 (share to Jarvis, Quick Settings tile, speaking visualizer).
+
 ### Speed (measured, build it this way from the start)
 
 - Fixed persona as the system prompt. Time, source and PC situation come as a preamble to **every message**
@@ -1438,6 +1546,14 @@ Each of these cost time there. Plan for it and check it right away instead of di
 - The bridge's log contains no conversation content, only source, duration, tool and lengths.
 - A rate limit per device token, on the home network as well as from outside (e.g. 120 questions in 10 minutes on the home network), against
   endless loops and costs.
+- **Private things never via shared speakers** (since 0.7): via Alexa, Home Assistant's voice pipeline and voice
+  satellites anyone can listen in, and without voice recognition whoever speaks counts as the person the device
+  belongs to. Whatever a module names in `LAUTSPRECHER_PRIVAT`, the bridge refuses there (see the Superbrain
+  foundation). The same applies to your own extensions: a person's lists and archives belong in the app and the PC
+  window.
+- **Self-written code only after approval and only in the sandbox** (since 0.7, Tool forge): no tool runs before the
+  main person has approved it with the code from the push, and every run goes into a fresh container without network,
+  read-only and without privileges. The forge is off by default.
 - **What Jarvis never does** (`NEVER.en.md`, since 0.3.2). Every point there has to be built, not just written into
   the persona:
     - It never pretends to be human and answers honestly when asked whether it's an AI, on the phone too. What it
@@ -1485,6 +1601,11 @@ Each of these cost time there. Plan for it and check it right away instead of di
    everything else), then memory as a constellation and appearance per person, rooms, open threads, arrival, guests,
    the 3D house, phone control, calls, projector screen, quiz and TV. Voice recognition last, and at first only with
    `zeigen`.
+   **Building blocks since 0.7** after that, as far as chosen: first Quick path and Watchers, then the Superbrain
+   foundation (context, speaker lock, thinking calls with a daily limit), then the modules that only read or store
+   (Where is it, Learning companion, Time capsule, Show me), then the ones that act outward (Family poll, Council,
+   Web watch, Night shift, House adventure). The Tool forge last, and only if the person explicitly wants it.
+   Calendar subscriptions, if chosen, together with the calendar.
 6. **App and remote access**, if chosen. Negative tests first: wrong token, internal paths from outside, lockout.
    Then: the responses of `/v1/koppeln` and of `/v1/gesund` with a valid proof contain `fernzugang` (https), and the
    app shows the remote access in the gear menu under "Connection". Test on mobile data with Wi-Fi off.
@@ -1553,6 +1674,23 @@ Prove every point individually with a real check (output, status code, measured 
       history. A stranger's or artificial voice becomes `fremd`, a profile can be deleted.
     - Call: the test call via `/v1/anruf/test` arrives, only after that `scharf`.
     - Projector screen and quiz: a recipe on the projector screen and paging through it, a quiz round in test mode.
+- Building blocks since 0.7 (if chosen), in test mode:
+    - Quick path: "What time is it?" is answered without the brain (no costs in the history), "What time is it in
+      Tokyo?" goes to the brain.
+    - Watchers: "Let me know when <sensor> rises above <value>" creates one, `liste` shows it, a request for a camera
+      or baby monitor is refused.
+    - Superbrain: a question about the time capsule archive via the source `test-alexa` gets "not over a speaker",
+      the same question from the app is answered. A guest gets a refusal from every module.
+      With `SUPERHIRN_TAGESLIMIT_USD=0.01` every thinking module honestly reports the daily limit.
+    - Web watch: an address on the home network (also via a name that resolves there) is refused.
+    - Family poll: the one-time link votes once, a wrong or second call brings 404.
+    - House adventure: without `abenteuer_lampen.json` it switches nothing. With the list, every lamp returns to its
+      previous state at the end.
+    - Tool forge (only if switched on): a proposal brings the push with the code, `nutzen` before approval is refused,
+      after approval the tool runs. The container has no network (check in the test with
+      `JARVIS_SCHMIEDE_DOCKER_TEST=1`).
+    - Calendar subscriptions: an http address or a target on the home network is refused, the message doesn't name
+      the address.
 - Interface (round 6a): screenshot shown, every chosen panel shows real values (no "–"), every
   quick action triggered in test mode and the matching tool called, the person says it fits
 - PC window: in the gear a color takes effect at once, an invalid value is refused with a message. It shows
@@ -1602,6 +1740,13 @@ and `ausgabe.py` together with their tests: the existing data stays valid, new a
 folder `oberflaeche-personen/`. After that replace the HUD template and build in the untrusted-text lock, then the
 house rule (`haupt=`) and `POST /v1/gedaechtnis`, after that the chosen building blocks in the order from phase 2.
 The PC client fetches version 22 through its update, the app 4.14 through its own, rebuild the web app.
+
+**Moving from 0.6 to 0.7:** `Read EINRICHTUNG.en.md, mode Change: move to 0.7`. Back up first. Go through the rows
+since 0.7 from round 4 with the person. Then replace `fremdtext.py` and `lage.py` together with their tests (new: the
+ten Superbrain tools, the exception for pure photo attachments with `args` in the hook, the processes for "Top load")
+and take over the hook from `vorlagen/bruecke/fremdtext_hook.py`. After that the chosen building blocks since 0.7 in
+the order from phase 2. The PC client fetches version 25 through its update, the constellation icon comes with the
+next run of the setup. The app 4.15 through its own update, rebuild the web app.
 
 Start `claude` in the Jarvis folder and say: `Lies EINRICHTUNG.md, Modus Ändern: <Wunsch>` (in English:
 `Read EINRICHTUNG.en.md, mode Change: <wish>`). Then only the matching round applies, for the appearance that is

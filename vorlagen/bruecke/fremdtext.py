@@ -46,6 +46,11 @@ QUELLEN = frozenset({
     "dokument_markdown",               # liest ein geschicktes Dokument als Text ein (MarkItDown)
     "termine",                         # Kalendertexte (Titel, Ort, Beschreibung) schreiben auch andere
     "updates",                         # Release Notes und Zusammenfassungen der Hersteller (updates.py)
+    # Superhirn (seit 0.7): nur die Aktionen in QUELLE_AKTIONEN liefern fremden Text
+    "schmiede",                        # zeigen: Entwurf mit vom Modell geschriebenem, ungeprueftem Text
+    "nachtschicht",                    # heute/jetzt: Bericht mit Webergebnissen der Selbstkorrektur
+    "weltwache",                       # pruefen_jetzt: Urteil ueber eine fremde Webseite
+    "zeitkapsel",                      # archiv: Botschaften anderer Personen
 })
 # Eingebaute Werkzeuge des Gehirns mit fremdem Text
 QUELLEN_EINGEBAUT = frozenset({"WebSearch", "WebFetch"})
@@ -53,6 +58,10 @@ QUELLEN_EINGEBAUT = frozenset({"WebSearch", "WebFetch"})
 # updates: Release Notes stehen nur in neuigkeiten; liste und status nennen Namen, Versionen und Fehlerarten.
 QUELLE_AKTIONEN = {
     "updates": ("aktion", "liste", frozenset({"neuigkeiten"})),
+    "schmiede": ("aktion", "liste", frozenset({"zeigen"})),                   # seit 0.7 (Superhirn)
+    "nachtschicht": ("aktion", "heute", frozenset({"heute", "jetzt"})),
+    "weltwache": ("aktion", "liste", frozenset({"pruefen_jetzt"})),
+    "zeitkapsel": ("aktion", "liste", frozenset({"archiv"})),
 }
 # Werkzeuge mit Wirkung (schalten, senden, schreiben, anlegen, Push, Durchsage, Kosten), nach fremdem Text in derselben
 # Frage gesperrt. An die eigenen Werkzeuge anpassen; im Zweifel rein. Welche ihrer Aktionen nur lesen, steht in
@@ -74,6 +83,10 @@ ZIELE = frozenset({
     "handy", "handy_apps", "handy_bedienen",                                # Handy
     "gastzugang", "gast_wlan", "gast_wlan_qr",         # Gastzugang anlegen oder widerrufen, Gaeste-WLAN schalten
     "bild_erzeugen",                                   # kostet Geld und schickt die Beschreibung an einen Bilddienst
+    # Superhirn (seit 0.7): anlegen, senden, schalten, kosten; lesende Aktionen in NUR_LESEN
+    "schmiede", "kabinett", "familienrunde", "nachtschicht", "weltwache", "zeigen", "ablageort",
+    "lernbegleiter", "abenteuer", "zeitkapsel",
+    "beobachten",                      # seit 0.7 (beobachter.py): legt einen Push-Ausloeser an
 })
 # Aktionen, die nur lesen (mit args): (Parameter, Standardaktion ohne Angabe, lesende Aktionen). Jede andere oder
 # unbekannte Aktion zaehlt als Wirkung. Namen aus den Werkzeugbeschreibungen (Vorlage werkzeuge/jarvis_mcp.py) und den
@@ -108,7 +121,30 @@ NUR_LESEN = {
     "vorschlaege": ("aktion", "zeigen", frozenset({"zeigen"})),
     "postfach": ("aktion", "neu", frozenset({"neu", "ungelesen", "suchen", "lesen", "anhang", "ordner", "wachen"})),
     "rezepte": ("aktion", "suchen", frozenset({"suchen", "vorschlag", "details", "plan"})),
+    # Superhirn (seit 0.7), Namen aus den Modulen (FREMDTEXT["nur_lesen"])
+    "schmiede": ("aktion", "liste", frozenset({"liste", "zeigen", "nutzen"})),   # nutzen: Sandbox ohne Netz
+    "kabinett": ("aktion", "liste", frozenset({"liste", "zeigen"})),
+    "familienrunde": ("aktion", "stand", frozenset({"stand"})),
+    "nachtschicht": ("aktion", "heute", frozenset({"heute"})),
+    "weltwache": ("aktion", "liste", frozenset({"liste"})),
+    "zeigen": ("aktion", "erklaeren", frozenset({"liste"})),            # erklaeren kostet: Ziel
+    "ablageort": ("aktion", "suchen", frozenset({"suchen", "verlauf", "liste"})),
+    "lernbegleiter": ("aktion", "stand", frozenset({"stand"})),
+    "abenteuer": ("aktion", "stand", frozenset({"stand"})),
+    "zeitkapsel": ("aktion", "liste", frozenset({"liste", "archiv"})),
+    "beobachten": ("aktion", "neu", frozenset({"liste"})),            # seit 0.7 (beobachter.py)
 }
+# Ziel-Aktionen, die frei bleiben, wenn der Anhang der Person die EINZIGE Fremdquelle der Frage ist (Abnahme zu 0.7:
+# "Foto + hier liegt der Ersatzschluessel", "Foto vom Arbeitsblatt + mach Lernkarten" ohne zweites Ja).
+# Nach Mail, Webtext, Dokument oder Bildschirm bleiben sie gesperrt (Pruefbericht zu 0.7, S1). Damit der Text aus
+# dem Bild nicht spaeter als eigener Eintrag zurueckkommt ("gewaschen"), speichern die Module die Fremdart mit
+# (ctx.fremd), und jede Ausgabe eines solchen Eintrags befleckt die Frage, die ihn liest (Antwortfeld "fremd",
+# markiert im Werkzeug-Server unter dem Werkzeugnamen).
+NUR_ANHANG = {
+    "ablageort": ("aktion", "suchen", frozenset({"merken"})),
+    "lernbegleiter": ("aktion", "stand", frozenset({"neues_thema"})),
+}
+ANHANG = "Anhang"                     # Fremdart, die die Bruecke fuer einen Anhang der Person setzt (_frage_ctx.fremd)
 # Werkzeuge ohne Wirkung: Sie lesen nur, oder ihr Ergebnis geht nur an das fragende Geraet. Alles, was weder hier noch
 # in ZIELE noch in QUELLEN steht, gilt als Ziel (im Zweifel sperren).
 # pdf_erstellen, bild_bearbeiten, datei_umwandeln arbeiten am Anhang, und ein Anhang macht die Frage ab dem ersten Wort
@@ -139,12 +175,16 @@ RUECKFRAGE = ("GESPERRT (Fremdtext-Sperre): In dieser Frage hast du fremden Text
 NAMEN = {"postfach": "Mail", "dokumente": "Paperless-Dokument", "nachrichten": "Nachrichten", "briefing": "Briefing",
          "neu_in_mediathek": "Mediathek", "steam_angebote": "Steam", "heute_in_geschichte": "Webtext",
          "rezepte": "Rezept", "tv_programm": "TV-Programm", "dokument_markdown": "Dokument",
-         "termine": "Kalender", "updates": "Release Notes",
+         "termine": "Kalender", "updates": "Release Notes", "schmiede": "Werkzeug-Entwurf",
+         "nachtschicht": "Nachtschicht-Bericht", "weltwache": "Webseite", "zeitkapsel": "Zeitkapsel",
+         "ablageort": "Ablageort aus fremdem Text", "lernbegleiter": "Lernkarten aus fremdem Text",
          "WebSearch": "Websuche", "WebFetch": "Webseite", "Anhang": "Anhang", "pc": "PC-Bildschirm"}
 NAMEN_EN = {"postfach": "e-mail", "dokumente": "Paperless document", "nachrichten": "news", "briefing": "briefing",
             "neu_in_mediathek": "media library", "steam_angebote": "Steam", "heute_in_geschichte": "web text",
             "rezepte": "recipe", "tv_programm": "TV guide", "dokument_markdown": "document",
-            "termine": "calendar", "updates": "release notes",
+            "termine": "calendar", "updates": "release notes", "schmiede": "tool draft",
+            "nachtschicht": "night report", "weltwache": "web page", "zeitkapsel": "time capsule",
+            "ablageort": "stored location from untrusted text", "lernbegleiter": "flashcards from untrusted text",
             "WebSearch": "web search", "WebFetch": "web page", "Anhang": "attachment", "pc": "PC screen"}
 
 # Hook (werkzeuge/fremdtext_hook.py): Pruefung nicht moeglich. Eigener Anfang statt "GESPERRT (Fremdtext-Sperre)", weil
@@ -311,25 +351,48 @@ def markieren(daten, pid, werkzeug):
     return True
 
 
-def befleckt(daten, pid, werkzeug=""):
+def arten(daten, pid):
+    """-> Liste der Fremdarten der laufenden Frage dieses Gehirns (Kennungen wie "Anhang", "postfach", "WebSearch"),
+    [] ohne fremden Text oder ohne laufende Frage. Unlesbare frische Frage-Datei: ["unlesbar"] (zaehlt als fremd).
+    Seit 0.7: Die Superhirn-Module speichern damit die Fremdart eines neuen Eintrags mit (ctx.fremd)."""
+    a = _aktiv(daten, pid)
+    if a is None:
+        return ["unlesbar"] if _frisch_unlesbar(daten, pid) else []
+    l = []
+    if a.get("fremd"):                             # von der Bruecke gesetzt (Anhang)
+        l.append(str(a["fremd"]))
+    m = _marke(daten, pid)
+    if m and m.get("frage") == _frage(a) and time.time() - float(m.get("gesetzt") or 0) <= GUELTIG_S:
+        l += [str(x) for x in (m.get("arten") or [])]
+    return l
+
+
+def nur_anhang_frei(werkzeug, args, fremdarten):
+    """Darf diese Ziel-Aktion trotz fremden Texts laufen? Nur Aktionen aus NUR_ANHANG (strenger Aktionsvergleich wie
+    in ist_ziel), und nur wenn der Anhang der Person die einzige Fremdquelle ist. Ohne args (aeltere Aufrufer) nie."""
+    w = str(werkzeug or "").replace("mcp__jarvis__", "", 1)
+    if w not in NUR_ANHANG or not isinstance(args, dict) or not fremdarten:
+        return False
+    return _aktion(NUR_ANHANG[w], args, streng=True) in NUR_ANHANG[w][2] and all(x == ANHANG for x in fremdarten)
+
+
+def befleckt(daten, pid, werkzeug="", args=None):
     """-> Klartext der Quelle (z. B. "Mail"), wenn die laufende Frage dieses Gehirns fremden Text enthaelt, der das
     Werkzeug sperrt, sonst "". Zaehlt nur fuer genau diese Frage; die naechste Frage hat eine neue Kennung.
     PC-Bildschirm sperrt alles ausser weiteren PC-Schritten: Bedienen heisst Bildschirm lesen und dann klicken; Mail,
     Web, Dokument und Anhang sperren auch den PC. Ist die Datei der laufenden Frage da, aber unlesbar und hoechstens
-    GUELTIG_S alt, gilt die Frage als fremd (wie im Hook: was sich nicht pruefen laesst, sperrt)."""
-    a = _aktiv(daten, pid)
-    if a is None:
-        return _t(*GRUENDE["frage"]) if _frisch_unlesbar(daten, pid) else ""
-    arten = []
-    if a.get("fremd"):                             # von der Bruecke gesetzt (Anhang)
-        arten.append(str(a["fremd"]))
-    m = _marke(daten, pid)
-    if m and m.get("frage") == _frage(a) and time.time() - float(m.get("gesetzt") or 0) <= GUELTIG_S:
-        arten += [str(x) for x in (m.get("arten") or [])]
+    GUELTIG_S alt, gilt die Frage als fremd (wie im Hook: was sich nicht pruefen laesst, sperrt).
+    args (seit 0.7): Argumente des Aufrufs; damit gilt die Ausnahme NUR_ANHANG (nur Anhang als Fremdquelle). Ohne args
+    gilt sie nie, der Aufruf bleibt gesperrt wie bisher."""
+    l = arten(daten, pid)
+    if l == ["unlesbar"] and _aktiv(daten, pid) is None:
+        return _t(*GRUENDE["frage"])
     if str(werkzeug or "").startswith(PC_PRAEFIX):
-        arten = [x for x in arten if x != "pc"]
+        l = [x for x in l if x != "pc"]
+    if nur_anhang_frei(werkzeug, args, l):
+        return ""
     namen = _t(NAMEN, NAMEN_EN)
-    return ", ".join(namen.get(x, _t("fremder Text", "untrusted text")) for x in arten)
+    return ", ".join(namen.get(x, _t("fremder Text", "untrusted text")) for x in l)
 
 
 def rueckfrage(quelle):

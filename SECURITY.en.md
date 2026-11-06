@@ -80,6 +80,18 @@ important ones:
   by default, because sound from the PC's own speakers (a video, a web page) counts as a speaker too. Switching it on
   means accepting exactly that.
 - **A brain with a shell** can also reach blocked files. Then only instruction and approval protect against that.
+- **Shared speakers** (since 0.7): without voice recognition, whoever speaks counts as the person the device belongs
+  to. The Superbrain modules name their private actions (`LAUTSPRECHER_PRIVAT`), and the bridge refuses them there.
+  Your own extensions must keep to this in the same way.
+- **The Tool forge** (since 0.7, off by default) runs code that Claude has written, after approval by the main person
+  and only in a container without network, read-only, without privileges and with fixed limits. On a kernel without
+  seccomp (some NAS) the container alone protects. Whoever belongs to the group `docker` has rights like root. Only
+  switch the forge on if you accept that, and look at the code before you approve it.
+- **Device tokens on the home network:** the app, the PC client and the web app talk to the bridge over HTTP.
+  Anyone who can listen in on your own network (for example from a hijacked device via ARP spoofing) sees the
+  tokens in clear text. Since 0.7 the app checks the bridge's proof again after every network change, and
+  the PC client only accepts updates with the key pinned at pairing. Only HTTPS to the bridge protects against
+  eavesdropping on your own network (e.g. `tailscale cert` or your own reverse proxy).
 - **The web app** comes via HTTP; its device token lives in the browser storage for that address. If, on a
   foreign network, a different device answers under the same address, it can read the token; a proof from the bridge
   doesn't help here, because the foreign page brings its own code. That is why web app devices are valid only on the

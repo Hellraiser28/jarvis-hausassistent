@@ -11,6 +11,9 @@ ohne Daten bleibt weg. Dieselben Daten gehen als Feld "system" in /v1/lage an di
 - sicherung: [{name, ok, alter_h}] (sicherung_eintrag(), die Quelle haengt von der Installation ab).
 - pc: Werte vom PC-Client (ab Version 21), der sie alle 30 s an POST /v1/pc/werte schickt. pc_werte_pruefen() bringt
   sie in feste Form, pc_eintrag() gibt sie nur heraus, solange der PC verbunden ist und sie hoechstens 180 s alt sind.
+- pc.prozesse (seit 0.7, PC-Client 24, "Groesste Last"): die Programme mit der meisten Last. Programmnamen verraten,
+  was jemand am PC tut, deshalb nie in system.json (ohne Token lesbar): pc_eintrag() laesst sie weg, und nur
+  system_mit_prozessen() setzt sie ein, fuer Abrufe mit Token und nur fuer die Hauptperson.
 
 Nur Python-Standardbibliothek (3.8)."""
 import re
@@ -46,15 +49,41 @@ def pc_werte_pruefen(b):
     if isinstance(g, dict):
         w["gpu"] = {"name": re.sub(r"[^\w .()+-]", "", str(g.get("name", "")))[:48], "last": prozent(g.get("last")),
                     "temp": prozent(g.get("temp")), "speicher": prozent(g.get("speicher"))}
+    # seit 0.7 (PC-Client 24): die groessten Prozesse; nur Name, CPU-Anteil und Speicher, keine Pfade, Fenstertitel
+    # oder Befehlszeilen. Ein Client vor 24 schickt das Feld nicht, dann fehlt es auch hier.
+    pz = b.get("prozesse")
+    if isinstance(pz, list):
+        w["prozesse"] = []
+        for p in pz[:8]:
+            if not isinstance(p, dict):
+                continue
+            name = re.sub(r"[^\w .()+-]", "", str(p.get("name", "")))[:40].strip()
+            ram = p.get("ram_mb")
+            ram = int(ram) if isinstance(ram, (int, float)) and not isinstance(ram, bool) and 0 <= ram < 10 ** 7 else None
+            if name and prozent(p.get("cpu")) is not None:
+                w["prozesse"].append({"name": name, "cpu": prozent(p.get("cpu")), "ram_mb": ram})
     return w
 
 
 def pc_eintrag(werte, zeit, pc_online, jetzt=None):
-    """Feld "pc" fuer system.json: die geprueften Werte mit alter_s, oder None (PC getrennt, nie gemeldet, zu alt)."""
+    """Feld "pc" fuer system.json: die geprueften Werte mit alter_s, oder None (PC getrennt, nie gemeldet, zu alt).
+    Ohne prozesse (seit 0.7): system.json ist ohne Token lesbar, Programmnamen gehoeren nicht hinein."""
     jetzt = time.time() if jetzt is None else jetzt
     if not werte or not pc_online or not zeit or jetzt - zeit > PC_MAX_ALTER:
         return None
-    return dict(werte, alter_s=int(max(0, jetzt - zeit)))
+    return dict({k: v for k, v in werte.items() if k != "prozesse"}, alter_s=int(max(0, jetzt - zeit)))
+
+
+def system_mit_prozessen(system, werte, zeit, haupt, jetzt=None):
+    """Seit 0.7 (PC-Client 24): system.json fuer einen Abruf MIT Token (PC-Fenster ueber /v1/client/daten/system.json,
+    App ueber das Feld "system" von /v1/lage) um die Prozesse des PCs ergaenzen, aber nur fuer die Hauptperson
+    (haupt=True, sonst nie). Ohne pc-Karte, ohne Prozesse oder bei Werten ueber 180 s bleibt system, wie es ist.
+    Gibt eine Kopie zurueck; die Datei system.json selbst bekommt die Prozesse nie."""
+    jetzt = time.time() if jetzt is None else jetzt
+    if (haupt is not True or not isinstance(system, dict) or not isinstance(system.get("pc"), dict) or not werte
+            or werte.get("prozesse") is None or not zeit or jetzt - zeit > PC_MAX_ALTER):
+        return system
+    return dict(system, pc=dict(system["pc"], prozesse=werte["prozesse"]))
 
 
 def volumes(pfade):

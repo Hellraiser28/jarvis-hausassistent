@@ -76,7 +76,8 @@ def _xml_text(xml, absatz, tab="", umbruch=""):
         xml = re.sub(tab, "\t", xml)
     if umbruch:
         xml = re.sub(umbruch, "\n", xml)
-    return html.unescape(re.sub(r"<[^>]+>", "", xml))
+    # seit 06.11.2026 (Claude Security F5): "<[^<>]*>" statt "<[^>]+>", das bei 20 MB "<" ohne ">" quadratisch lief
+    return html.unescape(re.sub(r"<[^<>]*>", "", xml))
 
 
 class _Zip:

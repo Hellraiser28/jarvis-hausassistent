@@ -57,18 +57,34 @@ def nachlesen_regel():
               "outside text.")
 
 
+NACHLESEN_MARKE = re.compile(r"⟦\s*nachlesen\s*:\s*([^⟦⟧]{2,800}?)\s*⟧", re.I | re.S)
+
+
+def _nachlesen_marke(s):
+    """(Anfang, Inhalt) der Marke ganz am Ende, sonst None. Ohne Suchmuster mit fuehrenden Leerraum-Quantoren: das
+    alte NACHLESEN_ENDE.search() brauchte bei langen Leerzeichenfolgen kubische Zeit (Claude Security F10, 06.11.2026)."""
+    ende = s.rstrip()
+    if not ende.endswith("⟧"):
+        return None
+    i = ende.rfind("⟦")
+    if i < 0 or len(ende) - i > 1200:
+        return None
+    m = NACHLESEN_MARKE.fullmatch(ende, i)
+    return (i, m.group(1)) if m else None
+
+
 def nachlesen_aus(antwort, schwaerzen=None):
     """(Text ohne Marke, [Stichpunkte]); ohne Marke am Ende (antwort, []). Nur eine Marke ganz am Ende zaehlt. Steht
     davor noch eine (Herkunft unklar, etwa aus einer zitierten Mail), wird die letzte entfernt, aber es gibt keine
     Karte; die anderen bleiben sichtbar im Text. schwaerzen: optionale Funktion je Punkt (Kennwoerter)."""
     s = str(antwort or "")
-    m = NACHLESEN_ENDE.search(s)
-    if not m:
+    mk = _nachlesen_marke(s)
+    if not mk:
         return antwort, []
-    text = s[:m.start()].rstrip()
+    text = s[:mk[0]].rstrip()
     if NACHLESEN.search(text):
         return text, []
-    punkte = [re.sub(r"\s+", " ", p).strip(" -•·–*") for p in m.group(1).split("|")]
+    punkte = [re.sub(r"\s+", " ", p).strip(" -•·–*") for p in mk[1].split("|")]
     punkte = [(schwaerzen(p) if schwaerzen else p)[:160] for p in punkte if len(p) > 1][:4]
     return (text or " ".join(punkte)), punkte
 

@@ -42,6 +42,33 @@ pruef("PC-Eintrag: zu alt", lage.pc_eintrag(w, 1000, True, jetzt=1000 + lage.PC_
 pruef("PC-Eintrag: PC getrennt", lage.pc_eintrag(w, 1000, False, jetzt=1010) is None)
 pruef("PC-Eintrag: nie gemeldet", lage.pc_eintrag(None, 0, True, jetzt=1010) is None)
 
+# ---------------------------------------------------------------- Groesste Last (seit 0.7, PC-Client 24)
+pruef("Prozesse: Client vor 24 ohne Feld -> kein Feld", "prozesse" not in lage.pc_werte_pruefen({"cpu": 5}))
+wp = lage.pc_werte_pruefen({"cpu": 50, "prozesse": [
+    {"name": "chrome", "cpu": 12.34, "ram_mb": 2048}, {"name": "C:\\Pfad\\<b>boese</b>.exe", "cpu": 150, "ram_mb": -1},
+    {"name": "", "cpu": 1}, {"name": "ohne CPU", "ram_mb": 5}, {"name": "wahr", "cpu": True}, "Unsinn",
+    {"name": "x" * 60, "cpu": 1, "ram_mb": True}] + [{"name": "p%d" % i, "cpu": i} for i in range(10)]})
+pruef("Prozesse: nur Name, CPU, Speicher; Name bereinigt und gekuerzt, Zahlen begrenzt",
+      wp["prozesse"][:3] == [{"name": "chrome", "cpu": 12.3, "ram_mb": 2048}, {"name": "CPfadbboeseb.exe", "cpu": 100.0, "ram_mb": None},
+                             {"name": "x" * 40, "cpu": 1.0, "ram_mb": None}], wp["prozesse"][:3])
+pruef("Prozesse: hoechstens 8 Eintraege gelesen", len(wp["prozesse"]) <= 8 and len(wp["prozesse"]) == 4, wp["prozesse"])
+pruef("Prozesse: kein Feld ausser name/cpu/ram_mb", all(set(p) == {"name", "cpu", "ram_mb"} for p in wp["prozesse"]))
+pruef("Prozesse: Unsinn statt Liste -> kein Feld", "prozesse" not in lage.pc_werte_pruefen({"prozesse": "chrome"}))
+ep = lage.pc_eintrag(wp, 1000, True, jetzt=1010)
+pruef("Prozesse: nie in system.json (pc_eintrag laesst sie weg)", ep and "prozesse" not in ep and ep["cpu"] == 50.0
+      and "prozesse" in wp, ep)
+sysj = {"zeilen": [], "pc": ep}
+mit = lage.system_mit_prozessen(sysj, wp, 1000, True, jetzt=1010)
+pruef("Prozesse: mit Token fuer die Hauptperson dabei", mit["pc"]["prozesse"] == wp["prozesse"] and mit["pc"]["cpu"] == 50.0, mit)
+pruef("Prozesse: Original bleibt ohne (Kopie)", "prozesse" not in sysj["pc"] and mit is not sysj)
+for name, args in (("andere Person", (sysj, wp, 1000, False)), ("Haupt nur als Wahrheitswert True", (sysj, wp, 1000, "ja")),
+                   ("zu alt", (sysj, wp, 1000 - lage.PC_MAX_ALTER - 1, True)), ("keine pc-Karte", ({"zeilen": []}, wp, 1000, True)),
+                   ("Client vor 24", (sysj, lage.pc_werte_pruefen({"cpu": 5}), 1000, True)), ("nie gemeldet", (sysj, None, 0, True))):
+    r = lage.system_mit_prozessen(*args, jetzt=1010)
+    pruef("Prozesse: %s -> unveraendert" % name, r is args[0] and "prozesse" not in (r.get("pc") or {}), r)
+pruef("Prozesse: kaputtes system bleibt, kein Absturz", lage.system_mit_prozessen(None, wp, 1000, True, jetzt=1010) is None
+      and lage.system_mit_prozessen({"pc": "x"}, wp, 1000, True, jetzt=1010) == {"pc": "x"})
+
 # ---------------------------------------------------------------- Volumes
 T = tempfile.mkdtemp(prefix="lage-")
 v = lage.volumes([("Daten\x07", T), ("fehlt", os.path.join(T, "gibt-es-nicht"))] + [("x", T)] * 10)

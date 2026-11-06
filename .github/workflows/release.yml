@@ -49,6 +49,7 @@ jobs:
           python3 -B vorlagen/bruecke/test_sprache_040.py
           python3 -B vorlagen/bruecke/test_funde_040.py
           python3 -B vorlagen/bruecke/test_kern.py
+          python3 -B vorlagen/bruecke/test_regex_laufzeit.py
           python3 -B vorlagen/bruecke/test_lage.py
           python3 -B vorlagen/bruecke/test_ankunft.py
           python3 -B vorlagen/bruecke/test_anruf.py
@@ -63,11 +64,28 @@ jobs:
           python3 -B vorlagen/bruecke/test_raeume.py
           python3 -B vorlagen/bruecke/test_sprecher.py
           python3 -B vorlagen/bruecke/test_updates.py
+          python3 -B vorlagen/bruecke/test_superhirn.py
+          python3 -B vorlagen/bruecke/test_sh_schmiede.py
+          python3 -B vorlagen/bruecke/test_sh_kabinett.py
+          python3 -B vorlagen/bruecke/test_sh_familienrunde.py
+          python3 -B vorlagen/bruecke/test_sh_nachtschicht.py
+          python3 -B vorlagen/bruecke/test_sh_weltwache.py
+          python3 -B vorlagen/bruecke/test_sh_zeigen.py
+          python3 -B vorlagen/bruecke/test_sh_ablageort.py
+          python3 -B vorlagen/bruecke/test_sh_lernbegleiter.py
+          python3 -B vorlagen/bruecke/test_sh_abenteuer.py
+          python3 -B vorlagen/bruecke/test_sh_zeitkapsel.py
+          python3 -B vorlagen/bruecke/test_schnellpfad.py
+          python3 -B vorlagen/bruecke/test_beobachter.py
+          python3 -B vorlagen/bruecke/test_kalender_abo.py
           python3 -B vorlagen/pc/test_echtzeit_befehl.py
           python3 -B vorlagen/pc/test_fenster_schutz.py
           python3 -B vorlagen/pc/test_neuigkeiten.py
           python3 -B vorlagen/pc/test_dateien_pc.py
           python3 -B vorlagen/pc/test_pc_werte.py
+          python3 -B vorlagen/pc/test_pc_update.py
+          python3 -B vorlagen/pc/test_pc_symbol.py
+          python3 -B vorlagen/pc/test_pc_ideen.py
 
       - name: Setup.exe bauen
         run: sh installer/bauen.sh "$VERSION"

@@ -33,6 +33,14 @@ otherwise a video playing through your speakers could say "Hey Jarvis" too.
 people's location and private appointments with their consent. Parents may ask for their children's location and
 appointments, never for their conversations with Jarvis.
 
+**Private lists never via shared speakers** (since 0.7). Via Alexa or a voice device in the room anyone can listen
+in. That's why it doesn't read out a person's archives, reports or lists there, such as time capsules, the Night
+shift, the Council or watched pages. Those are in the app and on the PC.
+
+**Code it writes itself only runs after your approval** (since 0.7, Tool forge, off by default). A tool it writes for
+itself only runs once the main person has approved it with the code from the push, and then only sealed off: without
+network, without your files, without access to the house.
+
 **It never deletes for good without your yes.** Permanently deleting files, e-mails, appointments or documents only
 happens after an explicit confirmation. It forgets things from its own memory on request. It doesn't delete
 e-mails at all (since 0.4), at most it moves them.
@@ -74,6 +82,8 @@ at your Jarvis or at GitHub.
 | Cameras and baby monitors | blocked | allow, device by device |
 | Memory | remembers useful things by itself, everything viewable and deletable ("What do you know about me?", "Forget …") | only on "Remember …" |
 | Learning at night (since 0.4) | off | on: lasting things from the day's conversations, never passwords, health or mail contents |
+| Tool forge (since 0.7) | off | on: small calculation tools of its own, each only after approval with a code, needs Docker |
+| Thinking without a conversation (since 0.7, Superbrain) | at most $2 a day | a different daily limit |
 | Tone | as chosen during setup | cheeky or matter-of-fact; the floor above always applies |
 
 ## Where your data goes
@@ -93,6 +103,9 @@ at your Jarvis or at GitHub.
 - **Tools** such as weather, news or web search query the respective services. They see the request, not your
   conversation.
 - **Learning at night** (only if switched on): the day's conversations go to Claude once more at night.
+- **Superbrain** (since 0.7, only what you choose): thinking jobs such as consultations, flash cards or explainer
+  pages go to Claude, Night shift and Web watch search via web search. Web watch fetches the watched pages directly,
+  the calendar subscription fetches your calendar addresses. The pages see your Jarvis's request.
 - **E-mails and letters** (only if set up): they stay in your mailbox and in your Paperless. What Jarvis reads from
   them goes to Claude with the question.
 - **The interface** loads fonts from Google Fonts (can be switched off).

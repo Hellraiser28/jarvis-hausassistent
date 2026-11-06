@@ -33,6 +33,14 @@ ausdrücklich einschaltest, denn sonst könnte auch ein Video aus deinen Lautspr
 Termine anderer gibt er nur mit deren Zustimmung heraus. Eltern dürfen Ort und Termine ihrer Kinder erfragen, nie
 deren Gespräche mit Jarvis.
 
+**Private Listen nie über gemeinsame Lautsprecher** (seit 0.7). Über Alexa oder ein Sprachgerät im Raum kann jeder
+mithören. Deshalb liest er dort keine Archive, Berichte oder Listen einer Person vor, etwa Zeitkapseln, die
+Nachtschicht, das Kabinett oder beobachtete Seiten. Die gibt es in der App und am PC.
+
+**Selbst geschriebener Code läuft nur nach deiner Freigabe** (seit 0.7, Werkzeugschmiede, standardmäßig aus). Ein
+Werkzeug, das er sich schreibt, läuft erst, wenn die Hauptperson es mit dem Code aus dem Push freigegeben hat, und
+dann nur abgeschottet: ohne Netz, ohne deine Dateien, ohne Zugriff aufs Haus.
+
 **Er löscht nie endgültig ohne dein Ja.** Dateien, Mails, Termine oder Dokumente unwiderruflich zu löschen geht nur
 nach ausdrücklicher Bestätigung. Sein eigenes Gedächtnis vergisst er auf Wunsch. Mails löscht er gar nicht (seit
 0.4), er verschiebt sie höchstens.
@@ -75,6 +83,8 @@ PC-Client, bei deinem Jarvis oder bei GitHub.
 | Kameras und Babyfon | gesperrt | freigeben, Gerät für Gerät |
 | Gedächtnis | merkt sich Nützliches von selbst, alles einsehbar und löschbar („Was weißt du über mich?“, „Vergiss …“) | nur auf „Merk dir …“ |
 | Nächtliches Mitlernen (seit 0.4) | aus | an: Dauerhaftes aus den Gesprächen des Tages, nie Kennwörter, Gesundheit oder Mailinhalte |
+| Werkzeugschmiede (seit 0.7) | aus | an: eigene kleine Rechenwerkzeuge, jedes erst nach Freigabe mit Code, braucht Docker |
+| Nachdenken ohne Gespräch (seit 0.7, Superhirn) | höchstens 2 $ am Tag | anderes Tageslimit |
 | Ton | wie beim Einrichten gewählt | frech oder sachlich; die Untergrenze oben gilt immer |
 
 ## Wohin deine Daten gehen
@@ -94,6 +104,9 @@ PC-Client, bei deinem Jarvis oder bei GitHub.
 - **Werkzeuge** wie Wetter, Nachrichten oder Websuche fragen die jeweiligen Dienste ab. Die sehen die Anfrage, nicht
   dein Gespräch.
 - **Mitlernen** (nur wenn eingeschaltet): Die Gespräche des Tages gehen nachts noch einmal an Claude.
+- **Superhirn** (seit 0.7, nur was du wählst): Denkaufträge wie Beratungen, Lernkarten oder Erklärseiten gehen an
+  Claude, Nachtschicht und Welt-Wache suchen über die Websuche. Die Welt-Wache ruft die beobachteten Seiten direkt
+  ab, das Kalender-Abo deine Kalenderadressen. Die Seiten sehen die Anfrage deines Jarvis.
 - **Mails und Briefe** (nur wenn eingerichtet): Sie bleiben in deinem Postfach und in deinem Paperless. Was Jarvis
   daraus liest, geht mit der Frage an Claude.
 - **Die Oberfläche** lädt Schriften von Google Fonts (abschaltbar).

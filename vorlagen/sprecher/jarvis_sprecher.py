@@ -65,6 +65,10 @@ SICHER = float(os.environ.get("SCHWELLE_SICHER", "0.55"))   # ab hier: diese Per
 FREMD = float(os.environ.get("SCHWELLE_FREMD", "0.35"))     # darunter: niemand aus dem Haushalt
 ABSTAND = float(os.environ.get("ABSTAND", "0.12"))          # Vorsprung vor der zweitbesten Person fuer "sicher"
 MIN_S, ANLERN_MIN_S, MAX_S = 1.0, 2.0, 30.0
+# Seit 06.11.2026: ein Stimm-Merkmal aus hoechstens 10 s. Das Modell brauchte fuer 30 s am Stueck so viel Speicher, dass
+# zwei Anlern-Aufrufe hintereinander die 512-MB-Grenze rissen (Kernel beendete den Dienst, das zweite Profil fehlte).
+# Laengere Aufnahmen tragen weiter voll bei: anlernen() zerlegt sie zusaetzlich in 3-s-Stuecke.
+VEKTOR_MAX_S = 10.0
 STUMM_RMS = 0.004                                           # leiser als das: Mikrofon belegt oder nichts gesagt
 MAX_PROBEN = 30
 WAV_MAX = 6 * 1024 * 1024
@@ -102,10 +106,14 @@ def profil_ordner(pfad):
 
 
 def pcm_zu_float(pcm, rate, breite, kanaele):
-    """Rohes PCM (8/16/32 bit) -> float32 mono 16 kHz."""
+    """Rohes PCM (8/16/24/32 bit) -> float32 mono 16 kHz."""
     import soxr
     if breite == 2:
         x = np.frombuffer(pcm[: len(pcm) // 2 * 2], dtype="<i2").astype(np.float32) / 32768
+    elif breite == 3:                   # 24 bit, z. B. Aufnahmen aus Audio-Programmen (seit 06.11.2026)
+        b3 = np.frombuffer(pcm[: len(pcm) // 3 * 3], dtype=np.uint8).reshape(-1, 3).astype(np.int32)
+        v = b3[:, 0] | (b3[:, 1] << 8) | (b3[:, 2] << 16)
+        x = (v - ((v & 0x800000) << 1)).astype(np.float32) / 8388608
     elif breite == 4:
         x = np.frombuffer(pcm[: len(pcm) // 4 * 4], dtype="<i4").astype(np.float32) / 2147483648
     elif breite == 1:
@@ -151,7 +159,7 @@ class Erkenner:
     def vektor(self, x):
         with self.s:
             st = self.ex.create_stream()
-            st.accept_waveform(16000, x)
+            st.accept_waveform(16000, x[: int(VEKTOR_MAX_S * 16000)])
             st.input_finished()
             return norm(self.ex.compute(st))
 

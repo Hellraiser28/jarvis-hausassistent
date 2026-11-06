@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.homelab.jarvis"
-    android:versionCode="44"
-    android:versionName="4.14.0">
+    android:versionCode="46"
+    android:versionName="4.15.1">
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Seit 4.15.1: Netzwechsel erkennen, danach beweist sich die Bruecke neu, bevor das Token wieder rausgeht -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Seit 3.7: Update-Knopf gibt die neue APK an Androids Installer (PackageInstaller) -->
@@ -17,6 +19,10 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <!-- Android 11+: ohne diese Abfrage sieht die App den Spracherkennungsdienst nicht -->
     <queries>
+        <!-- Seit 4.15.1: Bestaetigung des Paketinstallers vor dem Start pruefen (System-App?) -->
+        <intent>
+            <action android:name="android.content.pm.action.CONFIRM_INSTALL" />
+        </intent>
         <intent>
             <action android:name="android.speech.RecognitionService" />
         </intent>
@@ -51,6 +57,35 @@
                 <data android:scheme="jarvis" android:host="koppeln" />
             </intent-filter>
         </activity>
+        <!-- Seit 4.15 (Ideen-Paket A1): Teilen an Jarvis. Eine eigene Aktivitaet ohne Oberflaeche nimmt Text, Links und Bilder
+             aus dem Teilen-Menue an und reicht sie an die MainActivity in Jarvis' eigener Aufgabe weiter; direkt auf der
+             MainActivity entstuende eine zweite Jarvis-Instanz in der Aufgabe der teilenden App. Gesendet wird nichts. -->
+        <activity
+            android:name=".TeilenEmpfang"
+            android:label="Jarvis"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+        <!-- Seit 4.15 (Ideen-Paket A2): Schnelleinstellungs-Kachel "Jarvis"; oeffnet die App, die sofort zuhoert.
+             Nur das System darf sie binden (BIND_QUICK_SETTINGS_TILE). Symbol: die monochrome Ebene des App-Symbols. -->
+        <service
+            android:name=".JarvisKachel"
+            android:label="Jarvis"
+            android:icon="@mipmap/ic_launcher_monochrome"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
         <!-- Seit 4.3: Ablage fuer "Foto aufnehmen" (genau eine Datei im Cache, nicht exportiert; die Kamera-App bekommt
              nur fuer den einen Aufruf Schreibrecht) -->
         <provider

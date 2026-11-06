@@ -314,11 +314,37 @@ Function OrdnerVerlassen
     MessageBox MB_ICONEXCLAMATION "$(T_ORDNER_FREMD)"
     Abort
   ${EndIf}
+  ; Seit 0.7.0 (Claude Security F4): ein vorhandener Ordner ausserhalb des Profils nur, wenn er samt Inhalt diesem Konto
+  ; gehoert und kein anderes Konto eigene Rechte darauf hat (ordner.ps1, hier nur pruefen; abgesichert wird beim Installieren)
+  ${If} ${FileExists} "$INSTDIR\*.*"
+    StrCpy $0 "-NurPruefen"
+    Call OrdnerSkript
+    ${If} $0 == "2"
+      MessageBox MB_ICONEXCLAMATION "$(T_ORDNER_UNSICHER)"
+      Abort
+    ${EndIf}
+  ${EndIf}
   ; Ohne Code geht es nur in einen Ordner, in dem dieser PC schon gekoppelt ist (erneutes Setup = aktualisieren)
   ${If} $Code == ""
   ${AndIfNot} ${FileExists} "$INSTDIR\einstellungen.json"
     MessageBox MB_ICONEXCLAMATION "$(T_ORDNER_UNGEKOPPELT)"
     Abort
+  ${EndIf}
+FunctionEnd
+
+; ordner.ps1 aus dem eigenen Temp-Ordner des Setups (nur dieses Konto) fuer $INSTDIR; $0 = Zusatz ("-NurPruefen" oder
+; leer), danach $0 = Rueckgabe (0 gut, 2 fremder Ordner, 3 Rechte nicht gesetzt). Laeuft, bevor etwas in den Ordner kommt.
+Function OrdnerSkript
+  StrCpy $R9 $0
+  InitPluginsDir
+  File "/oname=$PLUGINSDIR\ordner.ps1" "dateien\ordner.ps1"
+  ${If} ${RunningX64}
+    ${DisableX64FSRedirection}
+  ${EndIf}
+  nsExec::ExecToLog '"${POWERSHELL}" -NoProfile -ExecutionPolicy Bypass -File "$PLUGINSDIR\ordner.ps1" -Ordner "$INSTDIR" $R9'
+  Pop $0
+  ${If} ${RunningX64}
+    ${EnableX64FSRedirection}
   ${EndIf}
 FunctionEnd
 
@@ -993,10 +1019,15 @@ Section "Jarvis"
   ; Seit 0.3.2 (Pruefbericht 0.3.1, Fund 10): Rechte setzen, bevor Dateien, Kopplungscode und Token hineinkommen.
   ; Ausserhalb des Profils erbt ein neuer Ordner sonst z. B. von C:\ "Authentifizierte Benutzer: Aendern", und ein anderes
   ; Konto koennte einrichten.ps1 oder jarvis_pc.py austauschen, bevor sie laufen. Scheitert das dort: abbrechen.
-  CreateDirectory "$INSTDIR"
-  ExpandEnvStrings $1 "%USERDOMAIN%\%USERNAME%"
-  nsExec::ExecToLog '"$SYSDIR\icacls.exe" "$INSTDIR" /inheritance:r /grant:r "$1:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" /Q'
-  Pop $0
+  ; Seit 0.7.0 (Claude Security F4): ordner.ps1 prueft einen vorhandenen Ordner (Besitzer, fremde Rechte, Verknuepfungen,
+  ; auch alles darin), setzt die Rechte darunter zurueck und ersetzt die DACL ganz. icacls /grant:r allein liess
+  ; explizite Eintraege anderer Konten stehen.
+  StrCpy $0 ""
+  Call OrdnerSkript
+  ${If} $0 == "2"
+    MessageBox MB_ICONSTOP "$(T_ORDNER_UNSICHER)"
+    Abort
+  ${EndIf}
   ${If} $0 != "0"
     StrLen $2 "$LOCALAPPDATA\"
     StrCpy $3 "$INSTDIR\" $2
@@ -1012,6 +1043,7 @@ Section "Jarvis"
   FileClose $0
   File "dateien\einrichten.ps1"
   File "dateien\entfernen.ps1"
+  File "dateien\ordner.ps1"
   File "dateien\EINRICHTUNG.md"
   File "dateien\EINRICHTUNG.en.md"
   File "dateien\jarvis_pc.py"

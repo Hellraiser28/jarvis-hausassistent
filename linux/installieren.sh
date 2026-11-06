@@ -470,7 +470,7 @@ vorlagen_kopieren() {   # $1 = Zielordner (<projekt>/einrichtung)
       install -m 644 "$q" "$1/$f.neu"
       # Seit 0.3.4 (Pruefbericht 0.3.3, Fund 16): Sicherheitsmodule nicht nur nebenbei erwaehnen
       case "${f##*/}" in   # nach Dateiname, auch in Unterordnern
-        anhang.py|ed25519.py|ausgabe.py|pdf.py|bilddienst.py|konvertieren.py|zusatzdienste.py|fremdtext.py|fremdtext_hook.py|handy.py|personen.py|gaeste.py|sprecher.py|anruf.py|raeume.py|postfach.py|updates.py|jarvis_sprecher.py)
+        anhang.py|ed25519.py|ausgabe.py|pdf.py|bilddienst.py|konvertieren.py|zusatzdienste.py|fremdtext.py|fremdtext_hook.py|handy.py|personen.py|gaeste.py|sprecher.py|anruf.py|raeume.py|postfach.py|updates.py|jarvis_sprecher.py|denken.py|superhirn.py|schmiede.py|weltwache.py|kalender_abo.py|familienrunde.py|zeigen.py)
           printf '   %s%s%s\n' "$ROT" "$(t "WICHTIG: einrichtung/$f ist ein Sicherheitsmodul und wurde nicht ersetzt. $f.neu enthält Sicherheitskorrekturen: Claude im Jarvis-Ordner bitten, sie zu übernehmen, bevor Jarvis weiterläuft." "IMPORTANT: einrichtung/$f is a security module and was not replaced. $f.neu contains security fixes: ask Claude in the Jarvis folder to apply them before Jarvis keeps running.")" "$AUS" ;;
       esac
       hinweis "$(t "einrichtung/$f behalten (vielleicht angepasst), die neue Vorlage liegt als $f.neu daneben." "kept einrichtung/$f (maybe customized), the new template is next to it as $f.neu.")"

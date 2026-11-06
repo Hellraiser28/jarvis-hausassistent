@@ -89,7 +89,7 @@ def vorher(werkzeug, grund, args=None):
         if not ft.frage_lesbar(DATEN, pid):          # Datei da, aber unlesbar: Marke und Anhang unbekannt
             sperren(ft.pruefung_aus("frage"))
             return 0
-        quelle = ft.befleckt(DATEN, pid, werkzeug)
+        quelle = ft.befleckt(DATEN, pid, werkzeug, args)     # args: Ausnahme NUR_ANHANG (seit 0.7)
     except Exception as e:                           # fail-closed: lieber nachfragen als blind ausfuehren
         sperren(ft.pruefung_aus(type(e).__name__))
         return 0

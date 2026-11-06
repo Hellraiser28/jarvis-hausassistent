@@ -65,6 +65,12 @@ public class MainActivity extends Activity {
     // beim Hochzaehlen einmal auf "4.2" stehen (26.10.2026), obwohl das Paket schon 4.3 war.
     static String VERSION = "?";
     static final String UPDATE_AKTION = "de.homelab.jarvis.UPDATE";
+    static final String TEILEN_AKTION = "de.homelab.jarvis.TEILEN";       // seit 4.15: von TeilenEmpfang
+    static final String ZUHOEREN_AKTION = "de.homelab.jarvis.ZUHOEREN";   // seit 4.15: von JarvisKachel
+    /** Seit 4.15: Die MainActivity ist exportiert (Startsymbol). Damit keine fremde App per Intent mit diesen Aktionen
+     *  das Zuhoeren startet oder etwas ins Eingabefeld legt, tragen Kachel und TeilenEmpfang diesen Schluessel mit
+     *  (Extra "intern"). Er entsteht zufaellig je Prozess; beide laufen im selben Prozess wie die MainActivity. */
+    static final String INTERN = zufallHex(16);
     WebView web;
     SharedPreferences einst;
     Handler ui;
@@ -75,9 +81,24 @@ public class MainActivity extends Activity {
     volatile String basis = null;            // aktuelle Adresse der Bruecke, null = offline
     volatile String art = "offline";         // heimnetz | internet | offline
     volatile boolean updateLaeuft = false;   // nur dann nimmt onNewIntent eine Installer-Rueckmeldung an
+    // Seit 4.15.1 (Claude Security, F11): Zufallswert je Installations-Sitzung im PendingIntent. Nur Rueckmeldungen, die
+    // ihn tragen, kommen wirklich von Androids Installer; eine fremde App kann die exportierte Activity zwar mit der
+    // UPDATE-Aktion aufrufen, kennt ihn aber nicht.
+    static final String UPDATE_SITZUNG = "jarvis_update_sitzung";
+    volatile String updateSitzung = null;
+    // Seit 4.15.1 (Claude Security, F3/F7): Der Beweis der Bruecke gilt nur in dem Netz, in dem er gefuehrt wurde. Jeder
+    // Netzwechsel und jede Rueckkehr in die App zaehlen netzStand hoch; http() nimmt basis nur, wenn sie im aktuellen
+    // Stand bewiesen wurde, und wartet sonst auf einen neuen Beweis. Vorher ging das Token nach einem WLAN-Wechsel an die
+    // alte Heimnetz-Adresse, egal wer dort antwortete, und dessen Antworten wurden ausgefuehrt.
+    final java.util.concurrent.atomic.AtomicInteger netzStand = new java.util.concurrent.atomic.AtomicInteger();
+    int basisStand = -1;                     // netzStand beim letzten Beweis (nur unter dem Lock von this)
+    android.net.ConnectivityManager.NetworkCallback netzRueckruf;
     JSONObject vorgaben = new JSONObject();  // assets/vorgaben.json (je Fassung, vom Bauskript gesetzt)
     volatile String wartenderLink = null;    // Kopplungslink {adresse, code}, holt die Oberflaeche ab (koppelLink)
     volatile String updateApk = null;        // GitHub-Weg: Download-Adresse der gefundenen APK
+    volatile String wartendesTeilen = null;  // seit 4.15: Geteiltes {text, bild?, hinweis?}, holt die Seite ab (geteilt)
+    volatile boolean kachelWartet = false;   // seit 4.15: Kachel getippt, die Seite hoert zu (kachel)
+    volatile boolean direktStart = false;    // seit 4.15: per Kachel oder Teilen gestartet, ohne Startsequenz
 
     static class HttpFehler extends IOException {
         final int code;
@@ -110,11 +131,22 @@ public class MainActivity extends Activity {
         ui = new Handler(Looper.getMainLooper());
         dateiAblageAufraeumen();
         einst = getSharedPreferences("jarvis", MODE_PRIVATE);
+        netzBeobachten();
         try {
             vorgaben = new JSONObject(new String(lesen(getAssets().open("vorgaben.json")), StandardCharsets.UTF_8));
         } catch (Exception ignored) {
         }
         linkMerken(getIntent());
+        if (b == null) {                     // seit 4.15; nach einem Neuaufbau (b != null) nicht noch einmal
+            Intent ein = getIntent();
+            if (neueAbsicht(ein, TEILEN_AKTION)) {
+                direktStart = true;
+                teilenMerken(ein);
+            } else if (neueAbsicht(ein, ZUHOEREN_AKTION)) {
+                direktStart = true;
+                kachelWartet = true;
+            }
+        }
         getWindow().setStatusBarColor(0xFF070206);
         getWindow().setNavigationBarColor(0xFF070206);
         web = new WebView(this);
@@ -185,12 +217,27 @@ public class MainActivity extends Activity {
             js("window.onKoppelLinkDa && window.onKoppelLinkDa()");
             return;
         }
+        if (neueAbsicht(i, TEILEN_AKTION)) {                                  // seit 4.15: Teilen bei laufender App
+            teilenMerken(i);
+            return;
+        }
+        if (neueAbsicht(i, ZUHOEREN_AKTION)) {                                // seit 4.15: Kachel bei laufender App
+            kachelWartet = true;
+            js("window.onKachel && window.onKachel()");
+            return;
+        }
         if (i == null || !UPDATE_AKTION.equals(i.getAction()) || !updateLaeuft) return;
+        String sitzung = i.getStringExtra(UPDATE_SITZUNG), soll = updateSitzung;     // seit 4.15.1 (F11)
+        if (sitzung == null || soll == null || !MessageDigest.isEqual(sitzung.getBytes(StandardCharsets.UTF_8),
+                soll.getBytes(StandardCharsets.UTF_8))) return;
         int st = i.getIntExtra(PackageInstaller.EXTRA_STATUS, -999);
-        if (st != PackageInstaller.STATUS_PENDING_USER_ACTION) updateLaeuft = false;
+        if (st != PackageInstaller.STATUS_PENDING_USER_ACTION) {
+            updateLaeuft = false;
+            updateSitzung = null;
+        }
         if (st == PackageInstaller.STATUS_PENDING_USER_ACTION) {
             Intent bestaetigen = (Intent) i.getParcelableExtra(Intent.EXTRA_INTENT);
-            if (bestaetigen != null) startActivity(bestaetigen);
+            if (bestaetigen != null && installerBestaetigung(bestaetigen)) startActivity(bestaetigen);
         } else if (st != PackageInstaller.STATUS_SUCCESS) {
             String grund = i.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             js("window.onUpdateMeldung && onUpdateMeldung(" + q(tx("Update nicht eingespielt", "Update not installed") + (grund != null ? ": " + grund : ".")) + ")");
@@ -200,6 +247,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        netzStand.incrementAndGet();             // seit 4.15.1 (F3/F7): erst neu beweisen, dann wieder Token senden
         if (web != null) js("window.onSichtbar && window.onSichtbar()");   // Netz kann gewechselt haben
         if (web != null) js("window.kernPause && kernPause(false)");
     }
@@ -212,6 +260,12 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (netzRueckruf != null) {
+            try {
+                ((android.net.ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).unregisterNetworkCallback(netzRueckruf);
+            } catch (Exception ignored) {
+            }
+        }
         if (erkenner != null) erkenner.destroy();
         stoppeWiedergabe();
         super.onDestroy();
@@ -243,6 +297,71 @@ public class MainActivity extends Activity {
             wartenderLink = new JSONObject().put("adresse", adresse).put("code", code).toString();
         } catch (Exception ignored) {
         }
+    }
+
+    // ------------------------------------------------------------ Teilen an Jarvis und Kachel (seit 4.15, Ideen-Paket A1/A2)
+
+    /** Eine frische Absicht dieser Art von Kachel oder TeilenEmpfang (Schluessel INTERN); eine aus dem Verlauf ("Zuletzt
+     *  verwendet" startet die Aufgabe neu mit dem alten Intent) wiederholt nichts: kein zweites Vorbereiten, kein
+     *  ungefragtes Zuhoeren. */
+    static boolean neueAbsicht(Intent i, String aktion) {
+        if (i == null || !aktion.equals(i.getAction()) || (i.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) return false;
+        try {
+            String s = i.getStringExtra("intern");
+            return s != null && MessageDigest.isEqual(s.getBytes(StandardCharsets.UTF_8), INTERN.getBytes(StandardCharsets.UTF_8));
+        } catch (RuntimeException e) {      // kaputte Extras
+            return false;
+        }
+    }
+
+    /**
+     * Geteiltes (von TeilenEmpfang) fuer die Seite bereitlegen: Text fuers Eingabefeld (TeilenRegeln.eingabe), ein Bild
+     * aufbereitet wie eine gewaehlte Datei (GeteiltesBild), das Original merkt sich die App wie bei der Dateiauswahl
+     * (letzteDatei, geht nur mit, wenn die Person abschickt). Die Seite holt es einmal ab (geteilt) und sendet NICHT.
+     */
+    void teilenMerken(Intent i) {
+        final String text = TeilenRegeln.eingabe(i.getStringExtra("text"), i.getStringExtra("betreff"), englisch());
+        Uri b = null;
+        try {
+            Object o = i.getParcelableExtra("bild");
+            if (o instanceof Uri) b = (Uri) o;
+        } catch (RuntimeException ignored) {
+        }
+        final Uri bild = b != null && sichereAdresse(b, false) ? b : null;
+        final boolean bildFehlt = (b != null && bild == null) || i.getBooleanExtra("bild_fehlt", false);
+        final String typAngabe = i.getStringExtra("typ");
+        if (text.isEmpty() && bild == null && !bildFehlt) return;
+        imHintergrund(new Runnable() { public void run() {
+            JSONObject d = new JSONObject();
+            try {
+                d.put("text", text);
+                if (bild != null) {
+                    try {
+                        d.put("bild", bildFuerSeite(bild, typAngabe));
+                        letzteDatei = bild;          // fuer das Original (frageMitAnhangOriginal prueft Groesse und Name)
+                    } catch (Exception e) {
+                        d.put("hinweis", tx("Das Bild konnte ich nicht lesen.", "I couldn't read the image."));
+                    }
+                } else if (bildFehlt) {
+                    d.put("hinweis", tx("Das Bild ließ sich nicht übernehmen.", "I couldn't take over the image."));
+                }
+            } catch (Exception ignored) {
+            }
+            wartendesTeilen = d.toString();
+            js("window.onGeteiltDa && window.onGeteiltDa()");
+        }});
+    }
+
+    /** {name, typ: image/jpeg, daten (Base64), groesse und original_typ/original_name des Originals} fuer den Anhang. */
+    JSONObject bildFuerSeite(Uri u, String typAngabe) throws Exception {
+        String typ = getContentResolver().getType(u);
+        if (typ == null || !typ.startsWith("image/")) typ = typAngabe;
+        if (typ == null || !typ.startsWith("image/")) throw new IOException("kein Bild");
+        byte[] jpeg = GeteiltesBild.alsJpeg(GeteiltesBild.laden(getContentResolver(), u));
+        String roh = dateiName(u);
+        return new JSONObject().put("name", TeilenRegeln.bildName(roh, englisch())).put("typ", "image/jpeg")
+                .put("daten", Base64.encodeToString(jpeg, Base64.NO_WRAP)).put("groesse", dateiGroesse(u))
+                .put("original_typ", TeilenRegeln.originalTyp(typ)).put("original_name", roh);
     }
 
     /**
@@ -358,6 +477,7 @@ public class MainActivity extends Activity {
 
     /** Heimnetz zuerst (schnell), sonst Fernzugang. Meldet den Wechsel an die Oberflaeche. */
     synchronized String pruefeVerbindung() {
+        final int stand = netzStand.get();           // seit 4.15.1: der Beweis gilt fuer diesen Netz-Stand
         String neu = null, neuArt = "offline";
         final String heim = lan(), fern = netz();
         // Seit 3.8 (Sicherheitspruefung): 192.168.178.x ist das Standardnetz jeder FRITZ!Box. In einem fremden WLAN
@@ -404,14 +524,49 @@ public class MainActivity extends Activity {
         }
         boolean gewechselt = !neuArt.equals(art);
         basis = neu;
+        basisStand = stand;
         art = neuArt;
         if (gewechselt) js("window.onVerbindung && window.onVerbindung(" + q(art) + ")");
         return basis;
     }
 
+    /** Seit 4.15.1 (F3/F7): Adresse der Bruecke nur, wenn sie im aktuellen Netz-Stand bewiesen wurde; sonst neu beweisen.
+     *  Dasselbe Lock wie pruefeVerbindung: Wer waehrend eines Beweises fragt, wartet auf dessen Ergebnis. */
+    synchronized String gueltigeBasis() {
+        if (basis != null && basisStand == netzStand.get()) return basis;
+        return pruefeVerbindung();
+    }
+
+    /** Seit 4.15.1 (F3/F7): Jeder Wechsel des Standardnetzes (neues WLAN, mobiles Netz, andere Adresse) verwirft den Beweis. */
+    void netzBeobachten() {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            if (cm == null) return;
+            netzRueckruf = new android.net.ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(android.net.Network n) {
+                    netzStand.incrementAndGet();
+                }
+
+                @Override
+                public void onLost(android.net.Network n) {
+                    netzStand.incrementAndGet();
+                }
+
+                @Override
+                public void onLinkPropertiesChanged(android.net.Network n, android.net.LinkProperties lp) {
+                    netzStand.incrementAndGet();
+                }
+            };
+            cm.registerDefaultNetworkCallback(netzRueckruf);
+        } catch (Exception e) {
+            netzRueckruf = null;                     // ohne Rueckruf verwirft wenigstens onResume den Beweis
+        }
+    }
+
     /** Anfrage an die Bruecke; reisst die Verbindung ab (WLAN weg), wird einmal neu gewaehlt und wiederholt. */
     byte[] http(String methode, String pfad, byte[] body, String typ, int lesezeit) throws IOException {
-        String b = basis != null ? basis : pruefeVerbindung();
+        String b = gueltigeBasis();
         if (b == null) throw new IOException("offline");
         try {
             return anfrage(b, methode, pfad, body, typ, lesezeit, true);
@@ -427,7 +582,7 @@ public class MainActivity extends Activity {
     /** Seit 4.4 (0.3.3): POST mit einer Datei aus der Auswahl, als Base64 in den JSON-Koerper gestreamt (vorne, Datei,
      *  hinten). Feste Laenge, Puffer von 48 KB: Auch 50 MB liegen nie als Ganzes im Speicher. */
     byte[] httpStrom(String pfad, byte[] vorne, Uri datei, long laenge, byte[] hinten, int lesezeit) throws IOException {
-        String b = basis != null ? basis : pruefeVerbindung();
+        String b = gueltigeBasis();
         if (b == null) throw new IOException("offline");
         try {
             return anfrageStrom(b, pfad, vorne, datei, laenge, hinten, lesezeit);
@@ -562,13 +717,29 @@ public class MainActivity extends Activity {
             o.write(apk);
             s.fsync(o);
             o.close();
-            Intent i = new Intent(this, MainActivity.class).setAction(UPDATE_AKTION);
+            updateSitzung = zufallHex(16);           // seit 4.15.1 (F11)
+            Intent i = new Intent(this, MainActivity.class).setAction(UPDATE_AKTION).putExtra(UPDATE_SITZUNG, updateSitzung);
             updateLaeuft = true;
             int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
             s.commit(PendingIntent.getActivity(this, 7, i, flags).getIntentSender());
         } finally {
             s.close();
         }
+    }
+
+    /** Seit 4.15.1 (F11): Die Bestaetigung des Installers ohne URI-Rechte starten und nur, wenn sie zu einer System-App
+     *  fuehrt (Androids Paketinstaller). Ist das Ziel fuer die App nicht sichtbar, reicht das Sitzungs-Token. */
+    boolean installerBestaetigung(Intent b) {
+        b.removeFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION);
+        b.setClipData(null);
+        b.setSelector(null);
+        android.content.pm.ResolveInfo r = getPackageManager().resolveActivity(b, 0);
+        if (r == null || r.activityInfo == null) return b.getComponent() == null;
+        android.content.pm.ApplicationInfo ai = r.activityInfo.applicationInfo;
+        if (ai == null || (ai.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0) return false;
+        b.setComponent(new android.content.ComponentName(r.activityInfo.packageName, r.activityInfo.name));
+        return true;
     }
 
     byte[] json(JSONObject o) {
@@ -791,12 +962,14 @@ public class MainActivity extends Activity {
                     spieler.setDataSource(f.getPath());
                     spieler.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         public void onCompletion(MediaPlayer mp) {
+                            visualizerAus();
                             fertig.countDown();
                         }
                     });
                     spieler.prepare();
                     spieler.start();
                     js("onStatus('spricht')");
+                    visualizerAn(spieler.getAudioSessionId());
                 } catch (Exception e) {
                     fertig.countDown();
                 }
@@ -1483,12 +1656,14 @@ public class MainActivity extends Activity {
                     spieler.setDataSource(f.getPath());
                     spieler.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                         public void onCompletion(MediaPlayer mp) {
+                            visualizerAus();
                             fertig.countDown();
                         }
                     });
                     spieler.prepare();
                     spieler.start();
                     js("onStatus('spricht')");
+                    visualizerAn(spieler.getAudioSessionId());
                     js("window.onHuelle && onHuelle(" + index + "," + huelle(wav) + ")");
                     js("onSatz(" + index + "," + spieler.getDuration() + ")");
                 } catch (Exception e) {
@@ -1532,7 +1707,66 @@ public class MainActivity extends Activity {
         }
     }
 
+    // ------------------------------------------------------------ Sprech-Visualizer (seit 4.15, Ideen-Paket A4)
+    android.media.audiofx.Visualizer stimmVis;
+    final StimmPegel stimmPegel = new StimmPegel();
+    long stimmPegelZeit = 0;
+
+    /**
+     * Pegel der laufenden Wiedergabe fuer den Kranz um Reaktor bzw. Kern: android.media.audiofx.Visualizer an der
+     * Audio-Sitzung des Players, kleine Wellenform, ~18 Werte/s, daraus der Effektivwert (StimmPegel), an die Seite als
+     * onStimmPegel(0..1). Der Visualizer braucht die Mikrofon-Erlaubnis (Android, weil er Ton mithoeren kann). Er wird nur
+     * benutzt, wenn sie schon erteilt ist; sonst, oder wenn das Geraet keinen Visualizer hat, meldet die App -1 und die
+     * Seite pulsiert sanft ohne echten Pegel. Immer hoechstens einer; frei mit dem Satzende und mit dem Player.
+     * Nur auf dem UI-Thread aufrufen (Player und Rueckmeldungen laufen dort).
+     */
+    void visualizerAn(int sitzung) {
+        visualizerAus();
+        if (sitzung == 0 || checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            js("window.onStimmPegel && onStimmPegel(-1)");
+            return;
+        }
+        android.media.audiofx.Visualizer v = null;
+        try {
+            v = new android.media.audiofx.Visualizer(sitzung);
+            int[] r = android.media.audiofx.Visualizer.getCaptureSizeRange();
+            v.setCaptureSize(Math.max(r[0], Math.min(r[1], 256)));
+            v.setScalingMode(android.media.audiofx.Visualizer.SCALING_MODE_AS_PLAYED);
+            int takt = Math.min(android.media.audiofx.Visualizer.getMaxCaptureRate(), 18000);     // mHz: 18 Werte/s
+            v.setDataCaptureListener(new android.media.audiofx.Visualizer.OnDataCaptureListener() {
+                public void onWaveFormDataCapture(android.media.audiofx.Visualizer x, byte[] welle, int rate) {
+                    long jetzt = android.os.SystemClock.uptimeMillis();
+                    if (jetzt - stimmPegelZeit < 45) return;
+                    stimmPegelZeit = jetzt;
+                    js("window.onStimmPegel && onStimmPegel(" + String.format(java.util.Locale.ROOT, "%.2f",
+                            stimmPegel.naechster(welle)) + ")");
+                }
+
+                public void onFftDataCapture(android.media.audiofx.Visualizer x, byte[] fft, int rate) {
+                }
+            }, takt, true, false);
+            v.setEnabled(true);
+            stimmVis = v;
+        } catch (Exception e) {          // Geraet ohne Visualizer, Sitzung schon weg, Effekt belegt
+            if (v != null) v.release();
+            js("window.onStimmPegel && onStimmPegel(-1)");
+        }
+    }
+
+    void visualizerAus() {
+        android.media.audiofx.Visualizer v = stimmVis;
+        stimmVis = null;
+        if (v == null) return;
+        try {
+            v.setEnabled(false);
+        } catch (Exception ignored) {
+        }
+        v.release();
+        js("window.onStimmPegel && onStimmPegel(0)");
+    }
+
     void spielerFreigeben() {
+        visualizerAus();                 // seit 4.15: vor dem Player, der Visualizer haengt an seiner Audio-Sitzung
         if (spieler != null) {
             try {
                 spieler.stop();
@@ -1799,9 +2033,11 @@ public class MainActivity extends Activity {
             imHintergrund(new Runnable() { public void run() {
                 String erg;
                 try {
-                    erg = new String(http("POST", "/v1/stimme/status" + (person == null || person.isEmpty() ? "" : "?person="
-                            + Uri.encode(person)), new byte[0], "application/octet-stream", 15000), StandardCharsets.UTF_8);
-                    new JSONObject(erg);
+                    // Seit 4.15.1 (Claude Security, F6): neu serialisiert wie alle anderen Antworten. Vorher ging der
+                    // Rohtext nach einer bloßen Pruefung in evaluateJavascript, und org.json ignoriert alles nach dem
+                    // ersten Wert: '{"a":1});<Code>;//' lief als JavaScript mit Zugriff auf die Bruecke.
+                    erg = jsonSicher(http("POST", "/v1/stimme/status" + (person == null || person.isEmpty() ? "" : "?person="
+                            + Uri.encode(person)), new byte[0], "application/octet-stream", 15000));
                 } catch (Exception e) {
                     erg = "{\"fehler\":" + JSONObject.quote(fehlertext(e)) + "}";
                 }
@@ -2136,6 +2372,28 @@ public class MainActivity extends Activity {
                 } catch (Exception ignored) {
                 }
             }});
+        }
+
+        /** Teilen an Jarvis (seit 4.15): Geteiltes als JSON {text, bild?, hinweis?} oder leer; einmal abholbar. */
+        @JavascriptInterface
+        public String geteilt() {
+            String g = wartendesTeilen;
+            wartendesTeilen = null;
+            return g == null ? "" : g;
+        }
+
+        /** Schnelleinstellungs-Kachel (seit 4.15): true, wenn die Kachel getippt wurde; einmal abholbar. */
+        @JavascriptInterface
+        public boolean kachel() {
+            boolean k = kachelWartet;
+            kachelWartet = false;
+            return k;
+        }
+
+        /** Seit 4.15: per Kachel oder Teilen gestartet; die Seite laesst dann die Startsequenz weg. */
+        @JavascriptInterface
+        public boolean direktStart() {
+            return direktStart;
         }
 
         /** 3D-Grundriss (seit 29.10.2026): Raeume, Geraete und Live-Zustaende von der Bruecke, im Heimnetz und
